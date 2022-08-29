@@ -8,6 +8,12 @@
 		},
 		{
 			"path": "stack-data-uploader"
+		},
+		{
+			"path": "common-scripts"
+		},
+		{
+			"path": "example_datasets"
 		}
 	],
 	"settings": {
