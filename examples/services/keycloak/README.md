@@ -14,9 +14,9 @@ This folder contains example keycloak configuration.
 - `https-certificate-key-file` and `https-certificate-file` are for [TLS](https://www.keycloak.org/server/enabletls) configuration with PEM certificates.
 
 ## Keycloak Container Set Up
-1. Copy files from /data to [stack manager inputs data folder](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/Deploy/stacks/dynamic/stack-manager/inputs/data).
-2. Copy files from /secret to [stack manager secret folder](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/Deploy/stacks/dynamic/stack-manager/inputs/secrets).
-3. Copy `keycloak.json` (located at Deploy/stacks/dynamic/stack-clients/src/main/resources/com/cmclinnovations/stack/services/built-ins/keycloak.json) to [stack manager inputs service config folder](https://github.com/cambridge-cares/TheWorldAvatar/tree/main/Deploy/stacks/dynamic/stack-manager/inputs/config/services)
+1. Copy files from `data` to the stack manager inputs data folder (`stack-manager/inputs/data`).
+2. Copy files from `secret` to stack manager secret folder (`stack-manager/inputs/secrets`).
+3. Copy `keycloak.json` (`stack-clients/src/main/resources/com/cmclinnovations/stack/services/built-ins/keycloak.json`) to stack manager inputs service config folder (`stack-manager/inputs/config/services`)
 4. Update `hostname-url` and `hostname-admin-url` in `stack-manager/inputs/secrets/keycloak.conf`
 5. PEM Certificate Set up
    1. Generate PEM certificate files `keycloak.pem` and `keycloak.key` for Keycloak TLS setup. 
