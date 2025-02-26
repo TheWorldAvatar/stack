@@ -32,8 +32,8 @@
     <distributionManagement>
         <repository>
             <id>repo</id>
-            <name>TheWorldAvatar Maven Repository</name>
-            <url>https://maven.pkg.github.com/cambridge-cares/TheWorldAvatar/</url>
+            <name>The World Avatar stack Maven Repository</name>
+            <url>https://maven.pkg.github.com/TheWorldAvatar/stack/</url>
         </repository>
     </distributionManagement>
 
