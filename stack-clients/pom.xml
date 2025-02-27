@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.40.2-post-move-version-SNAPSHOT</version>
+    <version>1.40.2</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>

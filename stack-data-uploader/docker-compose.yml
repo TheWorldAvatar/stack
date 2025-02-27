@@ -1,6 +1,6 @@
 services:
   stack-data-uploader:
-    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.40.2-post-move-version-SNAPSHOT
+    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.40.2
     secrets:
       - blazegraph_password
       - postgis_password
