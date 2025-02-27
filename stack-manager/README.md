@@ -399,5 +399,4 @@ You will need permission to push to the CMCL package repository to be able to bu
     ```
 
 <!-- Links -->
-[CMCL Docker Registry]: https://github.com/cambridge-cares/TheWorldAvatar/wiki/Docker%3A-Image-registry
 [resources directory]: ../stack-clients/src/main/resources/com/cmclinnovations/stack/services/built-ins/

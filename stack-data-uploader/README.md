@@ -903,9 +903,9 @@ This way you can look at look at the user interfaces of the various services (se
 
 [Turtle]: https://www.w3.org/TR/2014/REC-turtle-20140225/
 
-[RSC-uploader]:   https://github.com/cambridge-cares/TheWorldAvatar/blob/main/JPS_BASE_LIB/src/main/java/uk/ac/cam/cares/jps/base/query/RemoteStoreClient.java#L875
-[tbox-generation]: ../../../../JPS_BASE_LIB/src/main/java/uk/ac/cam/cares/jps/base/converter/TBoxGeneration.java#L91
-[tbox-examples]:   ../../../../JPS_Ontology/KBTemplates/TBox/
+[RSC-uploader]:    https://github.com/TheWorldAvatar/BaseLib/blob/main/src/main/java/uk/ac/cam/cares/jps/base/query/RemoteStoreClient.java
+[tbox-generation]: https://github.com/TheWorldAvatar/BaseLib/blob/main/src/main/java/uk/ac/cam/cares/jps/base/converter/TBoxGeneration.java
+[tbox-examples]:   https://github.com/TheWorldAvatar/Ontology/blob/main/KBTemplates/TBox/
 
 [gdal-docker]:    https://github.com/OSGeo/gdal/tree/master/docker
 [config-options]: https://gdal.org/user/configoptions.html#list-of-configuration-options-and-where-they-are-documented
