@@ -24,6 +24,15 @@
         <maven.compiler.release>11</maven.compiler.release>
     </properties>
 
+    <!-- Repository locations to fetch from -->
+    <repositories>
+        <repository>
+            <id>github</id>
+            <name>The World Avatar Maven Repository</name>
+            <url>https://maven.pkg.github.com/TheWorldAvatar/*</url>
+        </repository>
+    </repositories>
+
     <dependencies>
 
         <dependency>
