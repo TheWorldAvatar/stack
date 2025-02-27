@@ -7,7 +7,7 @@
 *.sql text eol=lf
 *.sparql text eol=lf
 *.ttl text eol=lf
-*patch text eol=lf
+*.patch text eol=lf
 
 # Windows line endings
 *.bat text eol=crlf
