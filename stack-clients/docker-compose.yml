@@ -1,0 +1,10 @@
+services:
+  stack-client:
+    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.40.4-fix-chown-on-copy-issue-SNAPSHOT
+    secrets:
+      - blazegraph_password
+      - postgis_password
+      - geoserver_password
+    volumes:
+      - ./inputs/data:/inputs/data
+      - ./inputs/config:/inputs/config
