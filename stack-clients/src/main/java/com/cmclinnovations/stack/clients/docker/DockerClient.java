@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.NoSuchElementException;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -551,7 +552,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
     }
 
     public String getContainerId(String containerName) {
-        return getContainer(containerName).map(Container::getId).orElseThrow();
+        return getContainer(containerName).map(Container::getId)
+                .orElseThrow(() -> new NoSuchElementException("Cannot get container "+containerName+"."));
     }
 
     private Map<String, List<String>> convertToConfigFilterMap(String configName, Map<String, String> labelMap) {
