@@ -32,8 +32,6 @@ public final class CityTilerService extends ContainerService {
 
         } catch (IOException ex) {
             throw new RuntimeException("Failed to read in default citytiler colour config file.", ex);
-        } catch (NoSuchElementException ex) {
-            throw new RuntimeException("Cannot find container " + TYPE);
         }
 
         try (InputStream is = CityTilerService.class
@@ -56,8 +54,6 @@ public final class CityTilerService extends ContainerService {
 
         } catch (IOException ex) {
             throw new RuntimeException("Failed to read in citytiler git patch file.", ex);
-        } catch (NoSuchElementException ex) {
-            throw new RuntimeException("Cannot find container " + TYPE);
         }
 
     }

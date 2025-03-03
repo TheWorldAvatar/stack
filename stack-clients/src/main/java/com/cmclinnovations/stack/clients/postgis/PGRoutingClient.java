@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +74,7 @@ public class PGRoutingClient extends PostGISClient {
     }
 
     public void uploadRoutingFilesToPostGIS(String database, Path configFilePath, List<Path> osmFilesList,
-            List<Path> pbfFilesList, String tablePrefix, Options options, boolean append) throws NoSuchElementException {
+            List<Path> pbfFilesList, String tablePrefix, Options options, boolean append) {
         try (TempDir tmpDir = makeLocalTempDir()) {
             tmpDir.copyFrom(configFilePath);
             osmFilesList.stream().forEach(tmpDir::copyFrom);
@@ -104,7 +103,7 @@ public class PGRoutingClient extends PostGISClient {
     }
 
     public void uploadRoutingToPostGIS(String database, Path osmFilePath, Path configFilePath, String tablePrefix,
-            Options options, boolean append) throws NoSuchElementException {
+            Options options, boolean append) {
         String containerId = getContainerId("postgis");
         ensurePostGISRoutingSupportEnabled(database, containerId);
 
