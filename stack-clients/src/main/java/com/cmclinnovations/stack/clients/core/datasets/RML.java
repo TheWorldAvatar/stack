@@ -7,7 +7,7 @@ import java.nio.file.Path;
 
 import com.cmclinnovations.stack.clients.rml.RmlMapperClient;
 
-public class RmlDataSubset extends DataSubset {
+public class RML extends DataSubset {
 
   @Override
   public boolean usesBlazegraph() {
