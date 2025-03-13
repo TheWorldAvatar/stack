@@ -53,19 +53,6 @@
     </distributionManagement>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/be.ugent.rml/rmlmapper -->
-        <dependency>
-            <groupId>be.ugent.rml</groupId>
-            <artifactId>rmlmapper</artifactId>
-            <version>7.3.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.logging.log4j</groupId>
-                    <artifactId>log4j-to-slf4j</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
