@@ -37,6 +37,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
 
   private static final String CSV_FILE_EXTENSION = "csv";
   private static final String YML_FILE_EXTENSION = "yml";
+  private static final String YARRRML_PARSER_EXECUTABLE_PATH = "/app/bin/parser.js";
 
   private static RmlMapperClient instance = null;
 
@@ -150,7 +151,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     // Iterate to copy each file and add the copied file path to the CMD command
     for (URI file : ymlFiles) {
       String fileName = Paths.get(file).getFileName().toString();
-      String targetFilePath = "/" + fileName;
+      String targetFilePath = "/data/" + fileName;
       this.sendFile(containerId, Paths.get(targetFilePath), this.getFileContents(file));
       // Add white space after the previous commands
       inputCommand.append(" -i ").append(targetFilePath);
@@ -159,7 +160,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     // Execute the command and return the RML mappings as streams
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-    String execId = super.createComplexCommand(containerId, "yarrrml-parser", inputCommand.toString())
+    String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, inputCommand.toString())
         .withOutputStream(outputStream)
         .withErrorStream(errorStream)
         .exec();
