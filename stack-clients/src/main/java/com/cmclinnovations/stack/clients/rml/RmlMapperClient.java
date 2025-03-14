@@ -2,16 +2,13 @@ package com.cmclinnovations.stack.clients.rml;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -50,7 +47,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
    * @param dirPath   Target directory path.
    * @param namespace Target namespace to upload the converted RDF triples.
    */
-  public ByteArrayOutputStream parseYarrrmlToRml(Path dirPath, String namespace) {
+  public Map<String, byte[]> parseYarrrmlToRml(Path dirPath, String namespace) {
     LOGGER.info("Checking and parsing YARRRML files...");
     this.validateDirContents(dirPath);
     return this.genRmlRules(dirPath, namespace);
@@ -62,7 +59,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
    * 
    * @param rmlRules Input RML rules.
    */
-  public void parseRmlToRDF(InputStream rmlRules) {
+  public void parseRmlToRDF(Map<String, byte[]> rmlRules) {
     LOGGER.info("Reading the RML rules...");
   }
 
@@ -90,25 +87,21 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
    * @param dirPath   Target directory path.
    * @param namespace Target namespace to upload the converted RDF triples.
    */
-  private ByteArrayOutputStream genRmlRules(Path dirPath, String namespace) {
+  private Map<String, byte[]> genRmlRules(Path dirPath, String namespace) {
     LOGGER.info("Retrieving the target SPARQL endpoint...");
-    BlazegraphEndpointConfig blazegraphConfig = super.readEndpointConfig(EndpointNames.BLAZEGRAPH,
+    BlazegraphEndpointConfig blazegraphConfig = readEndpointConfig(EndpointNames.BLAZEGRAPH,
         BlazegraphEndpointConfig.class);
     String sparqlEndpoint = blazegraphConfig.getUrl(namespace);
 
     LOGGER.info("Converting the YARRRML inputs into RML rules...");
     String containerId = super.getContainerId(super.getContainerName());
     Collection<URI> ymlFiles = this.getFiles(dirPath, YML_FILE_EXTENSION);
-    List<String> commandList = new ArrayList<>(List.of(YARRRML_PARSER_EXECUTABLE_PATH));
 
     // Convert from URI to String and append them to command
     Map<String, byte[]> yarrrmlRules = ymlFiles.stream()
         .map(ymlFile -> {
           try {
-            YarrrmlFile yarrrmlFile = new YarrrmlFile(ymlFile, sparqlEndpoint);
-            commandList.add("-i");
-            commandList.add("/data/" + yarrrmlFile.getFileName());
-            return yarrrmlFile;
+            return new YarrrmlFile(ymlFile, sparqlEndpoint);
           } catch (IOException e) {
             LOGGER.error(containerId, e);
             return new YarrrmlFile();
@@ -127,16 +120,25 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     // Send the files to a new data directory
     super.sendFilesContent(containerId, yarrrmlRules, "/data");
 
-    // Execute the command and return the RML mappings as streams
+    // Execute the command and return the RML rules alongside the CSV file name
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-    String execId = super.createComplexCommand(containerId, commandList.toArray(new String[0]))
-        .withOutputStream(outputStream)
-        .withErrorStream(errorStream)
-        .exec();
-    super.handleErrors(errorStream, execId, LOGGER);
+    Map<String, byte[]> rmlRules = yarrrmlRules.entrySet().stream()
+        .collect(Collectors.toMap(
+            entry -> FileUtils.replaceExtension(entry.getKey(), CSV_FILE_EXTENSION),
+            entry -> {
+              LOGGER.info("Generating RML rules from {}...", entry.getKey());
+              String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
+                  "/data/" + entry.getKey())
+                  .withOutputStream(outputStream)
+                  .withErrorStream(errorStream)
+                  .exec();
+              super.handleErrors(errorStream, execId, LOGGER);
+              return outputStream.toByteArray();
+            }));
+    LOGGER.info("RML rules are generated. Removing any temporary YARRRML files in the container...");
     super.deleteDirectory(containerId, "/data");
-    return outputStream;
+    return rmlRules;
   }
 
   /**
