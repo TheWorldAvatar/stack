@@ -244,7 +244,7 @@ public class DockerClientTest {
                 .exec();
 
         String result = outputStream.toString();
-        String expected = "1.abcd\r\n2.efdh\r\n3.abcd\r\n";
+        String expected = "1.abcd\n2.efdh\n3.abcd\n";
         Assert.assertEquals(expected, result);
     }
 
