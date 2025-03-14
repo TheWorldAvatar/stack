@@ -149,8 +149,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
    */
   private Collection<URI> getFiles(Path dirPath, String fileExtension) {
     try {
-      LOGGER.info(MessageFormat.format("Getting all {0} files from directory {1} ...", fileExtension,
-          dirPath.toAbsolutePath()));
+      LOGGER.info("Getting all {} files from directory {} ...", fileExtension, dirPath.toAbsolutePath());
       URL dirUrl = dirPath.toUri().toURL();
       return FileUtils.listFiles(dirUrl, fileExtension);
     } catch (URISyntaxException | MalformedURLException ex) {
