@@ -78,7 +78,9 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     if (csvFiles.size() != ymlFiles.size()) {
       LOGGER.error("Detected missing file pairs with {} csv and {} yml files! Ensure files are even.",
           csvFiles.size(), ymlFiles.size());
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException(
+          MessageFormat.format("Detected missing file pairs with {0} csv and {1} yml files! Ensure files are even.",
+              csvFiles.size(), ymlFiles.size()));
     }
   }
 
