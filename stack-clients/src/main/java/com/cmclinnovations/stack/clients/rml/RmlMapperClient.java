@@ -9,6 +9,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,9 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
 
   private static final String CSV_FILE_EXTENSION = "csv";
   private static final String YML_FILE_EXTENSION = "yml";
+  private static final String TTL_FILE_EXTENSION = "ttl";
   private static final String YARRRML_PARSER_EXECUTABLE_PATH = "/app/bin/parser.js";
+  private static final String TEMP_CONTAINER_DATA_DIR_PATH = "/data";
 
   private static RmlMapperClient instance = null;
 
@@ -57,10 +60,33 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
    * Parses the RML rules into RDF triples that will be uploaded at the target
    * namespace.
    * 
+   * @param dirPath  Target directory path.
    * @param rmlRules Input RML rules.
    */
-  public void parseRmlToRDF(Map<String, byte[]> rmlRules) {
-    LOGGER.info("Reading the RML rules...");
+  public void parseRmlToRDF(Path dirPath, Map<String, byte[]> rmlRules) {
+    LOGGER.info("Uploading the RML rules and csv files into the target container...");
+    String rmlMapperJavaContainerId = super.getContainerId(EndpointNames.RML_JAVA);
+
+    List<String> csvFiles = rmlRules.keySet().stream()
+        .map(file -> FileUtils.replaceExtension(file, CSV_FILE_EXTENSION))
+        .collect(Collectors.toList());
+    super.sendFiles(rmlMapperJavaContainerId, dirPath.toAbsolutePath().toString(), csvFiles,
+        TEMP_CONTAINER_DATA_DIR_PATH);
+    super.sendFilesContent(rmlMapperJavaContainerId, rmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
+
+    LOGGER.info("Converting and uploading csv data...");
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+    rmlRules.keySet().stream().forEach(file -> {
+      LOGGER.info("Executing RML rules for {}...", file);
+      String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
+          "/data/" + file, "-s", "turtle")
+          .withOutputStream(outputStream)
+          .withErrorStream(errorStream)
+          .exec();
+      super.handleErrors(errorStream, execId, LOGGER);
+    });
+    super.deleteDirectory(rmlMapperJavaContainerId, TEMP_CONTAINER_DATA_DIR_PATH);
   }
 
   /**
@@ -118,14 +144,14 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
               }
             }));
     // Send the files to a new data directory
-    super.sendFilesContent(containerId, yarrrmlRules, "/data");
+    super.sendFilesContent(containerId, yarrrmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
 
-    // Execute the command and return the RML rules alongside the CSV file name
+    // Execute the command and return the RML rules alongside the TTL file name
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
     Map<String, byte[]> rmlRules = yarrrmlRules.entrySet().stream()
         .collect(Collectors.toMap(
-            entry -> FileUtils.replaceExtension(entry.getKey(), CSV_FILE_EXTENSION),
+            entry -> FileUtils.replaceExtension(entry.getKey(), TTL_FILE_EXTENSION),
             entry -> {
               LOGGER.info("Generating RML rules from {}...", entry.getKey());
               String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
@@ -137,7 +163,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
               return outputStream.toByteArray();
             }));
     LOGGER.info("RML rules are generated. Removing any temporary YARRRML files in the container...");
-    super.deleteDirectory(containerId, "/data");
+    super.deleteDirectory(containerId, TEMP_CONTAINER_DATA_DIR_PATH);
     return rmlRules;
   }
 

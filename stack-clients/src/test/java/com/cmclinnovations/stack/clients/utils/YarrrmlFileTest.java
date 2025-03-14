@@ -105,7 +105,7 @@ class YarrrmlFileTest {
         Map<String, Map<String, Object>> sources = new LinkedHashMap<>();
         Map<String, Object> sourceRef = new LinkedHashMap<>();
         sourceRef.put("referenceFormulation", "csv");
-        sourceRef.put("access", FileUtils.replaceExtension(fileName, "csv"));
+        sourceRef.put("access", "/data/" + FileUtils.replaceExtension(fileName, "csv"));
         sources.put("source-ref", sourceRef);
         yamlData.put("sources", sources);
 

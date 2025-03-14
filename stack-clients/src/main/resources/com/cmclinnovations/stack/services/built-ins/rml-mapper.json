@@ -1,0 +1,16 @@
+{
+  "type": "rml-mapper",
+  "ServiceSpec": {
+    "Name": "rml-mapper",
+    "TaskTemplate": {
+      "ContainerSpec": {
+        "Image": "rmlio/rmlmapper-java:v7.3.1",
+        "Command": [
+          "tail",
+          "-f",
+          "/dev/null"
+        ]
+      }
+    }
+  }
+}

@@ -128,7 +128,7 @@ public final class YarrrmlFile {
 
         Map<String, Object> sources = new HashMap<>(this.sourcesTemplate);
         Map<String, Object> sourceRef = this.castToMapStringObject(sources.get(SOURCE_REF_KEY));
-        sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(this.fileName, "csv"));
+        sourceRef.put(ACCESS_KEY, "/data/" + FileUtils.replaceExtension(this.fileName, "csv"));
         output.put(SOURCES_KEY, sources);
     }
 
@@ -170,9 +170,10 @@ public final class YarrrmlFile {
                 stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
 
-            // Transformation of po if necessary to be YARRRML compliant 
+            // Transformation of po if necessary to be YARRRML compliant
             // SnakeYAML transforms the YML content for nested lists into - -
-            // BUT YARRRML parser only accepts -[] as a shortcut and should be updated accordingly
+            // BUT YARRRML parser only accepts -[] as a shortcut and should be updated
+            // accordingly
             List<Map<String, String>> transformedPo = new ArrayList<>();
             List<Object> originalPo = this.castToListObject(mappingValue.get(PRED_OBJ_KEY));
             for (Object predObj : originalPo) {

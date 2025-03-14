@@ -16,8 +16,9 @@ public class RML extends DataSubset {
   void loadInternal(Dataset parent) {
     Path subdirectory = this.getSubdirectory()
         .orElseThrow(() -> new RuntimeException("No 'subdirectory' specified - required for RML data"));
-    Map<String, byte[]> rmlRules = RmlMapperClient.getInstance().parseYarrrmlToRml(
-        parent.getDirectory().resolve(subdirectory), parent.getNamespace());
-    RmlMapperClient.getInstance().parseRmlToRDF(rmlRules);
+    Path fullSubDirPath = parent.getDirectory().resolve(subdirectory);
+    RmlMapperClient mapperClient = RmlMapperClient.getInstance();
+    Map<String, byte[]> rmlRules = mapperClient.parseYarrrmlToRml(fullSubDirPath, parent.getNamespace());
+    mapperClient.parseRmlToRDF(fullSubDirPath, rmlRules);
   }
 }
