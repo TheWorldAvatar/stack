@@ -110,6 +110,7 @@ The following table provides a description of each example:
 | [treesAndHills](../examples/datasets/inputs/config/treesAndHills.json)           | An example of how to use the `"externalDatasets"` node to load multiple datasets by name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | [ukpn-pylons](../examples/datasets/inputs/config/ukpn-pylons.json)               | Uploads a [set of Shapefiles](../examples/datasets/inputs/data/ukpn_pylons/vector/) into the stack as multiple vector layers along with a [.csv file](../examples/datasets/inputs/data/ukpn_pylons/tabular/ukpn_styling.csv) that contain auxiliary data. Some of the auxiliary data is then used by a custom style ([overhead-lines.sld](../examples/datasets/inputs/config/overhead-lines.sld) to dynamically style the lines and towers when served through GeoServer. There is also a OBDA mapping file ([ukpn_ontop.obda](../examples/datasets/inputs/data/ukpn_pylons/ukpn_ontop.obda)), which provides an example of how to make the uploaded data queryable through the Ontop SPARQL endpoint.                                                  |
 | [rdf](../examples/datasets/inputs/config/rdf.json)                               | A wrapper around a collection of examples of loading in [RDF](#rdf-data) data. This includes triples [with](../examples/datasets/inputs/config/triples_with_inference.json) and [without](../examples/datasets/inputs/config/triples.json) inference; [quads](../examples/datasets/inputs/config/quads.json); and [using a properties file](../examples/datasets/inputs/config/triples_using_properties_file.json).                                                                                                                                                                                                                                                                                                                                     |
+| [rml](../examples/datasets/inputs/config/rml.json)                               | An example of uploading YARRRML rules and a CSV file into a custom Blazegraph namespace.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | [tboxcsv](../examples/datasets/inputs/config/tboxcsv.json)                       | An example of loading a TBox from a CSV file into a custom Blazegraph namespace.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ## The Dataset Configuration File
@@ -337,7 +338,7 @@ Notes:
 
 ## Data Types
 
-The following data types are supported: [`vector`](#vector-data), [`raster`](#raster-data), [`tabular`](#tabular-data), [`rdf`](#rdf-data), [`tboxcsv`](#tbox-csv-data), [`citygml`](#citydb-data), [`xbuilding`](#x-building-data), and [`osmrouting`](#osm-data).
+The following data types are supported: [`vector`](#vector-data), [`raster`](#raster-data), [`tabular`](#tabular-data), [`rdf`](#rdf-data), [`rml`](#rml-data), [`tboxcsv`](#tbox-csv-data), [`citygml`](#citydb-data), [`xbuilding`](#x-building-data), and [`osmrouting`](#osm-data).
 A description of how each is processed and a summary of the available configuration options are provided below.
 
 ### Vector Data
@@ -572,6 +573,27 @@ The data loader does the following when uploading RDF data:
 1. It uses the [`RemoteStoreClient::uploadFile`][RSC-uploader] method to read in RDF triple and quad data to the Blazegraph database in the stack.
 
 There are no configurable options for this process, the namespace the data is added to is always the one defined in the parent dataset.
+
+### RML Data
+
+The `"rml"` data type should be used to load RDF triples from CSV files using [YARRRML rules](https://rml.io/yarrrml/), into a specified SPARQL endpoint namespace (defined in the parent dataset). Users must deploy both the `rml-mapper` and `yarrrml-parser` services within their stack, and provide resources as matching `.yml` and `.csv` file pairs with identical names for the loader to associate them.
+
+> [!IMPORTANT]  
+> Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
+
+The data loader performs the following steps when uploading csv data and rules:
+
+1. YARRRML loading
+
+The loader automatically populates the sources and targets fields following the csv data file names and the namespace defined in the parent dataset.
+
+2. YARRRML -> RML
+
+It converts the generated [YARRRML rules](https://rml.io/yarrrml/) into [RML rules](https://rml.io/specs/rml/) using the [YARRRML Parser tool](https://github.com/RMLio/yarrrml-parser).
+
+3. RML upload
+
+It reads the [RML rules](https://rml.io/specs/rml/) using the [RMLMapper tool](https://github.com/RMLio/rmlmapper-java) to convert the csv data files into RDF triples. These triples are then subsequently uploaded to the specified namespace to the Blazegraph database within the stack.
 
 ### TBox CSV Data
 
