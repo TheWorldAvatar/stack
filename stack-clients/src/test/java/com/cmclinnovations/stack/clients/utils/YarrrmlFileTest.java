@@ -7,6 +7,8 @@ import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,14 +33,14 @@ class YarrrmlFileTest {
 
     @Test
     void testFileConstructor() throws IOException, URISyntaxException {
-        URI rulesFilePath = YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI();
+        Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
         YarrrmlFile yarrrmlFile = new YarrrmlFile(rulesFilePath, TEST_ENDPOINT);
         checkRules(yarrrmlFile, TEST_ONE_FILE_NAME, this.genExpectedYarrrmlContents(TEST_ONE_FILE_NAME));
     }
 
     @Test
     void testAddRules_SuccessOriginalFormat() throws IOException, URISyntaxException {
-        URI rulesFilePath = YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI();
+        Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
         YarrrmlFile yarrrmlFile = new YarrrmlFile();
         yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
         checkRules(yarrrmlFile, TEST_ONE_FILE_NAME, this.genExpectedYarrrmlContents(TEST_ONE_FILE_NAME));
@@ -46,7 +48,7 @@ class YarrrmlFileTest {
 
     @Test
     void testAddRules_SuccessShortcutFormat() throws IOException, URISyntaxException {
-        URI rulesFilePath = YarrrmlFileTest.class.getResource(TEST_TWO_FILE_NAME).toURI();
+        Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_TWO_FILE_NAME).toURI());
         YarrrmlFile yarrrmlFile = new YarrrmlFile();
         yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
         checkRules(yarrrmlFile, TEST_TWO_FILE_NAME, this.genExpectedYarrrmlContents(TEST_TWO_FILE_NAME));
@@ -105,7 +107,7 @@ class YarrrmlFileTest {
         Map<String, Map<String, Object>> sources = new LinkedHashMap<>();
         Map<String, Object> sourceRef = new LinkedHashMap<>();
         sourceRef.put("referenceFormulation", "csv");
-        sourceRef.put("access", "/data/" + FileUtils.replaceExtension(fileName, "csv"));
+        sourceRef.put("access", FileUtils.replaceExtension(fileName, "csv"));
         sources.put("source-ref", sourceRef);
         yamlData.put("sources", sources);
 

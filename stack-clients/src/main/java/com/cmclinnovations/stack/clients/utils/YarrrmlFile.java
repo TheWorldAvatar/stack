@@ -4,10 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +53,7 @@ public final class YarrrmlFile {
      * @param ymlFile  YML file path.
      * @param endpoint The endpoint url for uploading the converted triples.
      */
-    public YarrrmlFile(URI ymlFile, String endpoint) throws IOException {
+    public YarrrmlFile(Path ymlFile, String endpoint) throws IOException {
         this();
         this.addRules(ymlFile, endpoint);
     }
@@ -66,10 +64,9 @@ public final class YarrrmlFile {
      * @param ymlFile  YML file path.
      * @param endpoint The endpoint url for uploading the converted triples.
      */
-    public void addRules(URI ymlFile, String endpoint) throws IOException {
-        Path ymlFilePath = Paths.get(ymlFile);
-        this.rules = yaml.load(Files.newInputStream(ymlFilePath));
-        this.appendSources(this.rules, ymlFilePath.getFileName());
+    public void addRules(Path ymlFile, String endpoint) throws IOException {
+        this.rules = yaml.load(Files.newInputStream(ymlFile));
+        this.appendSources(this.rules, ymlFile.getFileName());
         this.appendTargets(this.rules, endpoint);
         this.updateMappings(this.rules);
     }
@@ -128,7 +125,7 @@ public final class YarrrmlFile {
 
         Map<String, Object> sources = new HashMap<>(this.sourcesTemplate);
         Map<String, Object> sourceRef = this.castToMapStringObject(sources.get(SOURCE_REF_KEY));
-        sourceRef.put(ACCESS_KEY, "/data/" + FileUtils.replaceExtension(this.fileName, "csv"));
+        sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(this.fileName, "csv"));
         output.put(SOURCES_KEY, sources);
     }
 

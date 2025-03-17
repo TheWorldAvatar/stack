@@ -63,6 +63,10 @@ public final class FileUtils {
         return removeExtension(pathComponents[pathComponents.length - 1]);
     }
 
+    public static Path appendDirectoryPath(URI file, String parentDir) {
+        return Paths.get(parentDir).resolve(file.getPath());
+    }
+
     public static boolean filterOnExtension(Path path, String extension) {
         return path.getFileName().toString().endsWith(extension);
     }

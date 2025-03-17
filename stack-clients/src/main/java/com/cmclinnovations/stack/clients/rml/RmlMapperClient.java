@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
@@ -29,7 +30,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
   private static final String YML_FILE_EXTENSION = "yml";
   private static final String TTL_FILE_EXTENSION = "ttl";
   private static final String YARRRML_PARSER_EXECUTABLE_PATH = "/app/bin/parser.js";
-  private static final String TEMP_CONTAINER_DATA_DIR_PATH = "/data";
+  private static final String TEMP_CONTAINER_DATA_DIR_PATH = "/dataset";
 
   private static RmlMapperClient instance = null;
 
@@ -80,7 +81,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
       ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
       LOGGER.info("Executing RML rules for {}...", file);
       String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
-          "/data/" + file, "-s", "turtle")
+          Paths.get(TEMP_CONTAINER_DATA_DIR_PATH).resolve(file).toString(), "-s", "turtle")
           .withOutputStream(outputStream)
           .withErrorStream(errorStream)
           .exec();
@@ -127,7 +128,8 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     Map<String, byte[]> yarrrmlRules = ymlFiles.stream()
         .map(ymlFile -> {
           try {
-            return new YarrrmlFile(ymlFile, sparqlEndpoint);
+            return new YarrrmlFile(FileUtils.appendDirectoryPath(ymlFile, TEMP_CONTAINER_DATA_DIR_PATH),
+                sparqlEndpoint);
           } catch (IOException e) {
             LOGGER.error(containerId, e);
             return new YarrrmlFile();
@@ -155,7 +157,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
               ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
               ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
               String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
-                  "/data/" + entry.getKey())
+                  Paths.get(TEMP_CONTAINER_DATA_DIR_PATH).resolve(entry.getKey()).toString())
                   .withOutputStream(outputStream)
                   .withErrorStream(errorStream)
                   .exec();

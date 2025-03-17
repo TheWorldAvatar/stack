@@ -1,5 +1,9 @@
 package com.cmclinnovations.stack.clients.utils;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -46,4 +50,15 @@ public class FileUtilsTest {
                         .collect(Collectors.toList()));
     }
 
+    @Test
+    public void testAppendDirectoryPath() throws URISyntaxException {
+        Assert.assertEquals(List.of(
+                "/dataset/123.csv", "/dataset/345.csv", "/dataset/678.csv"),
+                Stream.of(
+                        new URI("123.csv"),
+                        new URI("345.csv"),
+                        new URI("678.csv"))
+                        .map(path -> FileUtils.appendDirectoryPath(path, "/dataset").toAbsolutePath().toString())
+                        .collect(Collectors.toList()));
+    }
 }
