@@ -119,12 +119,13 @@ public final class FileUtils {
             }
         }
         String cleanedDirURL = dirURL.toString().replaceFirst("^(.*?)/?$", "$1/");
+        Path basePath = Path.of(path).normalize();
         try (JarFile jar = new JarFile(jarPath)) {
             Enumeration<JarEntry> entries = jar.entries(); // gives ALL entries in jar
             while (entries.hasMoreElements()) {
-                String name = entries.nextElement().getName();
-                if (name.startsWith(path)) { // filter according to the path
-                    String entry = name.substring(path.length());
+                Path name = Path.of(entries.nextElement().getName()).normalize();
+                if (name.startsWith(basePath)) { // filter according to the path
+                    String entry = basePath.relativize(name).toString();
                     if (!entry.isEmpty() && !entry.contains("/")) {
                         uris.add(URI.create(cleanedDirURL + entry));
                     }
