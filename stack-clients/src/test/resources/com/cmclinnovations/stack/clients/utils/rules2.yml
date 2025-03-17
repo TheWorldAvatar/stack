@@ -2,14 +2,14 @@ prefixes:
   rdfs: "http://www.w3.org/2000/01/rdf-schema#"
   base: "https://theworldavatar.io/kg/"
 
-mappings:
+mapping:
   person:
-    s: base:person/$(id)
-    po:
+    subjects: base:person/$(id)
+    predicateobjects:
       - [a, base:Person]
       - [base:hasName, base:person/name/$(id)~iri]
   person-name:
-    s: base:person/name/$(id)
+    subject: base:person/name/$(id)
     po:
       - [a, base:PersonName]
       - [rdfs:label, $(name)]

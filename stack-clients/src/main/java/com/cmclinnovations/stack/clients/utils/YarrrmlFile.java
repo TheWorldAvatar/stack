@@ -28,8 +28,13 @@ public final class YarrrmlFile {
     private static final String TARGETS_KEY = "targets";
     private static final String TARGET_REF_KEY = "target-ref";
     private static final String MAPPING_KEY = "mappings";
+    private static final String MAPPING_ALT_KEY = "mapping";
+    private static final String MAPPING_ALT_TWO_KEY = "m";
     private static final String SUBJECT_KEY = "s";
+    private static final String SUBJECT_ALT_KEY = "subject";
+    private static final String SUBJECT_ALT_TWO_KEY = "subjects";
     private static final String PRED_OBJ_KEY = "po";
+    private static final String PRED_OBJ_ALT_KEY = "predicateobjects";
     private static final String ACCESS_KEY = "access";
 
     /**
@@ -76,6 +81,13 @@ public final class YarrrmlFile {
      */
     public String getFileName() {
         return this.fileName;
+    }
+
+    /**
+     * Get the rules content.
+     */
+    public Map<String, Object> getRules() {
+        return this.rules;
     }
 
     /**
@@ -149,19 +161,23 @@ public final class YarrrmlFile {
      * @param output The target YAML output.
      */
     private void updateMappings(Map<String, Object> output) {
-        Map<String, Object> ruleMappings = this.castToMapStringObject(output.get(MAPPING_KEY));
+        Map<String, Object> ruleMappings = this.castToMapStringObject(
+                this.getObjectWithOneOfManyKeys(output, MAPPING_KEY, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY));
         ruleMappings.forEach((field, value) -> {
             // Addition of sources and their reference
             Map<String, Object> mappingValue = this.castToMapStringObject(value);
             mappingValue.put(SOURCES_KEY, SOURCE_REF_KEY);
 
             // Addition of targets and their reference
-            Object subjectVal = mappingValue.get(SUBJECT_KEY);
+            Object subjectVal = this.getObjectWithOneOfManyKeys(mappingValue, SUBJECT_KEY, SUBJECT_ALT_KEY,
+                    SUBJECT_ALT_TWO_KEY);
             if (subjectVal instanceof String) {
                 Map<String, Object> newSubjectMap = new HashMap<>();
                 newSubjectMap.put("value", subjectVal);
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
                 mappingValue.put(SUBJECT_KEY, newSubjectMap);
+                mappingValue.remove(SUBJECT_ALT_KEY);
+                mappingValue.remove(SUBJECT_ALT_TWO_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
                 Map<String, Object> stringObjectMap = this.castToMapStringObject(subjectVal);
                 stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
@@ -172,7 +188,8 @@ public final class YarrrmlFile {
             // BUT YARRRML parser only accepts -[] as a shortcut and should be updated
             // accordingly
             List<Map<String, String>> transformedPo = new ArrayList<>();
-            List<Object> originalPo = this.castToListObject(mappingValue.get(PRED_OBJ_KEY));
+            List<Object> originalPo = this
+                    .castToListObject(this.getObjectWithOneOfManyKeys(mappingValue, PRED_OBJ_KEY, PRED_OBJ_ALT_KEY));
             for (Object predObj : originalPo) {
                 if (predObj instanceof List) {
                     List<Object> nestedPredObjList = this.castToListObject(predObj);
@@ -187,8 +204,27 @@ public final class YarrrmlFile {
             }
             if (!transformedPo.isEmpty()) {
                 mappingValue.put(PRED_OBJ_KEY, transformedPo);
+                mappingValue.remove(PRED_OBJ_ALT_KEY);
             }
         });
+        output.put(MAPPING_KEY, ruleMappings);
+        output.remove(MAPPING_ALT_KEY);
+        output.remove(MAPPING_ALT_TWO_KEY);
+    }
+
+    /**
+     * Gets the object from the mappings based on any of the shortcut key inputs.
+     * 
+     * @param mappings     The target mappings.
+     * @param shortcutKeys The possible shortcut keys available in YARRRML.
+     */
+    private Object getObjectWithOneOfManyKeys(Map<String, Object> mappings, String... shortcutKeys) {
+        for (String shortcut : shortcutKeys) {
+            if (mappings.containsKey(shortcut)) {
+                return mappings.get(shortcut);
+            }
+        }
+        throw new IllegalArgumentException("Invalid input. Object is not a Map.");
     }
 
     private Map<String, Object> castToMapStringObject(Object obj) throws ClassCastException {
