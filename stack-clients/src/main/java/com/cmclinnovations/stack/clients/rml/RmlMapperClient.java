@@ -75,9 +75,9 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     super.sendFilesContent(rmlMapperJavaContainerId, rmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
 
     LOGGER.info("Converting and uploading csv data...");
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
     rmlRules.keySet().stream().forEach(file -> {
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
       LOGGER.info("Executing RML rules for {}...", file);
       String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
           "/data/" + file, "-s", "turtle")
@@ -147,13 +147,13 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     super.sendFilesContent(containerId, yarrrmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
 
     // Execute the command and return the RML rules alongside the TTL file name
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
     Map<String, byte[]> rmlRules = yarrrmlRules.entrySet().stream()
         .collect(Collectors.toMap(
             entry -> FileUtils.replaceExtension(entry.getKey(), TTL_FILE_EXTENSION),
             entry -> {
               LOGGER.info("Generating RML rules from {}...", entry.getKey());
+              ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+              ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
               String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
                   "/data/" + entry.getKey())
                   .withOutputStream(outputStream)
