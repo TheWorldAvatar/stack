@@ -13,7 +13,7 @@ mappings:
         o: base:person/name/$(id)~iri
   person-name:
     s: 
-      value: base:person/name/$(id)base:person/name/$(id)
+      value: base:person/name/$(id)
     po:
       - p: a
         o: base:PersonName
