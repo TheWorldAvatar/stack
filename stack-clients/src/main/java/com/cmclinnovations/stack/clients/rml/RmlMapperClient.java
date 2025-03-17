@@ -12,6 +12,7 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -106,6 +107,28 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
           MessageFormat.format("Detected missing file pairs with {0} csv and {1} yml files! Ensure files are even.",
               csvFiles.size(), ymlFiles.size()));
     }
+    Set<String> csvFileNames = csvFiles.stream()
+        .map(csvFile -> {
+          try {
+            return FileUtils.getFileNameWithoutExtension(csvFile.toURL());
+          } catch (MalformedURLException ex) {
+            LOGGER.error("Invalid URL: {}. Read error message for more information: {}", csvFile, ex.getMessage());
+            throw new IllegalArgumentException(MessageFormat.format("Invalid URL: {0}", csvFile));
+          }
+        }).collect(Collectors.toSet());
+
+    ymlFiles.forEach(ymlFile -> {
+      try {
+        String ymlFileName = FileUtils.getFileNameWithoutExtension(ymlFile.toURL());
+        if (!csvFileNames.contains(ymlFileName)) {
+          LOGGER.error("CSV file is missing for: {}.", ymlFileName);
+          throw new IllegalArgumentException(MessageFormat.format("CSV file is missing for: {0}.", ymlFileName));
+        }
+      } catch (MalformedURLException ex) {
+        LOGGER.error("Invalid URL: {}. Read error message for more information: {}", ymlFile, ex.getMessage());
+        throw new IllegalArgumentException(MessageFormat.format("Invalid URL: {0}", ymlFile));
+      }
+    });
   }
 
   /**
