@@ -581,6 +581,9 @@ The `"rml"` data type should be used to load RDF triples from CSV files using [Y
 > [!IMPORTANT]  
 > Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
 
+> [!TIP]  
+> Users can make use of the [default functions in RML Mapper](https://rml.io/docs/rmlmapper/default-functions/) as functions in their YARRRML rules. Please read the test `.yml` files if you require compliant samples.
+
 The data loader performs the following steps when uploading csv data and rules:
 
 1. YARRRML loading
