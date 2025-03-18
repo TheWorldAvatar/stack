@@ -13,7 +13,7 @@
 <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881>
         rdf:type  <https://theworldavatar.io/kg/service#Ontop>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
+                "1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
         <http://purl.org/dc/terms/requires>
                 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>;
         <http://purl.org/dc/terms/title>
@@ -39,7 +39,7 @@
 <https://theworldavatar.io/kg/61f4a804-96f1-40dd-a4e4-8319d659556a>
         rdf:type  <https://theworldavatar.io/kg/service#Ontop>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/61f4a804-96f1-40dd-a4e4-8319d659556a";
+                "61f4a804-96f1-40dd-a4e4-8319d659556a";
         <http://purl.org/dc/terms/requires>
                 <https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628>;
         <http://purl.org/dc/terms/title>
@@ -65,7 +65,7 @@
 <https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628";
+                "1eaa6cee-003e-4d7c-83df-143a43274628";
         <http://purl.org/dc/terms/title>
                 "testDataset3";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -76,7 +76,7 @@
 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d";
+                "7dc9e69c-cc10-4305-b57a-5ba44023781d";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>

@@ -13,7 +13,7 @@
 <https://theworldavatar.io/kg/c735c3fd-ef45-4f1b-8609-a225540ce3cc>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/c735c3fd-ef45-4f1b-8609-a225540ce3cc";
+                "c735c3fd-ef45-4f1b-8609-a225540ce3cc";
         <http://purl.org/dc/terms/title>
                 "testDataset3";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -24,7 +24,7 @@
 <https://theworldavatar.io/kg/55e0b0e1-4bf2-461a-8e04-688d6b1cc97a>
         rdf:type  <https://theworldavatar.io/kg/service#GeoServer>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/55e0b0e1-4bf2-461a-8e04-688d6b1cc97a";
+                "55e0b0e1-4bf2-461a-8e04-688d6b1cc97a";
         <http://purl.org/dc/terms/references>
                 <https://theworldavatar.io/kg/b91e2813-7ecb-4dda-886f-ff08287d35ce>;
         <http://purl.org/dc/terms/title>
@@ -46,7 +46,7 @@
 <https://theworldavatar.io/kg/c8afa676-de13-4d63-ac87-4de212e73541>
         rdf:type  <https://theworldavatar.io/kg/service#GeoServer>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/c8afa676-de13-4d63-ac87-4de212e73541";
+                "c8afa676-de13-4d63-ac87-4de212e73541";
         <http://purl.org/dc/terms/references>
                 <https://theworldavatar.io/kg/c735c3fd-ef45-4f1b-8609-a225540ce3cc>;
         <http://purl.org/dc/terms/title>
@@ -57,7 +57,7 @@
 <https://theworldavatar.io/kg/48840d8d-6aff-4b28-bf92-52ab91acce38>
         rdf:type  <https://theworldavatar.io/kg/service#GeoServer>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/48840d8d-6aff-4b28-bf92-52ab91acce38";
+                "48840d8d-6aff-4b28-bf92-52ab91acce38";
         <http://purl.org/dc/terms/references>
                 <https://theworldavatar.io/kg/b91e2813-7ecb-4dda-886f-ff08287d35ce>;
         <http://purl.org/dc/terms/title>
@@ -68,7 +68,7 @@
 <https://theworldavatar.io/kg/b91e2813-7ecb-4dda-886f-ff08287d35ce>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/b91e2813-7ecb-4dda-886f-ff08287d35ce";
+                "b91e2813-7ecb-4dda-886f-ff08287d35ce";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>

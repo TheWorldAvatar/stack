@@ -13,7 +13,7 @@
 <https://theworldavatar.io/kg/943d7228-d68e-499b-ab47-efb3388e874e>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/943d7228-d68e-499b-ab47-efb3388e874e";
+                "943d7228-d68e-499b-ab47-efb3388e874e";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -39,7 +39,7 @@
 <https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb";
+                "36c185f7-672e-4185-a1d0-29151a3214fb";
         <http://purl.org/dc/terms/title>
                 "testDataset2";
         <http://www.w3.org/ns/dcat#endpointURL>

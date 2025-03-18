@@ -548,16 +548,17 @@ class DCATUpdateQueryTest {
     private Model genericiseModel(Model modelIn) {
         Map<RDFNode, RDFNode> specificToGeneric = modelIn.listSubjects().toSet().stream()
                 .collect(Collectors.toMap(s -> s, s -> ResourceFactory.createResource()));
-        specificToGeneric.entrySet().stream()
-                .collect(Collectors.toMap(e -> ResourceFactory.createPlainLiteral(e.getKey().toString()),
-                        e -> ResourceFactory.createPlainLiteral(e.getValue().toString())));
+        // TODO: Come up with way to do this that does not involve parsing the IRI
+        specificToGeneric.putAll(specificToGeneric.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> ResourceFactory.createPlainLiteral(
+                                e.getKey().toString().substring(e.getKey().toString().lastIndexOf("/") + 1)),
+                        e -> ResourceFactory.createPlainLiteral("The UUID in the URI as a literal!"))));
+
         List<Literal> dateTimes = modelIn.listObjects().toSet().stream().filter(o -> o.isLiteral())
                 .map(o -> o.asLiteral()).filter(o -> o.getDatatype().equals(XSDDatatype.XSDdateTime))
                 .sorted((o1, o2) -> ((XSDDateTime) o1.getValue()).compare((XSDDateTime) o2.getValue()))
                 .collect(Collectors.toList());
-        specificToGeneric.putAll(specificToGeneric.entrySet().stream()
-                .collect(Collectors.toMap(e -> ResourceFactory.createPlainLiteral(e.getKey().toString()),
-                        e -> ResourceFactory.createPlainLiteral("An URI as a literal!"))));
         specificToGeneric.putAll(dateTimes.stream().collect(
                 Collectors.toMap(dt -> dt,
                         dt -> ResourceFactory.createTypedLiteral(

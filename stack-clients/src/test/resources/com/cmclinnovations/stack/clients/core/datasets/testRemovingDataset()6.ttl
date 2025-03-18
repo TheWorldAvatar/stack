@@ -24,7 +24,7 @@
 <https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb";
+                "36c185f7-672e-4185-a1d0-29151a3214fb";
         <http://purl.org/dc/terms/title>
                 "testDataset2";
         <http://www.w3.org/ns/dcat#endpointURL>

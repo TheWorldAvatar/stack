@@ -39,7 +39,7 @@
 <https://theworldavatar.io/kg/44d198d6-acf2-4129-9bf7-d6a6a579c5ec>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/44d198d6-acf2-4129-9bf7-d6a6a579c5ec";
+                "44d198d6-acf2-4129-9bf7-d6a6a579c5ec";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>

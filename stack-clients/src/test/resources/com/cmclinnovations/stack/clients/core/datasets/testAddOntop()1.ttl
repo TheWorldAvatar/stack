@@ -26,7 +26,7 @@
 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d";
+                "7dc9e69c-cc10-4305-b57a-5ba44023781d";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -37,7 +37,7 @@
 <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881>
         rdf:type  <https://theworldavatar.io/kg/service#Ontop>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
+                "1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
         <http://purl.org/dc/terms/requires>
                 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>;
         <http://purl.org/dc/terms/title>

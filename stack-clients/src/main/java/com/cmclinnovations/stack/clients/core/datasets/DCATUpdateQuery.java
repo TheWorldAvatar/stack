@@ -42,7 +42,11 @@ final class DCATUpdateQuery {
     }
 
     private Iri createIRI() {
-        return Rdf.iri(SparqlConstants.DEFAULT_BASE_IRI + UUID.randomUUID());
+        return createIRI(UUID.randomUUID().toString());
+    }
+
+    private Iri createIRI(String suffix) {
+        return Rdf.iri(SparqlConstants.DEFAULT_BASE_IRI + suffix);
     }
 
     private Variable createVar(Variable baseVar, String suffix) {
@@ -232,6 +236,7 @@ final class DCATUpdateQuery {
 
             // Remove all existing triples that have this service as the subject
             Variable existingServiceVar = createVar(serviceVar, EXISTING);
+            Variable existingServiceLiteral = createVar(serviceLiteral, EXISTING);
             Variable existingPVar = createVar(existingServiceVar, "p");
             Variable existingOVar = createVar(existingServiceVar, "o");
             query.delete(existingServiceVar.has(existingPVar, existingOVar));
@@ -258,14 +263,17 @@ final class DCATUpdateQuery {
                     existingServiceVar.isA(type)
                             .andHas(DCTERMS.TITLE, title)
                             .andHas(DCAT.SERVES_DATASET, datasetVar)
-                            .andHas(existingPVar, existingOVar))
+                            .andHas(existingPVar, existingOVar)
+                            .andHas(DCTERMS.IDENTIFIER, existingServiceLiteral))
                     .optional());
 
+            String newId = UUID.randomUUID().toString();
             // Create new IRI for this service if not already present
-            query.where(Expressions.bind(Expressions.coalesce(existingServiceVar, createIRI()), serviceVar));
+            query.where(Expressions.bind(Expressions.coalesce(existingServiceVar, createIRI(newId)), serviceVar));
 
             // Create literal from IRI for "identifier"
-            query.where(Expressions.bind(Expressions.str(serviceVar), serviceLiteral));
+            query.where(Expressions.bind(Expressions.coalesce(existingServiceLiteral, Rdf.literalOf(newId)),
+                    serviceLiteral));
         } else {
             Variable existingServiceVar = createVar(serviceVar, EXISTING);
             // Insert link from the dataset
