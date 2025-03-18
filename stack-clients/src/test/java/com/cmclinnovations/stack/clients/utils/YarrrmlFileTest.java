@@ -21,15 +21,14 @@ class YarrrmlFileTest {
         @Test
         void testDefaultConstructor() {
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                String expected = "";
-                checkRules(yarrrmlFile, expected, new HashMap<>());
+                this.checkRules(new HashMap<>(), yarrrmlFile.getRules());
         }
 
         @Test
         void testFileConstructor() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile(rulesFilePath, TEST_ENDPOINT);
-                checkRules(yarrrmlFile, TEST_ONE_FILE_NAME, this.genExpectedYarrrmlContents(TEST_ONE_FILE_NAME));
+                this.checkRules(this.genExpectedYarrrmlContents(rulesFilePath.toString()), yarrrmlFile.getRules());
         }
 
         @Test
@@ -37,7 +36,7 @@ class YarrrmlFileTest {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
                 yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
-                checkRules(yarrrmlFile, TEST_ONE_FILE_NAME, this.genExpectedYarrrmlContents(TEST_ONE_FILE_NAME));
+                this.checkRules(this.genExpectedYarrrmlContents(rulesFilePath.toString()), yarrrmlFile.getRules());
         }
 
         @Test
@@ -45,7 +44,7 @@ class YarrrmlFileTest {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_TWO_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
                 yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
-                checkRules(yarrrmlFile, TEST_TWO_FILE_NAME, this.genExpectedYarrrmlContents(TEST_TWO_FILE_NAME));
+                this.checkRules(this.genExpectedYarrrmlContents(rulesFilePath.toString()), yarrrmlFile.getRules());
         }
 
         @Test
@@ -53,8 +52,8 @@ class YarrrmlFileTest {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_THREE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
                 yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
-                checkRules(yarrrmlFile, TEST_THREE_FILE_NAME,
-                                this.genExpectedYarrrmlFunctionContents(TEST_ONE_FILE_NAME));
+                this.checkRules(this.genExpectedYarrrmlFunctionContents(rulesFilePath.toString()),
+                                yarrrmlFile.getRules());
         }
 
         @Test
@@ -62,17 +61,11 @@ class YarrrmlFileTest {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_FOUR_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
                 yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
-                checkRules(yarrrmlFile, TEST_FOUR_FILE_NAME,
-                                this.genExpectedYarrrmlFunctionContents(TEST_ONE_FILE_NAME));
+                this.checkRules(this.genExpectedYarrrmlFunctionContents(rulesFilePath.toString()),
+                                yarrrmlFile.getRules());
         }
 
-        private void checkRules(YarrrmlFile yarrrmlFile, String expectedFileName,
-                        Map<String, Object> expectedContents) {
-                Assertions.assertEquals(expectedFileName, yarrrmlFile.getFileName());
-                this.checkMappings(expectedContents, yarrrmlFile.getRules());
-        }
-
-        private void checkMappings(Map<?, ?> expectedRules, Map<?, ?> rules) {
+        private void checkRules(Map<?, ?> expectedRules, Map<?, ?> rules) {
                 Assertions.assertEquals(expectedRules.isEmpty(), rules.isEmpty());
                 rules.keySet().stream()
                                 .forEach(key -> {
@@ -81,13 +74,13 @@ class YarrrmlFileTest {
                                         Object expectedObj = expectedRules.get(key);
                                         Object actualObj = rules.get(key);
                                         if (expectedObj instanceof Map<?, ?> && actualObj instanceof Map<?, ?>) {
-                                                this.checkMappings((Map<?, ?>) expectedObj, (Map<?, ?>) actualObj);
+                                                this.checkRules((Map<?, ?>) expectedObj, (Map<?, ?>) actualObj);
                                         } else if (expectedObj instanceof List<?> && actualObj instanceof List<?>) {
                                                 List<Object> expectedList = (List<Object>) expectedObj;
                                                 List<Object> actualList = (List<Object>) actualObj;
                                                 for (int i = 0; i < actualList.size(); i++) {
                                                         if (actualList.get(i) instanceof Map<?, ?>)
-                                                                this.checkMappings((Map<?, ?>) expectedList.get(i),
+                                                                this.checkRules((Map<?, ?>) expectedList.get(i),
                                                                                 (Map<?, ?>) actualList.get(i));
                                                 }
                                         } else {

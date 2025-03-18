@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -15,7 +16,6 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 public final class YarrrmlFile {
-    private String fileName;
     private AliasMap<Object> rules;
 
     private final Yaml yaml;
@@ -50,7 +50,6 @@ public final class YarrrmlFile {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
-        this.fileName = "";
         this.yaml = new Yaml(options);
         this.rules = new AliasMap<>();
         this.sourcesTemplate = new HashMap<>();
@@ -77,16 +76,9 @@ public final class YarrrmlFile {
      */
     public void addRules(Path ymlFile, String endpoint) throws IOException {
         this.load(ymlFile);
-        this.appendSources(this.rules, ymlFile.getFileName());
+        this.appendSources(this.rules, ymlFile);
         this.appendTargets(this.rules, endpoint);
         this.updateMappings(this.rules);
-    }
-
-    /**
-     * Get the file name.
-     */
-    public String getFileName() {
-        return this.fileName;
     }
 
     /**
@@ -99,15 +91,15 @@ public final class YarrrmlFile {
     /**
      * Writes the file content into a byte array for further usage.
      */
-    public byte[] write() throws IOException {
+    public String write() throws IOException {
         // yaml dump is returning {} instead of ""
         if (this.rules.isEmpty()) {
-            return new byte[0];
+            return "";
         }
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 Writer writer = new OutputStreamWriter(outputStream)) {
             yaml.dump(this.rules, writer);
-            return outputStream.toByteArray();
+            return outputStream.toString(StandardCharsets.UTF_8.name());
         } catch (IOException e) {
             throw new IOException(MessageFormat.format("Failed to write YARRRML output. {0}", e.getMessage()));
         }
@@ -149,10 +141,10 @@ public final class YarrrmlFile {
      * @param filePath The file path to the file source.
      */
     private void appendSources(Map<String, Object> output, Path filePath) {
-        this.fileName = filePath.toString();
         Map<String, Object> sources = new HashMap<>(this.sourcesTemplate);
         Map<String, Object> sourceRef = this.castToAliasMap(sources.get(SOURCE_REF_KEY));
-        sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(this.fileName, "csv"));
+        sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(filePath.toString(), "csv"));
+        sources.put(SOURCE_REF_KEY, sourceRef);
         output.put(SOURCES_KEY, sources);
     }
 
@@ -166,6 +158,7 @@ public final class YarrrmlFile {
         Map<String, Object> targets = new HashMap<>(this.targetTemplate);
         Map<String, Object> targetRef = this.castToAliasMap(targets.get(TARGET_REF_KEY));
         targetRef.put(ACCESS_KEY, endpoint);
+        targets.put(TARGET_REF_KEY, targetRef);
         output.put(TARGETS_KEY, targets);
     }
 

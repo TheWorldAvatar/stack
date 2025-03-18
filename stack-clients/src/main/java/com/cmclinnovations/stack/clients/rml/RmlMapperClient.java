@@ -2,15 +2,18 @@ package com.cmclinnovations.stack.clients.rml;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,6 +25,7 @@ import com.cmclinnovations.stack.clients.blazegraph.BlazegraphEndpointConfig;
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.utils.FileUtils;
+import com.cmclinnovations.stack.clients.utils.TempDir;
 import com.cmclinnovations.stack.clients.utils.YarrrmlFile;
 
 public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig> {
@@ -31,7 +35,6 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
   private static final String YML_FILE_EXTENSION = "yml";
   private static final String TTL_FILE_EXTENSION = "ttl";
   private static final String YARRRML_PARSER_EXECUTABLE_PATH = "/app/bin/parser.js";
-  private static final String TEMP_CONTAINER_DATA_DIR_PATH = "/dataset";
 
   private static RmlMapperClient instance = null;
 
@@ -47,48 +50,21 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
   }
 
   /**
-   * Parses YARRRML files into RML mappings in the specified directory.
+   * Parses YARRRML files into RDF triples that will be uploaded at the target
+   * namespace.
    * 
    * @param dirPath   Target directory path.
    * @param namespace Target namespace to upload the converted RDF triples.
    */
-  public Map<String, byte[]> parseYarrrmlToRml(Path dirPath, String namespace) {
+  public void parseYarrrmlToRDF(Path dirPath, String namespace) {
     LOGGER.info("Checking and parsing YARRRML files...");
     this.validateDirContents(dirPath);
-    return this.genRmlRules(dirPath, namespace);
-  }
-
-  /**
-   * Parses the RML rules into RDF triples that will be uploaded at the target
-   * namespace.
-   * 
-   * @param dirPath  Target directory path.
-   * @param rmlRules Input RML rules.
-   */
-  public void parseRmlToRDF(Path dirPath, Map<String, byte[]> rmlRules) {
-    LOGGER.info("Uploading the RML rules and csv files into the target container...");
-    String rmlMapperJavaContainerId = super.getContainerId(EndpointNames.RML_JAVA);
-
-    List<String> csvFiles = rmlRules.keySet().stream()
-        .map(file -> FileUtils.replaceExtension(file, CSV_FILE_EXTENSION))
-        .collect(Collectors.toList());
-    super.sendFiles(rmlMapperJavaContainerId, dirPath.toAbsolutePath().toString(), csvFiles,
-        TEMP_CONTAINER_DATA_DIR_PATH);
-    super.sendFilesContent(rmlMapperJavaContainerId, rmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
-
-    LOGGER.info("Converting and uploading csv data...");
-    rmlRules.keySet().stream().forEach(file -> {
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-      ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-      LOGGER.info("Executing RML rules for {}...", file);
-      String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
-          Paths.get(TEMP_CONTAINER_DATA_DIR_PATH).resolve(file).toString(), "-s", "turtle")
-          .withOutputStream(outputStream)
-          .withErrorStream(errorStream)
-          .exec();
-      super.handleErrors(errorStream, execId, LOGGER);
-    });
-    super.deleteDirectory(rmlMapperJavaContainerId, TEMP_CONTAINER_DATA_DIR_PATH);
+    try (TempDir tmpDir = makeLocalTempDir()) {
+      // Copy all csv and rml files into the temp directory
+      tmpDir.copyFrom(dirPath);
+      Map<String, String> rmlRules = this.genRmlRules(tmpDir, namespace);
+      this.convertToRDF(tmpDir, rmlRules);
+    }
   }
 
   /**
@@ -132,12 +108,13 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
   }
 
   /**
-   * Generate RML rules from YARRRML files in the directory if available.
+   * Generate RML rules from YARRRML files in the temporary directory if
+   * available.
    * 
-   * @param dirPath   Target directory path.
+   * @param tmpDir    Target temporary directory.
    * @param namespace Target namespace to upload the converted RDF triples.
    */
-  private Map<String, byte[]> genRmlRules(Path dirPath, String namespace) {
+  private Map<String, String> genRmlRules(TempDir tmpDir, String namespace) {
     LOGGER.info("Retrieving the target SPARQL endpoint...");
     BlazegraphEndpointConfig blazegraphConfig = readEndpointConfig(EndpointNames.BLAZEGRAPH,
         BlazegraphEndpointConfig.class);
@@ -145,51 +122,65 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
 
     LOGGER.info("Converting the YARRRML inputs into RML rules...");
     String containerId = super.getContainerId(super.getContainerName());
-    Collection<URI> ymlFiles = this.getFiles(dirPath, YML_FILE_EXTENSION);
+    Collection<URI> ymlFiles = this.getFiles(tmpDir.getPath(), YML_FILE_EXTENSION);
 
-    // Convert from URI to String and append them to command
-    Map<String, byte[]> yarrrmlRules = ymlFiles.stream()
-        .map(ymlFile -> {
-          try {
-            return new YarrrmlFile(FileUtils.appendDirectoryPath(ymlFile, TEMP_CONTAINER_DATA_DIR_PATH),
-                sparqlEndpoint);
-          } catch (IOException e) {
-            LOGGER.error(containerId, e);
-            return new YarrrmlFile();
-          }
-        })
-        .collect(Collectors.toMap(
-            YarrrmlFile::getFileName,
-            yarrrmlFile -> {
-              try {
-                return yarrrmlFile.write();
-              } catch (IOException e) {
-                LOGGER.error(containerId, e);
-                return new byte[0];
-              }
-            }));
-    // Send the files to a new data directory
-    super.sendFilesContent(containerId, yarrrmlRules, TEMP_CONTAINER_DATA_DIR_PATH);
+    Map<String, String> rmlRules = new HashMap<>();
+    ymlFiles.stream().forEach(ymlFile -> {
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+      try {
+        String fileName = FileUtils.getFileNameWithoutExtension(ymlFile.toURL());
+        LOGGER.info("Updating YARRRML rules with sources and targets for {}...", fileName);
+        // Generate file path for the parsed YML file
+        YarrrmlFile yarrrmlFile = new YarrrmlFile(Paths.get(ymlFile), sparqlEndpoint);
+        Path parsedYmlPath = Files.writeString(Paths.get(ymlFile), yarrrmlFile.write());
 
-    // Execute the command and return the RML rules alongside the TTL file name
-    Map<String, byte[]> rmlRules = yarrrmlRules.entrySet().stream()
-        .collect(Collectors.toMap(
-            entry -> FileUtils.replaceExtension(entry.getKey(), TTL_FILE_EXTENSION),
-            entry -> {
-              LOGGER.info("Generating RML rules from {}...", entry.getKey());
-              ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-              ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-              String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
-                  Paths.get(TEMP_CONTAINER_DATA_DIR_PATH).resolve(entry.getKey()).toString())
-                  .withOutputStream(outputStream)
-                  .withErrorStream(errorStream)
-                  .exec();
-              super.handleErrors(errorStream, execId, LOGGER);
-              return outputStream.toByteArray();
-            }));
-    LOGGER.info("RML rules are generated. Removing any temporary YARRRML files in the container...");
-    super.deleteDirectory(containerId, TEMP_CONTAINER_DATA_DIR_PATH);
+        LOGGER.info("Generating RML rules for {}...", fileName);
+        String execId = super.createComplexCommand(containerId, YARRRML_PARSER_EXECUTABLE_PATH, "-i",
+            parsedYmlPath.toString())
+            .withOutputStream(outputStream)
+            .withErrorStream(errorStream)
+            .exec();
+        super.handleErrors(errorStream, execId, LOGGER);
+        rmlRules.put(fileName, outputStream.toString(StandardCharsets.UTF_8.name()));
+      } catch (IOException e) {
+        LOGGER.error(containerId, e);
+        throw new UncheckedIOException(e);
+      }
+    });
     return rmlRules;
+  }
+
+  /**
+   * Parses the RML rules into RDF triples that will be uploaded at the target
+   * namespace.
+   * 
+   * @param tmpDir   Target temporary directory.
+   * @param rmlRules Input RML rules.
+   */
+  private void convertToRDF(TempDir tmpDir, Map<String, String> rmlRules) {
+    LOGGER.info("Uploading the csv files using the RML rules into the target endpoint...");
+    String rmlMapperJavaContainerId = super.getContainerId(EndpointNames.RML_JAVA);
+
+    rmlRules.keySet().stream().forEach(fileName -> {
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+      try {
+        Path tmpRmlFilePath = Files.createTempFile(tmpDir.getPath(), fileName, "." + TTL_FILE_EXTENSION);
+        Files.writeString(tmpRmlFilePath, rmlRules.get(fileName));
+        LOGGER.info("Executing RML rules for {}...", fileName);
+
+        String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
+            tmpRmlFilePath.toString(), "-s", "turtle")
+            .withOutputStream(outputStream)
+            .withErrorStream(errorStream)
+            .exec();
+        super.handleErrors(errorStream, execId, LOGGER);
+      } catch (IOException e) {
+        LOGGER.error(rmlMapperJavaContainerId, e);
+        throw new UncheckedIOException(e);
+      }
+    });
   }
 
   /**
