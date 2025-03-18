@@ -17,7 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public final class YarrrmlFile {
     private String fileName;
-    private Map<String, Object> rules;
+    private AliasMap<Object> rules;
 
     private final Yaml yaml;
     private final Map<String, Object> sourcesTemplate;
@@ -46,7 +46,7 @@ public final class YarrrmlFile {
         options.setPrettyFlow(true);
         this.fileName = "";
         this.yaml = new Yaml(options);
-        this.rules = new HashMap<>();
+        this.rules = new AliasMap<>();
         this.sourcesTemplate = new HashMap<>();
         this.targetTemplate = new HashMap<>();
         this.genYamlTemplates(this.sourcesTemplate, this.targetTemplate);
@@ -70,7 +70,7 @@ public final class YarrrmlFile {
      * @param endpoint The endpoint url for uploading the converted triples.
      */
     public void addRules(Path ymlFile, String endpoint) throws IOException {
-        this.rules = yaml.load(Files.newInputStream(ymlFile));
+        this.load(ymlFile);
         this.appendSources(this.rules, ymlFile.getFileName());
         this.appendTargets(this.rules, endpoint);
         this.updateMappings(this.rules);
@@ -108,6 +108,16 @@ public final class YarrrmlFile {
     }
 
     /**
+     * Load the YARRRML file as an Alias Map.
+     * 
+     * @param ymlFile YML file path.
+     */
+    public void load(Path ymlFile) throws IOException {
+        Map<String, Object> loadedMap = yaml.load(Files.newInputStream(ymlFile));
+        this.rules.putAll(loadedMap);
+    }
+
+    /**
      * Generate YAML templates for csv sources and SPARQL targets that can be reused
      * and added to different outputs.
      * 
@@ -134,9 +144,8 @@ public final class YarrrmlFile {
      */
     private void appendSources(Map<String, Object> output, Path filePath) {
         this.fileName = filePath.toString();
-
         Map<String, Object> sources = new HashMap<>(this.sourcesTemplate);
-        Map<String, Object> sourceRef = this.castToMapStringObject(sources.get(SOURCE_REF_KEY));
+        Map<String, Object> sourceRef = this.castToAliasMap(sources.get(SOURCE_REF_KEY));
         sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(this.fileName, "csv"));
         output.put(SOURCES_KEY, sources);
     }
@@ -149,7 +158,7 @@ public final class YarrrmlFile {
      */
     private void appendTargets(Map<String, Object> output, String endpoint) {
         Map<String, Object> targets = new HashMap<>(this.targetTemplate);
-        Map<String, Object> targetRef = this.castToMapStringObject(targets.get(TARGET_REF_KEY));
+        Map<String, Object> targetRef = this.castToAliasMap(targets.get(TARGET_REF_KEY));
         targetRef.put(ACCESS_KEY, endpoint);
         output.put(TARGETS_KEY, targets);
     }
@@ -160,26 +169,23 @@ public final class YarrrmlFile {
      * 
      * @param output The target YAML output.
      */
-    private void updateMappings(Map<String, Object> output) {
-        Map<String, Object> ruleMappings = this.castToMapStringObject(
-                this.getObjectWithOneOfManyKeys(output, MAPPING_KEY, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY));
+    private void updateMappings(AliasMap<Object> output) {
+        Map<String, Object> ruleMappings = this
+                .castToAliasMap(output.get(MAPPING_KEY, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY));
         ruleMappings.forEach((field, value) -> {
             // Addition of sources and their reference
-            Map<String, Object> mappingValue = this.castToMapStringObject(value);
+            AliasMap<Object> mappingValue = this.castToAliasMap(value);
             mappingValue.put(SOURCES_KEY, SOURCE_REF_KEY);
 
             // Addition of targets and their reference
-            Object subjectVal = this.getObjectWithOneOfManyKeys(mappingValue, SUBJECT_KEY, SUBJECT_ALT_KEY,
-                    SUBJECT_ALT_TWO_KEY);
+            Object subjectVal = mappingValue.get(SUBJECT_KEY, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             if (subjectVal instanceof String) {
                 Map<String, Object> newSubjectMap = new HashMap<>();
                 newSubjectMap.put("value", subjectVal);
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
-                mappingValue.put(SUBJECT_KEY, newSubjectMap);
-                mappingValue.remove(SUBJECT_ALT_KEY);
-                mappingValue.remove(SUBJECT_ALT_TWO_KEY);
+                mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
-                Map<String, Object> stringObjectMap = this.castToMapStringObject(subjectVal);
+                Map<String, Object> stringObjectMap = this.castToAliasMap(subjectVal);
                 stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
 
@@ -187,50 +193,36 @@ public final class YarrrmlFile {
             // SnakeYAML transforms the YML content for nested lists into - -
             // BUT YARRRML parser only accepts -[] as a shortcut and should be updated
             // accordingly
-            List<Map<String, String>> transformedPo = new ArrayList<>();
-            List<Object> originalPo = this
-                    .castToListObject(this.getObjectWithOneOfManyKeys(mappingValue, PRED_OBJ_KEY, PRED_OBJ_ALT_KEY));
+            List<Map<String, Object>> transformedPo = new ArrayList<>();
+            List<Object> originalPo = this.castToListObject(
+                    mappingValue.get(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY));
             for (Object predObj : originalPo) {
                 if (predObj instanceof List) {
                     List<Object> nestedPredObjList = this.castToListObject(predObj);
                     if (nestedPredObjList.size() == 2 && nestedPredObjList.get(0) instanceof String
                             && nestedPredObjList.get(1) instanceof String) {
-                        Map<String, String> transformedItem = new HashMap<>();
+                        Map<String, Object> transformedItem = new HashMap<>();
                         transformedItem.put("p", nestedPredObjList.get(0).toString());
                         transformedItem.put("o", nestedPredObjList.get(1).toString());
                         transformedPo.add(transformedItem);
                     }
+                } else {
+                    AliasMap<Object> currentPOMap = this.castToAliasMap(predObj);
+                    transformedPo.add(currentPOMap);
                 }
             }
-            if (!transformedPo.isEmpty()) {
-                mappingValue.put(PRED_OBJ_KEY, transformedPo);
-                mappingValue.remove(PRED_OBJ_ALT_KEY);
-            }
+            mappingValue.put(PRED_OBJ_KEY, transformedPo, PRED_OBJ_ALT_KEY);
+            ruleMappings.put(field, mappingValue);
         });
-        output.put(MAPPING_KEY, ruleMappings);
-        output.remove(MAPPING_ALT_KEY);
-        output.remove(MAPPING_ALT_TWO_KEY);
+        output.put(MAPPING_KEY, ruleMappings, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY);
     }
 
-    /**
-     * Gets the object from the mappings based on any of the shortcut key inputs.
-     * 
-     * @param mappings     The target mappings.
-     * @param shortcutKeys The possible shortcut keys available in YARRRML.
-     */
-    private Object getObjectWithOneOfManyKeys(Map<String, Object> mappings, String... shortcutKeys) {
-        for (String shortcut : shortcutKeys) {
-            if (mappings.containsKey(shortcut)) {
-                return mappings.get(shortcut);
-            }
-        }
-        throw new IllegalArgumentException("Invalid input. Object is not a Map.");
-    }
-
-    private Map<String, Object> castToMapStringObject(Object obj) throws ClassCastException {
+    private AliasMap<Object> castToAliasMap(Object obj) throws ClassCastException {
         if (obj instanceof Map<?, ?>) {
             @SuppressWarnings("unchecked")
-            Map<String, Object> result = (Map<String, Object>) obj;
+            Map<String, Object> mapObj = (Map<String, Object>) obj;
+            AliasMap<Object> result = new AliasMap<>();
+            result.putAll(mapObj);
             return result;
         }
         throw new IllegalArgumentException("Invalid input. Object is not a Map.");
