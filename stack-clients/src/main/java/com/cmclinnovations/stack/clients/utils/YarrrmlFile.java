@@ -7,7 +7,6 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -177,7 +176,7 @@ public final class YarrrmlFile {
             AliasMap<Object> mappingValue = this.castToAliasMap(value);
             mappingValue.put(SOURCES_KEY, SOURCE_REF_KEY);
 
-            // Addition of targets and their reference
+            // Appends the target and its reference to the subjects key under mappings
             Object subjectVal = mappingValue.get(SUBJECT_KEY, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             if (subjectVal instanceof String) {
                 Map<String, Object> newSubjectMap = new HashMap<>();
@@ -189,29 +188,7 @@ public final class YarrrmlFile {
                 stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
 
-            // Transformation of po if necessary to be YARRRML compliant
-            // SnakeYAML transforms the YML content for nested lists into - -
-            // BUT YARRRML parser only accepts -[] as a shortcut and should be updated
-            // accordingly
-            List<Map<String, Object>> transformedPo = new ArrayList<>();
-            List<Object> originalPo = this.castToListObject(
-                    mappingValue.get(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY));
-            for (Object predObj : originalPo) {
-                if (predObj instanceof List) {
-                    List<Object> nestedPredObjList = this.castToListObject(predObj);
-                    if (nestedPredObjList.size() == 2 && nestedPredObjList.get(0) instanceof String
-                            && nestedPredObjList.get(1) instanceof String) {
-                        Map<String, Object> transformedItem = new HashMap<>();
-                        transformedItem.put("p", nestedPredObjList.get(0).toString());
-                        transformedItem.put("o", nestedPredObjList.get(1).toString());
-                        transformedPo.add(transformedItem);
-                    }
-                } else {
-                    AliasMap<Object> currentPOMap = this.castToAliasMap(predObj);
-                    transformedPo.add(currentPOMap);
-                }
-            }
-            mappingValue.put(PRED_OBJ_KEY, transformedPo, PRED_OBJ_ALT_KEY);
+            mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
             ruleMappings.put(field, mappingValue);
         });
         output.put(MAPPING_KEY, ruleMappings, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY);
@@ -235,5 +212,34 @@ public final class YarrrmlFile {
             return result;
         }
         throw new IllegalArgumentException("Invalid input. Object is not a list.");
+    }
+
+    /**
+     * Updates predicate-object mappings within a YARRRML-compliant data structure.
+     * 
+     * This method corrects the representation of nested lists in predicate-object
+     * mappings, addressing the discrepancy between SnakeYAML's output and the
+     * YARRRML parser's expectations. Specifically, this method transforms
+     * the SnakeYAML output to match the non-shortcut predicate-object syntax.
+     * 
+     * @param mappingObj The mappings field object.
+     */
+    private List<Object> updatePredObjMappings(AliasMap<Object> mappingObj) {
+        List<Object> predObjList = this.castToListObject(
+                mappingObj.get(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY));
+        for (int i = 0; i < predObjList.size(); i++) {
+            Object predObj = predObjList.get(i);
+            if (predObj instanceof List) {
+                List<Object> nestedPredObjList = this.castToListObject(predObj);
+                if (nestedPredObjList.size() == 2 && nestedPredObjList.get(0) instanceof String
+                        && nestedPredObjList.get(1) instanceof String) {
+                    Map<String, Object> transformedPredObj = new HashMap<>();
+                    transformedPredObj.put("p", nestedPredObjList.get(0).toString());
+                    transformedPredObj.put("o", nestedPredObjList.get(1).toString());
+                    predObjList.set(i, transformedPredObj);
+                }
+            }
+        }
+        return predObjList;
     }
 }
