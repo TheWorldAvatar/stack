@@ -130,26 +130,17 @@ class YarrrmlFileTest {
 
                 mappings.put("person", Map.of(
                                 "sources", "source-ref",
-                                "s", Map.of(
-                                                "value", "base:person/$(id)",
-                                                "targets", "target-ref"),
+                                "s", this.genExpectedYarrrmlFunction(
+                                                "grel:string_trim",
+                                                "base:person/$(id)~iri",
+                                                Map.of("targets", "target-ref")),
                                 "po", List.of(this.genExpectedYarrrmlPredObj("a", "base:Person"),
                                                 this.genExpectedYarrrmlPredObj("base:hasName",
-                                                                Map.of(
-                                                                                "function", "grel:toLowerCase",
-                                                                                "parameters", List.of(Map.of(
-                                                                                                "parameter",
-                                                                                                "grel:valueParameter",
-                                                                                                "value",
-                                                                                                Map.of(
-                                                                                                                "function",
-                                                                                                                "grel:string_trim",
-                                                                                                                "parameters",
-                                                                                                                List.of(Map.of(
-                                                                                                                                "parameter",
-                                                                                                                                "grel:valueParameter",
-                                                                                                                                "value",
-                                                                                                                                "base:department/name/$(name)~iri"))))))))));
+                                                                this.genExpectedYarrrmlFunction(
+                                                                                "grel:toLowerCase",
+                                                                                this.genExpectedYarrrmlFunction(
+                                                                                                "grel:string_trim",
+                                                                                                "base:department/name/$(name)~iri"))))));
                 yamlData.put("mappings", mappings);
                 return yamlData;
         }
@@ -172,9 +163,25 @@ class YarrrmlFileTest {
                 return yamlData;
         }
 
-        private Map<String, Object> genExpectedYarrrmlPredObj(String predVal,
-                        Object objVal) {
+        private Map<String, Object> genExpectedYarrrmlPredObj(String predVal, Object objVal) {
                 return Map.of("p", predVal,
                                 "o", objVal);
+        }
+
+        private Map<String, Object> genExpectedYarrrmlFunction(String function, Object paramVal) {
+                return this.genExpectedYarrrmlFunction(function, paramVal, null);
+        }
+
+        private Map<String, Object> genExpectedYarrrmlFunction(String function, Object paramVal,
+                        Map<String, Object> additionalFields) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("function", function);
+                result.put("parameters", List.of(
+                                Map.of("parameter", "grel:valueParameter",
+                                                "value", paramVal)));
+                if (additionalFields != null && !additionalFields.isEmpty()) {
+                        result.putAll(additionalFields);
+                }
+                return result;
         }
 }

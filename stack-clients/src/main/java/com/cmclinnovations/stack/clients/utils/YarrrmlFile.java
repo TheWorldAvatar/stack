@@ -40,6 +40,7 @@ public final class YarrrmlFile {
     private static final String PARAMS_KEY = "parameters";
     private static final String PARAMS_ALT_KEY = "pms";
     private static final String ACCESS_KEY = "access";
+    private static final String CONDITION_KEY = "condition";
     private static final String VALUE_KEY = "value";
 
     /**
@@ -190,8 +191,10 @@ public final class YarrrmlFile {
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
                 mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
-                Map<String, Object> stringObjectMap = this.castToAliasMap(subjectVal);
+                AliasMap<Object> stringObjectMap = this.castToAliasMap(subjectVal);
                 stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
+                // Function may be present instead of the value key
+                this.updateFunctionMappingsIfPresent(stringObjectMap);
             }
 
             mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
@@ -252,6 +255,11 @@ public final class YarrrmlFile {
                 if (currentObjectsObj instanceof Map<?, ?>) {
                     AliasMap<Object> currentObjectsMap = this.castToAliasMap(currentObjectsObj);
                     this.updateFunctionMappingsIfPresent(currentObjectsMap);
+                }
+                // All conditions are functions
+                if (currentPOMap.containsKey(CONDITION_KEY)) {
+                    AliasMap<Object> conditionMap = this.castToAliasMap(currentPOMap.get(CONDITION_KEY));
+                    this.updateFunctionMappingsIfPresent(conditionMap);
                 }
             }
         }

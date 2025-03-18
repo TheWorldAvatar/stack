@@ -5,7 +5,10 @@ prefixes:
 
 m:
   person:
-    s: base:person/$(id)
+    s:
+      function: grel:string_trim
+      parameters:
+        - [grel:valueParameter, base:person/$(id)~iri]
     po:
       - [a, base:Person]
       - p: base:hasName
