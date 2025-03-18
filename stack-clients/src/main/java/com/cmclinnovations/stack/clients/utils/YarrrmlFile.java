@@ -34,7 +34,13 @@ public final class YarrrmlFile {
     private static final String SUBJECT_ALT_TWO_KEY = "subjects";
     private static final String PRED_OBJ_KEY = "po";
     private static final String PRED_OBJ_ALT_KEY = "predicateobjects";
+    private static final String OBJ_KEY = "o";
+    private static final String OBJ_ALT_KEY = "objects";
+    private static final String OBJ_ALT_TWO_KEY = "object";
+    private static final String PARAMS_KEY = "parameters";
+    private static final String PARAMS_ALT_KEY = "pms";
     private static final String ACCESS_KEY = "access";
+    private static final String VALUE_KEY = "value";
 
     /**
      * Constructor to initialise all variables.
@@ -180,7 +186,7 @@ public final class YarrrmlFile {
             Object subjectVal = mappingValue.get(SUBJECT_KEY, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             if (subjectVal instanceof String) {
                 Map<String, Object> newSubjectMap = new HashMap<>();
-                newSubjectMap.put("value", subjectVal);
+                newSubjectMap.put(VALUE_KEY, subjectVal);
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
                 mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
@@ -235,11 +241,58 @@ public final class YarrrmlFile {
                         && nestedPredObjList.get(1) instanceof String) {
                     Map<String, Object> transformedPredObj = new HashMap<>();
                     transformedPredObj.put("p", nestedPredObjList.get(0).toString());
-                    transformedPredObj.put("o", nestedPredObjList.get(1).toString());
+                    transformedPredObj.put(OBJ_KEY, nestedPredObjList.get(1).toString());
                     predObjList.set(i, transformedPredObj);
+                }
+            } else {
+                AliasMap<Object> currentPOMap = this.castToAliasMap(predObj);
+                // If the objects value is a map
+                Object currentObjectsObj = currentPOMap.get(OBJ_KEY, OBJ_ALT_KEY,
+                        OBJ_ALT_TWO_KEY);
+                if (currentObjectsObj instanceof Map<?, ?>) {
+                    AliasMap<Object> currentObjectsMap = this.castToAliasMap(currentObjectsObj);
+                    this.updateFunctionMappingsIfPresent(currentObjectsMap);
                 }
             }
         }
         return predObjList;
+    }
+
+    /**
+     * Recursively updates function mappings within a YARRRML-compliant data
+     * structure.
+     * 
+     * This method addresses a common issue where SnakeYAML, when parsing
+     * nested lists, represents them using `--` instead of the YARRRML-expected
+     * `-[]` shortcut for function definitions. Specifically, this method transforms
+     * the SnakeYAML output to match the non-shortcut function syntax .
+     * 
+     * @param mapObj The mappings field object.
+     */
+    private void updateFunctionMappingsIfPresent(AliasMap<Object> mapObj) {
+        // Only continue parsing if this is a function mapping
+        if (mapObj.containsKey(PARAMS_KEY, PARAMS_ALT_KEY)) {
+            List<Object> paramObjs = this
+                    .castToListObject(mapObj.get(PARAMS_KEY, PARAMS_ALT_KEY));
+            for (int j = 0; j < paramObjs.size(); j++) {
+                Object paramObj = paramObjs.get(j);
+                // Detected use of shortcut, transforming into long form
+                if (paramObj instanceof List) {
+                    List<Object> paramList = this.castToListObject(paramObj);
+                    if (paramList.size() == 2) {
+                        Map<String, Object> transformedParam = new HashMap<>();
+                        transformedParam.put("parameter", paramList.get(0).toString());
+                        transformedParam.put(VALUE_KEY, paramList.get(1).toString());
+                        paramObjs.set(j, transformedParam);
+                    }
+                } else if (paramObj instanceof Map<?, ?>) {
+                    Object functionParamValue = this.castToAliasMap(paramObj).get(VALUE_KEY);
+                    // For nested functions
+                    if (functionParamValue instanceof Map<?, ?>) {
+                        this.updateFunctionMappingsIfPresent(this.castToAliasMap(functionParamValue));
+                    }
+                }
+            }
+        }
     }
 }
