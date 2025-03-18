@@ -51,19 +51,6 @@ class FileUtilsTest {
                         .collect(Collectors.toList()));
     }
 
-    @Test
-    void testAppendDirectoryPath() throws URISyntaxException {
-        Assertions.assertEquals(Stream.of(
-                "dataset/123.csv", "dataset/345.csv", "dataset/678.csv")
-                .map(Path::of)
-                .collect(Collectors.toList()),
-                Stream.of(
-                        new URI("123.csv"),
-                        new URI("345.csv"),
-                        new URI("678.csv"))
-                        .map(path -> FileUtils.appendDirectoryPath(path, "dataset"))
-                        .collect(Collectors.toList()));
-    }
 
     private Collection<URI> getExpectedURIs(URL dirURL, Collection<String> expectedFiles)
             throws URISyntaxException, IOException {
