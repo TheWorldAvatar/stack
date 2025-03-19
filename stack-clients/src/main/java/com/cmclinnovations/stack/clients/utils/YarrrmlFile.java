@@ -178,17 +178,18 @@ public final class YarrrmlFile {
 
             // Appends the target and its reference to the subjects key under mappings
             Object subjectVal = mappingValue.get(SUBJECT_KEY, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
+            AliasMap<Object> newSubjectMap = new AliasMap<>();
             if (subjectVal instanceof String) {
-                Map<String, Object> newSubjectMap = new HashMap<>();
                 newSubjectMap.put(VALUE_KEY, subjectVal);
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
-                mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
-                AliasMap<Object> stringObjectMap = this.castToAliasMap(subjectVal);
-                stringObjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
+                newSubjectMap = this.castToAliasMap(subjectVal);
                 // Function may be present instead of the value key
-                this.updateFunctionMappingsIfPresent(stringObjectMap);
+                this.updateFunctionMappingsIfPresent(newSubjectMap);
+                // Add targets after function changes
+                newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
+            mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
 
             mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
             ruleMappings.put(field, mappingValue);
