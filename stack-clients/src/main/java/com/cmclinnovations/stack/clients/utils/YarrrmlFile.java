@@ -193,6 +193,8 @@ public final class YarrrmlFile {
             if (mappingValue.containsKey(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY)) {
                 mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
             }
+            // The mapping itself may be conditional
+            this.updateConditionMappings(mappingValue);
             ruleMappings.put(field, mappingValue);
         });
         output.put(MAPPING_KEY, ruleMappings, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY);
@@ -255,6 +257,7 @@ public final class YarrrmlFile {
                     for (int j = 0; j < currentObjList.size(); j++) {
                         AliasMap<Object> objectNode = this.castToAliasMap(currentObjList.get(j));
                         this.updateConditionMappings(objectNode);
+                        this.updateFunctionMappingsIfPresent(objectNode);
                         currentObjList.set(j, objectNode);
                     }
                     currentPOMap.put(OBJ_KEY, currentObjList, OBJ_ALT_KEY,
