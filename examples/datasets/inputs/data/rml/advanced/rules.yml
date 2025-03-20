@@ -1,0 +1,46 @@
+prefixes:
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  base: "https://theworldavatar.io/kg/"
+  grel: "http://users.ugent.be/~bjdmeest/function/grel.ttl#"
+  idlab-fn: "https://w3id.org/imec/idlab/function#"
+
+mappings:
+  person:
+    s: base:person/$(id)
+    po:
+      - [a, base:Person]
+      - p: base:hasName
+        o:
+          - mapping: person-name
+            condition:
+              function: grel:boolean_not
+              parameters:
+                - parameter: grel:bool_b
+                  value:
+                    function: idlab-fn:isNull
+                    parameters:
+                      - [idlab-fn:str, $(name)]
+  person-name:
+    s: base:person/name/$(id)
+    po:
+      - p: a
+        o: base:PersonName
+        condition:
+          function: grel:boolean_not
+          parameters:
+            - parameter: grel:bool_b
+              value:
+                function: idlab-fn:isNull
+                parameters:
+                  - [idlab-fn:str, $(name)]
+      - p: rdfs:label
+        o:
+          function: grel:string_replace
+          parameters:
+            - [grel:p_string_find, /\s+/]
+            - [grel:p_string_replace, ""]
+            - parameter: grel:valueParameter
+              value:
+                function: grel:string_trim
+                parameters:
+                  - [grel:valueParameter, $(name)]
