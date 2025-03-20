@@ -3,13 +3,15 @@ prefixes:
   base: "https://theworldavatar.io/kg/"
   grel: "http://users.ugent.be/~bjdmeest/function/grel.ttl#"
 
-m:
+mappings:
   person:
-    s: 
+    sources: source-ref
+    s:
       function: grel:string_trim
       parameters:
         - parameter: grel:valueParameter
-          value: base:person/$(id)~iri
+          value: base:person/$(id)
+      targets: target-ref
     po:
       - p: a
         o: base:Person
@@ -22,4 +24,14 @@ m:
                 function: grel:string_trim
                 parameters:
                   - parameter: grel:valueParameter
-                    value: base:department/name/$(name)~iri
+                    value: base:department/name/$(name)
+          type: iri
+sources:
+  source-ref:
+    referenceFormulation: csv
+    access: [source]
+targets:
+  target-ref:
+    serialization: turtle
+    type: sd
+    access: [target]

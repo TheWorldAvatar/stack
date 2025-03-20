@@ -1,0 +1,23 @@
+prefixes:
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  base: "https://theworldavatar.io/kg/"
+  grel: "http://users.ugent.be/~bjdmeest/function/grel.ttl#"
+
+m:
+  person:
+    s:
+      function: grel:string_trim
+      parameters:
+        - [grel:valueParameter, base:person/$(id)]
+    po:
+      - [a, base:Person]
+      - p: base:hasName
+        o:
+          type: iri
+          function: grel:toLowerCase
+          parameters:
+            - parameter: grel:valueParameter
+              value:
+                function: grel:string_trim
+                parameters:
+                  - [grel:valueParameter, base:department/name/$(name)]
