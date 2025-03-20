@@ -190,8 +190,9 @@ public final class YarrrmlFile {
                 newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
             mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
-
-            mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
+            if (mappingValue.containsKey(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY)) {
+                mappingValue.put(PRED_OBJ_KEY, updatePredObjMappings(mappingValue), PRED_OBJ_ALT_KEY);
+            }
             ruleMappings.put(field, mappingValue);
         });
         output.put(MAPPING_KEY, ruleMappings, MAPPING_ALT_KEY, MAPPING_ALT_TWO_KEY);
@@ -249,15 +250,33 @@ public final class YarrrmlFile {
                 if (currentObjectsObj instanceof Map<?, ?>) {
                     AliasMap<Object> currentObjectsMap = this.castToAliasMap(currentObjectsObj);
                     this.updateFunctionMappingsIfPresent(currentObjectsMap);
+                } else if (currentObjectsObj instanceof List) {
+                    List<Object> currentObjList = this.castToListObject(currentObjectsObj);
+                    for (int j = 0; j < currentObjList.size(); j++) {
+                        AliasMap<Object> objectNode = this.castToAliasMap(currentObjList.get(j));
+                        this.updateConditionMappings(objectNode);
+                        currentObjList.set(j, objectNode);
+                    }
+                    currentPOMap.put(OBJ_KEY, currentObjList, OBJ_ALT_KEY,
+                            OBJ_ALT_TWO_KEY);
                 }
-                // All conditions are functions
-                if (currentPOMap.containsKey(CONDITION_KEY)) {
-                    AliasMap<Object> conditionMap = this.castToAliasMap(currentPOMap.get(CONDITION_KEY));
-                    this.updateFunctionMappingsIfPresent(conditionMap);
-                }
+
+                this.updateConditionMappings(currentPOMap);
             }
         }
         return predObjList;
+    }
+
+    /**
+     * Updates the condition mappings, which will contain a function if present.
+     * 
+     * @param mapObj The mappings field object.
+     */
+    private void updateConditionMappings(AliasMap<Object> mapObj) {
+        if (mapObj.containsKey(CONDITION_KEY)) {
+            AliasMap<Object> conditionMap = this.castToAliasMap(mapObj.get(CONDITION_KEY));
+            this.updateFunctionMappingsIfPresent(conditionMap);
+        }
     }
 
     /**
@@ -276,8 +295,8 @@ public final class YarrrmlFile {
         if (mapObj.containsKey(PARAMS_KEY, PARAMS_ALT_KEY)) {
             List<Object> paramObjs = this
                     .castToListObject(mapObj.get(PARAMS_KEY, PARAMS_ALT_KEY));
-            for (int j = 0; j < paramObjs.size(); j++) {
-                Object paramObj = paramObjs.get(j);
+            for (int i = 0; i < paramObjs.size(); i++) {
+                Object paramObj = paramObjs.get(i);
                 // Detected use of shortcut, transforming into long form
                 if (paramObj instanceof List) {
                     List<Object> paramList = this.castToListObject(paramObj);
@@ -285,7 +304,7 @@ public final class YarrrmlFile {
                         Map<String, Object> transformedParam = new HashMap<>();
                         transformedParam.put("parameter", paramList.get(0).toString());
                         transformedParam.put(VALUE_KEY, paramList.get(1).toString());
-                        paramObjs.set(j, transformedParam);
+                        paramObjs.set(i, transformedParam);
                     }
                 } else if (paramObj instanceof Map<?, ?>) {
                     Object functionParamValue = this.castToAliasMap(paramObj).get(VALUE_KEY);

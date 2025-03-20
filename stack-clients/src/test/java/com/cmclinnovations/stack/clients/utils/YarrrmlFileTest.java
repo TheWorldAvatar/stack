@@ -23,6 +23,8 @@ class YarrrmlFileTest {
         private static final String EXPECTED_THREE_FILE_NAME = "yml/expected/rules_functions.yml";
         private static final String TEST_FOUR_FILE_NAME = "yml/test/rules2_functions.yml";
         private static final String EXPECTED_FOUR_FILE_NAME = "yml/expected/rules2_functions.yml";
+        private static final String TEST_FIVE_FILE_NAME = "yml/test/rules_condition.yml";
+        private static final String EXPECTED_FIVE_FILE_NAME = "yml/expected/rules_condition.yml";
 
         @Test
         void testDefaultConstructor() {
@@ -81,6 +83,17 @@ class YarrrmlFileTest {
                 yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_FOUR_FILE_NAME),
+                                rulesFilePath, TEST_ENDPOINT),
+                                yarrrmlFile.getRules());
+        }
+
+        @Test
+        void testAddRules_SuccessConditionFormat() throws IOException, URISyntaxException {
+                Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_FIVE_FILE_NAME).toURI());
+                YarrrmlFile yarrrmlFile = new YarrrmlFile();
+                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                Assertions.assertEquals(this.genExpectedYarrrmlContents(
+                                YarrrmlFileTest.class.getResource(EXPECTED_FIVE_FILE_NAME),
                                 rulesFilePath, TEST_ENDPOINT),
                                 yarrrmlFile.getRules());
         }
