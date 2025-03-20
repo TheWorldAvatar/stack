@@ -11,17 +11,23 @@ mappings:
         o:
           - mapping: person-name
             condition:
-              function: idlab-fn:notEqual
+              function: grel:boolean_not
               parameters:
-                - [grel:valueParameter, $(name)]
-                - [grel:valueParameter, ""]
+                - parameter: grel:bool_b
+                  value:
+                    function: idlab-fn:isNull
+                    parameters:
+                      - [idlab-fn:str, $(name)]
   person-name:
     subject: base:person/name/$(id)
     po:
       - p: base:hasValue
         o: $(name)
         condition:
-          function: idlab-fn:notEqual
+          function: grel:boolean_not
           parameters:
-            - [grel:valueParameter, $(name)]
-            - [grel:valueParameter, ""]
+            - parameter: grel:bool_b
+              value:
+                function: idlab-fn:isNull
+                parameters:
+                  - [idlab-fn:str, $(name)]

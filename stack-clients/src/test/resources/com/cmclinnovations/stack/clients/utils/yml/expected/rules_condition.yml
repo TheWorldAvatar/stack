@@ -7,15 +7,17 @@ mappings:
   person-name:
     sources: source-ref
     po:
-    - p: base:hasValue
-      o: $(name)
-      condition:
-        function: idlab-fn:notEqual
-        parameters:
-        - parameter: grel:valueParameter
-          value: $(name)
-        - parameter: grel:valueParameter
-          value: ''
+      - p: base:hasValue
+        o: $(name)
+        condition:
+          function: grel:boolean_not
+          parameters:
+            - parameter: grel:bool_b
+              value:
+                function: idlab-fn:isNull
+                parameters:
+                  - parameter: idlab-fn:str
+                    value: $(name)
     s:
       value: base:person/name/$(id)
       targets: target-ref
@@ -25,16 +27,18 @@ mappings:
       value: base:person/$(id)
       targets: target-ref
     po:
-    - p: base:hasName
-      o:
-      - mapping: person-name
-        condition:
-          function: idlab-fn:notEqual
-          parameters:
-          - parameter: grel:valueParameter
-            value: $(name)
-          - parameter: grel:valueParameter
-            value: ''
+      - p: base:hasName
+        o:
+          - mapping: person-name
+            condition:
+              function: grel:boolean_not
+              parameters:
+                - parameter: grel:bool_b
+                  value:
+                    function: idlab-fn:isNull
+                    parameters:
+                      - parameter: idlab-fn:str
+                        value: $(name)
 sources:
   source-ref:
     referenceFormulation: csv
