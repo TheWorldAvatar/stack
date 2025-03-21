@@ -12,12 +12,10 @@ mappings:
       o: $(name)
     s:
       value: base:person/name/$(id)
-      targets: target-ref
   person:
     sources: source-ref
     s:
       value: base:person/$(id)
-      targets: target-ref
     po:
     - p: a
       o: base:Person
@@ -27,8 +25,3 @@ sources:
   source-ref:
     referenceFormulation: csv
     access: [source]
-targets:
-  target-ref:
-    serialization: turtle
-    type: sd
-    access: [target]

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cmclinnovations.stack.clients.blazegraph.BlazegraphEndpointConfig;
+import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.docker.ContainerClient;
 import com.cmclinnovations.stack.clients.utils.FileUtils;
@@ -34,6 +34,7 @@ public class RmlMapperClient extends ContainerClient {
   private static final String CSV_FILE_EXTENSION = "csv";
   private static final String YML_FILE_EXTENSION = "yml";
   private static final String TTL_FILE_EXTENSION = "ttl";
+  private static final String OUTPUT_DIR = "output";
   private static final String YARRRML_PARSER_EXECUTABLE_PATH = "/app/bin/parser.js";
 
   private static RmlMapperClient instance = null;
@@ -61,8 +62,8 @@ public class RmlMapperClient extends ContainerClient {
     try (TempDir tmpDir = makeLocalTempDir()) {
       // Copy all csv and rml files into the temp directory
       tmpDir.copyFrom(dirPath);
-      Map<String, String> rmlRules = this.genRmlRules(tmpDir, namespace);
-      this.convertToRDF(tmpDir, rmlRules);
+      Map<String, String> rmlRules = this.genRmlRules(tmpDir);
+      this.convertToRDF(tmpDir, rmlRules, namespace);
     }
   }
 
@@ -110,15 +111,9 @@ public class RmlMapperClient extends ContainerClient {
    * Generate RML rules from YARRRML files in the temporary directory if
    * available.
    * 
-   * @param tmpDir    Target temporary directory.
-   * @param namespace Target namespace to upload the converted RDF triples.
+   * @param tmpDir Target temporary directory.
    */
-  private Map<String, String> genRmlRules(TempDir tmpDir, String namespace) {
-    LOGGER.info("Retrieving the target SPARQL endpoint...");
-    BlazegraphEndpointConfig blazegraphConfig = readEndpointConfig(EndpointNames.BLAZEGRAPH,
-        BlazegraphEndpointConfig.class);
-    String sparqlEndpoint = blazegraphConfig.getUrl(namespace);
-
+  private Map<String, String> genRmlRules(TempDir tmpDir) {
     LOGGER.info("Converting the YARRRML inputs into RML rules...");
     String containerId = super.getContainerId(EndpointNames.RML);
     Collection<URI> ymlFiles = this.getFiles(tmpDir.getPath(), YML_FILE_EXTENSION);
@@ -131,7 +126,7 @@ public class RmlMapperClient extends ContainerClient {
         String fileName = FileUtils.getFileNameWithoutExtension(ymlFile.toURL());
         LOGGER.info("Updating YARRRML rules with sources and targets for {}...", fileName);
         // Generate file path for the parsed YML file
-        YarrrmlFile yarrrmlFile = new YarrrmlFile(Paths.get(ymlFile), sparqlEndpoint);
+        YarrrmlFile yarrrmlFile = new YarrrmlFile(Paths.get(ymlFile));
         Path parsedYmlPath = Files.writeString(Paths.get(ymlFile), yarrrmlFile.write());
 
         LOGGER.info("Generating RML rules for {}...", fileName);
@@ -154,12 +149,21 @@ public class RmlMapperClient extends ContainerClient {
    * Parses the RML rules into RDF triples that will be uploaded at the target
    * namespace.
    * 
-   * @param tmpDir   Target temporary directory.
-   * @param rmlRules Input RML rules.
+   * @param tmpDir    Target temporary directory.
+   * @param rmlRules  Input RML rules.
+   * @param namespace Target namespace to upload the converted RDF triples.
    */
-  private void convertToRDF(TempDir tmpDir, Map<String, String> rmlRules) {
+  private void convertToRDF(TempDir tmpDir, Map<String, String> rmlRules, String namespace) {
     LOGGER.info("Uploading the csv files using the RML rules into the target endpoint...");
     String rmlMapperJavaContainerId = super.getContainerId(EndpointNames.RML_JAVA);
+    // Initialise the output directory
+    Path outputDir = tmpDir.getPath().resolve(OUTPUT_DIR);
+    try {
+      Files.createDirectories(outputDir);
+    } catch (IOException e) {
+      LOGGER.error(rmlMapperJavaContainerId, e);
+      throw new UncheckedIOException(e);
+    }
 
     rmlRules.forEach((fileName, content) -> {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -170,7 +174,8 @@ public class RmlMapperClient extends ContainerClient {
         LOGGER.info("Executing RML rules for {}...", fileName);
 
         String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-Dfile.encoding=UTF-8", "-jar",
-            "/rmlmapper.jar", "-m", tmpRmlFilePath.toString(), "-s", "turtle")
+            "/rmlmapper.jar", "-m", tmpRmlFilePath.toString(),
+            "-o", outputDir.resolve(fileName + "." + TTL_FILE_EXTENSION).toString(), "-s", "turtle")
             .withOutputStream(outputStream)
             .withErrorStream(errorStream)
             .exec();
@@ -180,6 +185,9 @@ public class RmlMapperClient extends ContainerClient {
         throw new UncheckedIOException(e);
       }
     });
+
+    LOGGER.info("Uploading output RDF files to endpoint...");
+    BlazegraphClient.getInstance().uploadRDFFiles(outputDir, namespace);
   }
 
   /**

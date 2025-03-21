@@ -20,12 +20,9 @@ public final class YarrrmlFile {
 
     private final Yaml yaml;
     private final Map<String, Object> sourcesTemplate;
-    private final Map<String, Object> targetTemplate;
 
     private static final String SOURCES_KEY = "sources";
     private static final String SOURCE_REF_KEY = "source-ref";
-    private static final String TARGETS_KEY = "targets";
-    private static final String TARGET_REF_KEY = "target-ref";
     private static final String MAPPING_KEY = "mappings";
     private static final String MAPPING_ALT_KEY = "mapping";
     private static final String MAPPING_ALT_TWO_KEY = "m";
@@ -53,31 +50,27 @@ public final class YarrrmlFile {
         this.yaml = new Yaml(options);
         this.rules = new AliasMap<>();
         this.sourcesTemplate = new HashMap<>();
-        this.targetTemplate = new HashMap<>();
-        this.genYamlTemplates(this.sourcesTemplate, this.targetTemplate);
+        this.genYamlTemplates(this.sourcesTemplate);
     }
 
     /**
      * Constructor to construct the YARRRML rules from the file input.
      * 
      * @param ymlFile  YML file path.
-     * @param endpoint The endpoint url for uploading the converted triples.
      */
-    public YarrrmlFile(Path ymlFile, String endpoint) throws IOException {
+    public YarrrmlFile(Path ymlFile) throws IOException {
         this();
-        this.addRules(ymlFile, endpoint);
+        this.addRules(ymlFile);
     }
 
     /**
      * Add YARRRML rules.
      * 
      * @param ymlFile  YML file path.
-     * @param endpoint The endpoint url for uploading the converted triples.
      */
-    public void addRules(Path ymlFile, String endpoint) throws IOException {
+    public void addRules(Path ymlFile) throws IOException {
         this.load(ymlFile);
         this.appendSources(this.rules, ymlFile);
-        this.appendTargets(this.rules, endpoint);
         this.updateMappings(this.rules);
     }
 
@@ -120,18 +113,12 @@ public final class YarrrmlFile {
      * and added to different outputs.
      * 
      * @param sources The map for storing the sources template.
-     * @param targets The map for storing the targets template.
      */
-    private void genYamlTemplates(Map<String, Object> sources, Map<String, Object> targets) {
+    private void genYamlTemplates(Map<String, Object> sources) {
         // For the sources template
         Map<String, Object> nestedSourceRef = new HashMap<>();
         nestedSourceRef.put("referenceFormulation", "csv");
         sources.put(SOURCE_REF_KEY, nestedSourceRef);
-        // For the targets template
-        Map<String, Object> sparql = new HashMap<>();
-        sparql.put("type", "sd");
-        sparql.put("serialization", "turtle");
-        targets.put(TARGET_REF_KEY, sparql);
     }
 
     /**
@@ -146,20 +133,6 @@ public final class YarrrmlFile {
         sourceRef.put(ACCESS_KEY, FileUtils.replaceExtension(filePath.toString(), "csv"));
         sources.put(SOURCE_REF_KEY, sourceRef);
         output.put(SOURCES_KEY, sources);
-    }
-
-    /**
-     * Appends the targets to the output yaml object.
-     * 
-     * @param output   The target YAML output.
-     * @param endpoint The target endpoint.
-     */
-    private void appendTargets(Map<String, Object> output, String endpoint) {
-        Map<String, Object> targets = new HashMap<>(this.targetTemplate);
-        Map<String, Object> targetRef = this.castToAliasMap(targets.get(TARGET_REF_KEY));
-        targetRef.put(ACCESS_KEY, endpoint);
-        targets.put(TARGET_REF_KEY, targetRef);
-        output.put(TARGETS_KEY, targets);
     }
 
     /**
@@ -181,13 +154,10 @@ public final class YarrrmlFile {
             AliasMap<Object> newSubjectMap = new AliasMap<>();
             if (subjectVal instanceof String) {
                 newSubjectMap.put(VALUE_KEY, subjectVal);
-                newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             } else if (subjectVal instanceof Map<?, ?>) {
                 newSubjectMap = this.castToAliasMap(subjectVal);
                 // Function may be present instead of the value key
                 this.updateFunctionMappingsIfPresent(newSubjectMap);
-                // Add targets after function changes
-                newSubjectMap.put(TARGETS_KEY, TARGET_REF_KEY);
             }
             mappingValue.put(SUBJECT_KEY, newSubjectMap, SUBJECT_ALT_KEY, SUBJECT_ALT_TWO_KEY);
             if (mappingValue.containsKey(PRED_OBJ_KEY, PRED_OBJ_ALT_KEY)) {

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.yaml.snakeyaml.Yaml;
 
 class YarrrmlFileTest {
-        private static final String TEST_ENDPOINT = "https://example.org/kg/sparql";
         private static final String TEST_ONE_FILE_NAME = "yml/test/rules.yml";
         private static final String EXPECTED_ONE_FILE_NAME = "yml/expected/rules.yml";
         private static final String TEST_TWO_FILE_NAME = "yml/test/rules2.yml";
@@ -35,11 +34,11 @@ class YarrrmlFileTest {
         @Test
         void testFileConstructor() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
-                YarrrmlFile yarrrmlFile = new YarrrmlFile(rulesFilePath, TEST_ENDPOINT);
+                YarrrmlFile yarrrmlFile = new YarrrmlFile(rulesFilePath);
                 Assertions.assertEquals(
                                 this.genExpectedYarrrmlContents(
                                                 YarrrmlFileTest.class.getResource(EXPECTED_ONE_FILE_NAME),
-                                                rulesFilePath, TEST_ENDPOINT),
+                                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
@@ -47,10 +46,10 @@ class YarrrmlFileTest {
         void testAddRules_SuccessOriginalFormat() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_ONE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                yarrrmlFile.addRules(rulesFilePath);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_ONE_FILE_NAME),
-                                rulesFilePath, TEST_ENDPOINT),
+                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
@@ -58,10 +57,10 @@ class YarrrmlFileTest {
         void testAddRules_SuccessShortcutFormat() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_TWO_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                yarrrmlFile.addRules(rulesFilePath);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_TWO_FILE_NAME),
-                                rulesFilePath, TEST_ENDPOINT),
+                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
@@ -69,10 +68,10 @@ class YarrrmlFileTest {
         void testAddRules_SuccessFunctionFormat() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_THREE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                yarrrmlFile.addRules(rulesFilePath);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_THREE_FILE_NAME),
-                                rulesFilePath, TEST_ENDPOINT),
+                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
@@ -80,10 +79,10 @@ class YarrrmlFileTest {
         void testAddRules_SuccessFunctionShorcutFormat() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_FOUR_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                yarrrmlFile.addRules(rulesFilePath);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_FOUR_FILE_NAME),
-                                rulesFilePath, TEST_ENDPOINT),
+                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
@@ -91,22 +90,20 @@ class YarrrmlFileTest {
         void testAddRules_SuccessConditionFormat() throws IOException, URISyntaxException {
                 Path rulesFilePath = Paths.get(YarrrmlFileTest.class.getResource(TEST_FIVE_FILE_NAME).toURI());
                 YarrrmlFile yarrrmlFile = new YarrrmlFile();
-                yarrrmlFile.addRules(rulesFilePath, TEST_ENDPOINT);
+                yarrrmlFile.addRules(rulesFilePath);
                 Assertions.assertEquals(this.genExpectedYarrrmlContents(
                                 YarrrmlFileTest.class.getResource(EXPECTED_FIVE_FILE_NAME),
-                                rulesFilePath, TEST_ENDPOINT),
+                                rulesFilePath),
                                 yarrrmlFile.getRules());
         }
 
-        private AliasMap<Object> genExpectedYarrrmlContents(URL expectedFilePath, Path expectedSourceLocation,
-                        String endpoint)
+        private AliasMap<Object> genExpectedYarrrmlContents(URL expectedFilePath, Path expectedSourceLocation)
                         throws IOException, URISyntaxException {
                 Yaml yaml = new Yaml();
                 String content = new String(Files.readAllBytes(Paths.get(expectedFilePath.toURI())));
                 String modifiedContent = content
                                 .replace("[source]",
-                                                FileUtils.replaceExtension(expectedSourceLocation.toString(), "csv"))
-                                .replace("[target]", endpoint);
+                                                FileUtils.replaceExtension(expectedSourceLocation.toString(), "csv"));
 
                 Map<String, Object> loadedMap = yaml.load(modifiedContent);
 
