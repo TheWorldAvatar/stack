@@ -37,13 +37,10 @@ jobs:
         id: check_tag
         run: |
           if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
+            echo "::set-output name=tag::exists"
           fi
-
       - name: Create tag
-        if: env.TAG_EXISTS == 'false'
+        if: steps.check_tag.outputs.tag == 'exists'
         run: |
           git tag -a "v${{ env.VERSION }}" -m "Version ${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
