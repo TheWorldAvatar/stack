@@ -1,0 +1,27 @@
+prefixes:
+  rdfs: http://www.w3.org/2000/01/rdf-schema#
+  base: https://theworldavatar.io/kg/
+
+mappings:
+  person-name:
+    sources: source-ref
+    s:
+      value: base:person/name/$(id)
+    po:
+      - p: a
+        o: base:PersonName
+      - p: rdfs:label
+        o: $(name)
+  person:
+    sources: source-ref
+    s:
+      value: base:person/$(id)
+    po:
+      - p: a
+        o: base:Person
+      - p: base:hasName
+        o: base:person/name/$(id)~iri
+sources:
+  source-ref:
+    referenceFormulation: csv
+    access: [source]

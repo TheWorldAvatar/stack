@@ -1,0 +1,15 @@
+prefixes:
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  base: "https://theworldavatar.io/kg/"
+
+mapping:
+  person:
+    subjects: base:person/$(id)
+    predicateobjects:
+      - [a, base:Person]
+      - [base:hasName, base:person/name/$(id)~iri]
+  person-name:
+    subject: base:person/name/$(id)
+    po:
+      - [a, base:PersonName]
+      - [rdfs:label, $(name)]
