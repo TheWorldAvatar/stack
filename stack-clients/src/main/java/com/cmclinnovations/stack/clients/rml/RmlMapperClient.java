@@ -169,8 +169,8 @@ public class RmlMapperClient extends ContainerClient {
         Files.writeString(tmpRmlFilePath, content);
         LOGGER.info("Executing RML rules for {}...", fileName);
 
-        String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
-            tmpRmlFilePath.toString(), "-s", "turtle")
+        String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-Dfile.encoding=UTF-8", "-jar",
+            "/rmlmapper.jar", "-m", tmpRmlFilePath.toString(), "-s", "turtle")
             .withOutputStream(outputStream)
             .withErrorStream(errorStream)
             .exec();
