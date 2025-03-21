@@ -1,5 +1,4 @@
 {
-  "type": "rml-mapper",
   "ServiceSpec": {
     "Name": "rml-mapper",
     "TaskTemplate": {
