@@ -141,7 +141,7 @@ public class RmlMapperClient extends ContainerClient {
             .withErrorStream(errorStream)
             .exec();
         super.handleErrors(errorStream, execId, LOGGER);
-        rmlRules.put(fileName, outputStream.toString(StandardCharsets.UTF_8.name()));
+        rmlRules.put(fileName, outputStream.toString(StandardCharsets.UTF_8));
       } catch (IOException e) {
         LOGGER.error(containerId, e);
         throw new UncheckedIOException(e);
