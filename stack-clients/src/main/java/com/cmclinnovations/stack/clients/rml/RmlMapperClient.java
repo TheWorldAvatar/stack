@@ -22,13 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphEndpointConfig;
-import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
+import com.cmclinnovations.stack.clients.docker.ContainerClient;
 import com.cmclinnovations.stack.clients.utils.FileUtils;
 import com.cmclinnovations.stack.clients.utils.TempDir;
 import com.cmclinnovations.stack.clients.utils.YarrrmlFile;
 
-public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig> {
+public class RmlMapperClient extends ContainerClient {
   private static final Logger LOGGER = LoggerFactory.getLogger(RmlMapperClient.class);
 
   private static final String CSV_FILE_EXTENSION = "csv";
@@ -46,7 +46,6 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
   }
 
   private RmlMapperClient() {
-    super(EndpointNames.RML, RmlMapperEndpointConfig.class);
   }
 
   /**
@@ -121,7 +120,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     String sparqlEndpoint = blazegraphConfig.getUrl(namespace);
 
     LOGGER.info("Converting the YARRRML inputs into RML rules...");
-    String containerId = super.getContainerId(super.getContainerName());
+    String containerId = super.getContainerId(EndpointNames.RML);
     Collection<URI> ymlFiles = this.getFiles(tmpDir.getPath(), YML_FILE_EXTENSION);
 
     Map<String, String> rmlRules = new HashMap<>();
