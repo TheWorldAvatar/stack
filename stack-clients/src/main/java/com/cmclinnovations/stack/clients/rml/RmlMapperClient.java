@@ -125,7 +125,7 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     Collection<URI> ymlFiles = this.getFiles(tmpDir.getPath(), YML_FILE_EXTENSION);
 
     Map<String, String> rmlRules = new HashMap<>();
-    ymlFiles.stream().forEach(ymlFile -> {
+    ymlFiles.forEach(ymlFile -> {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
       try {
@@ -162,12 +162,12 @@ public class RmlMapperClient extends ClientWithEndpoint<RmlMapperEndpointConfig>
     LOGGER.info("Uploading the csv files using the RML rules into the target endpoint...");
     String rmlMapperJavaContainerId = super.getContainerId(EndpointNames.RML_JAVA);
 
-    rmlRules.keySet().stream().forEach(fileName -> {
+    rmlRules.forEach((fileName, content) -> {
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
       ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
       try {
         Path tmpRmlFilePath = Files.createTempFile(tmpDir.getPath(), fileName, "." + TTL_FILE_EXTENSION);
-        Files.writeString(tmpRmlFilePath, rmlRules.get(fileName));
+        Files.writeString(tmpRmlFilePath, content);
         LOGGER.info("Executing RML rules for {}...", fileName);
 
         String execId = super.createComplexCommand(rmlMapperJavaContainerId, "java", "-jar", "/rmlmapper.jar", "-m",
