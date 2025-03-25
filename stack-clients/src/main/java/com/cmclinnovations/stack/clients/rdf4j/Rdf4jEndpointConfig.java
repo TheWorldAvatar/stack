@@ -46,7 +46,7 @@ public class Rdf4jEndpointConfig extends PasswordEndpointConfig {
     }
 
     @JsonIgnore
-    public String getDataSourceServiceUrl() {
+    public String getWorkbenchServiceUrl() {
         return getServiceUrl() + "/rdf4j-workbench";
     }
 
