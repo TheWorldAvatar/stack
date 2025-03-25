@@ -8,6 +8,7 @@ public final class EndpointNames {
     public static final String GEOSERVER = "geoserver";
     public static final String RML = "yarrrml-parser";
     public static final String RML_JAVA = "rml-mapper";
+    public static final String RDF4J = "rdf4j";
 
     private EndpointNames() {
     }
