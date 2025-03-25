@@ -5,7 +5,17 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import org.eclipse.rdf4j.model.vocabulary.DCAT;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.propertypath.builder.PropertyPathBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.core.SparqlBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
+import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
+import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
+import org.json.JSONArray;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
@@ -14,11 +24,13 @@ import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.services.OntopService;
 import com.cmclinnovations.stack.services.ServiceManager;
 import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 
+import uk.ac.cam.cares.jps.base.derivation.ValuesPattern;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 public class DatasetLoader {
@@ -42,6 +54,7 @@ public class DatasetLoader {
         Stream<Dataset> selectedDatasets = DatasetReader.getStackSpecificDatasets(allDatasets, selectedDatasetName);
 
         loadDatasets(selectedDatasets);
+
     }
 
     public void loadDatasets(Collection<Dataset> selectedDatasets) {
@@ -76,7 +89,40 @@ public class DatasetLoader {
                     .executeUpdate(new DCATUpdateQuery().getUpdateQuery(dataset));
 
             runRules(dataset, directory);
+
+            createSparqlEndpointRdf4jRepos(dataset.getName());
         }
+    }
+
+    private void createSparqlEndpointRdf4jRepos(String datasetName) {
+        Variable idVar = SparqlBuilder.var("id");
+        Variable titleVar = SparqlBuilder.var("title");
+        Variable urlVar = SparqlBuilder.var("url");
+
+        Variable serviceTypeVar = SparqlBuilder.var("serviceType");
+        Variable serviceVar = SparqlBuilder.var("service");
+
+        SelectQuery query = Queries.SELECT(idVar, titleVar, urlVar)
+                .where(
+                        serviceVar.isA(serviceTypeVar)
+                                .andHas(PropertyPathBuilder.of(DCAT.SERVES_DATASET).then(DCTERMS.TITLE).build(),
+                                        datasetName)
+                                .andHas(DCTERMS.IDENTIFIER, idVar)
+                                .andHas(DCTERMS.TITLE, titleVar)
+                                .andHas(DCAT.ENDPOINT_URL, urlVar),
+                        new ValuesPattern(serviceTypeVar,
+                                List.of(SparqlConstants.ONTOP_SERVICE, SparqlConstants.BLAZEGRAPH_SERVICE)));
+
+        JSONArray queryResult = BlazegraphClient.getInstance().getRemoteStoreClient(catalogNamespace)
+                .executeQuery(query.getQueryString());
+
+        Rdf4jClient rdf4jClient = Rdf4jClient.getInstance();
+
+        IntStream.range(0, queryResult.length()).mapToObj(queryResult::getJSONObject)
+                .forEach(jOb -> rdf4jClient.createSparqlRepository(
+                        jOb.getString(idVar.getVarName()),
+                        jOb.getString(titleVar.getVarName()),
+                        jOb.getString(urlVar.getVarName())));
     }
 
     private void configurePostgres(Dataset dataset, List<DataSubset> dataSubsets) {
