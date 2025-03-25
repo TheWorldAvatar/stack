@@ -69,7 +69,7 @@ public final class FileUtils {
 
     public static Collection<URI> listFiles(URL dirURL, String fileExtension) throws IOException, URISyntaxException {
         return listFiles(dirURL).stream().filter(uri -> uri.toString().endsWith(fileExtension))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     public static Collection<URI> listFiles(URL dirURL) throws IOException, URISyntaxException {
@@ -77,7 +77,7 @@ public final class FileUtils {
             switch (dirURL.getProtocol()) {
                 case "file":
                     // A file path: easy enough
-                    return listFileFromPath(Path.of(dirURL.toURI()));
+                    return listFilesFromPath(Path.of(dirURL.toURI()));
                 case "jar":
                     // A JAR path
                     return listFilesFromJar(dirURL);
@@ -89,7 +89,7 @@ public final class FileUtils {
                 "Cannot load config files from URL '" + dirURL + "'. Only 'file' and 'jar' protocols are supported.");
     }
 
-    private static Set<URI> listFileFromPath(Path configDir) throws IOException {
+    private static Set<URI> listFilesFromPath(Path configDir) throws IOException {
         try (Stream<Path> stream = Files.list(configDir)) {
             return stream.map(Path::toUri).collect(Collectors.toSet());
         }
@@ -115,12 +115,13 @@ public final class FileUtils {
             }
         }
         String cleanedDirURL = dirURL.toString().replaceFirst("^(.*?)/?$", "$1/");
+        Path basePath = Path.of(path).normalize();
         try (JarFile jar = new JarFile(jarPath)) {
             Enumeration<JarEntry> entries = jar.entries(); // gives ALL entries in jar
             while (entries.hasMoreElements()) {
-                String name = entries.nextElement().getName();
-                if (name.startsWith(path)) { // filter according to the path
-                    String entry = name.substring(path.length());
+                Path name = Path.of(entries.nextElement().getName()).normalize();
+                if (name.startsWith(basePath)) { // filter according to the path
+                    String entry = basePath.relativize(name).toString();
                     if (!entry.isEmpty() && !entry.contains("/")) {
                         uris.add(URI.create(cleanedDirURL + entry));
                     }

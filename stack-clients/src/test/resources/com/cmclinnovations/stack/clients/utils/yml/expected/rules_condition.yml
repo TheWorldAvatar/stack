@@ -1,0 +1,43 @@
+prefixes:
+  rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+  base: "https://theworldavatar.io/kg/"
+  grel: "http://users.ugent.be/~bjdmeest/function/grel.ttl#"
+
+mappings:
+  person-name:
+    sources: source-ref
+    po:
+      - p: base:hasValue
+        o: $(name)
+        condition:
+          function: grel:boolean_not
+          parameters:
+            - parameter: grel:bool_b
+              value:
+                function: idlab-fn:isNull
+                parameters:
+                  - parameter: idlab-fn:str
+                    value: $(name)
+    s:
+      value: base:person/name/$(id)
+  person:
+    sources: source-ref
+    s:
+      value: base:person/$(id)
+    po:
+      - p: base:hasName
+        o:
+          - mapping: person-name
+            condition:
+              function: grel:boolean_not
+              parameters:
+                - parameter: grel:bool_b
+                  value:
+                    function: idlab-fn:isNull
+                    parameters:
+                      - parameter: idlab-fn:str
+                        value: $(name)
+sources:
+  source-ref:
+    referenceFormulation: csv
+    access: [source]
