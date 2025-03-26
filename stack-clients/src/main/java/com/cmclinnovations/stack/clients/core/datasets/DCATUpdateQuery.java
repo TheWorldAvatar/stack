@@ -22,6 +22,7 @@ import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 
 final class DCATUpdateQuery {
 
@@ -36,6 +37,7 @@ final class DCATUpdateQuery {
     private final Variable postgisServiceVar = SparqlBuilder.var("postgis");
     private final Variable geoserverServiceVar = SparqlBuilder.var("geoserver");
     private final Variable ontopServiceVar = SparqlBuilder.var("ontop");
+    private final Variable rdf4jServiceVar = SparqlBuilder.var("rdf4j");
 
     private String getQuery() {
         return query.getQueryString();
@@ -203,7 +205,7 @@ final class DCATUpdateQuery {
         String namespace = dataset.getNamespace();
         String url = used ? BlazegraphClient.getInstance().readEndpointConfig().getUrl(namespace) : null;
 
-        addService(blazegraphServiceVar, namespace, SparqlConstants.BLAZEGRAPH_SERVICE, url, null, used);
+        addService(blazegraphServiceVar, namespace, SparqlConstants.BLAZEGRAPH_SERVICE, url, null, null, used);
     }
 
     private void addPostGISServer(Dataset dataset) {
@@ -211,13 +213,13 @@ final class DCATUpdateQuery {
         String database = dataset.getDatabase();
         String url = used ? PostGISClient.getInstance().readEndpointConfig().getJdbcURL(database) : null;
 
-        addService(postgisServiceVar, database, SparqlConstants.POSTGIS_SERVICE, url, null, used);
+        addService(postgisServiceVar, database, SparqlConstants.POSTGIS_SERVICE, url, null, null, used);
     }
 
     private void addGeoServerServer(Dataset dataset) {
         boolean used = dataset.usesGeoServer();
         addService(geoserverServiceVar, dataset.getWorkspaceName(), SparqlConstants.GEOSERVER_SERVICE, null,
-                DCTERMS.REFERENCES, used);
+                DCTERMS.REFERENCES, null, used);
     }
 
     private void addOntopServer(Dataset dataset) {
@@ -225,11 +227,18 @@ final class DCATUpdateQuery {
         String ontopName = dataset.getOntopName();
         String url = used ? OntopClient.getInstance(ontopName).readEndpointConfig().getUrl() : null;
         addService(ontopServiceVar, StackClient.prependStackName(ontopName),
-                SparqlConstants.ONTOP_SERVICE, url, DCTERMS.REQUIRES, used);
+                SparqlConstants.ONTOP_SERVICE, url, DCTERMS.REQUIRES, null, used);
+    }
+
+    private void addRDF4JServer(Dataset dataset) {
+        boolean used = dataset.usesBlazegraph() || dataset.usesOntop();
+        String name = dataset.getName();
+        String urlPrefix = Rdf4jClient.getInstance().readEndpointConfig().getServerServiceUrl() + "/repositories";
+        addService(rdf4jServiceVar, name, SparqlConstants.RDF4J_SERVICE, null, null, urlPrefix, used);
     }
 
     private void addService(Variable serviceVar, String title, Iri type, String url, IRI postgisRelation,
-            boolean isUsed) {
+            String urlPrefix, boolean isUsed) {
 
         if (isUsed) {
             Variable serviceLiteral = createVar(serviceVar, "literal");
@@ -250,6 +259,10 @@ final class DCATUpdateQuery {
             // Insert optional triples
             if (null != url) {
                 serviceTriples.andHas(DCAT.ENDPOINT_URL, Rdf.iri(url));
+            } else if (null != urlPrefix) {
+                Variable serviceUrlVar = createVar(serviceVar, "url");
+                Expressions.bind(Expressions.concat(Rdf.literalOf(urlPrefix), existingServiceLiteral), serviceUrlVar);
+                serviceTriples.andHas(DCAT.ENDPOINT_URL, serviceUrlVar);
             }
             if (null != postgisRelation) {
                 serviceTriples.andHas(postgisRelation, postgisServiceVar);
@@ -331,6 +344,8 @@ final class DCATUpdateQuery {
                 .forEach(this::addDataSubset);
 
         removeExistingServiceLinks();
+
+        addRDF4JServer(dataset);
 
         addBlazegraphServer(dataset);
 

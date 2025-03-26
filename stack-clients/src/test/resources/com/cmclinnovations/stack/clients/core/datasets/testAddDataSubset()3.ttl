@@ -45,7 +45,16 @@
         <http://www.w3.org/ns/dcat#dataset>
                 <https://theworldavatar.io/kg/1b301ccc-228e-4c67-af61-eeacd6b85415>;
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/d65adb48-1df7-435d-9d61-e62933f6ce0c> .
+                <https://theworldavatar.io/kg/d65adb48-1df7-435d-9d61-e62933f6ce0c> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b3> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b3>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b3";
+        <http://purl.org/dc/terms/title>
+                "testDataset3";
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/af0b004b-87f3-47cf-bad2-98179e12f071> .
 
 <https://theworldavatar.io/kg/78ae96a5-95d0-440f-8406-48ce610c13fe>
         rdf:type  <http://www.w3.org/ns/dcat#Dataset>;
@@ -82,4 +91,13 @@
         <http://www.w3.org/ns/dcat#dataset>
                 <https://theworldavatar.io/kg/78ae96a5-95d0-440f-8406-48ce610c13fe>;
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/4a1d2dc9-66cf-44f7-bc39-a6052115bf24> .
+                <https://theworldavatar.io/kg/4a1d2dc9-66cf-44f7-bc39-a6052115bf24> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b1";
+        <http://purl.org/dc/terms/title>
+                "testDataset";
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/a35adecc-170e-4f8e-b6f0-b112cefd28b2> .

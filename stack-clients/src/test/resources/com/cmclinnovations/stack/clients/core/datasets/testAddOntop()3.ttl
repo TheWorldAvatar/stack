@@ -34,7 +34,16 @@
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d> , <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881> .
+                <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d> , <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b1";
+        <http://purl.org/dc/terms/title>
+                "testDataset";
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/c96f5363-0933-4b4d-80a7-0dafb1e9599e> .
 
 <https://theworldavatar.io/kg/61f4a804-96f1-40dd-a4e4-8319d659556a>
         rdf:type  <https://theworldavatar.io/kg/service#Ontop>;
@@ -60,7 +69,16 @@
         <http://purl.org/dc/terms/title>
                 "testDataset3";
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/61f4a804-96f1-40dd-a4e4-8319d659556a> , <https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628> .
+                <https://theworldavatar.io/kg/61f4a804-96f1-40dd-a4e4-8319d659556a> , <https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b3> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b3>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b3";
+        <http://purl.org/dc/terms/title>
+                "testDataset3";
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/cf20d652-c8a5-4ff2-8c31-8e17754b0c32> .
 
 <https://theworldavatar.io/kg/1eaa6cee-003e-4d7c-83df-143a43274628>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;

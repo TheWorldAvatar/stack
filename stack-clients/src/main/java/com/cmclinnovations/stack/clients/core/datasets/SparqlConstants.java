@@ -12,4 +12,5 @@ public class SparqlConstants {
     public static final Iri POSTGIS_SERVICE = Rdf.iri(DEFAULT_BASE_IRI + "service#PostGIS");
     public static final Iri GEOSERVER_SERVICE = Rdf.iri(DEFAULT_BASE_IRI + "service#GeoServer");
     public static final Iri ONTOP_SERVICE = Rdf.iri(DEFAULT_BASE_IRI + "service#Ontop");
+    public static final Iri RDF4J_SERVICE = Rdf.iri(DEFAULT_BASE_IRI + "service#RDF4J");
 }

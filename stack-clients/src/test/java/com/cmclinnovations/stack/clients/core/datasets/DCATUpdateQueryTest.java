@@ -37,6 +37,7 @@ import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.ontop.OntopEndpointConfig;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.clients.utils.BlazegraphContainer;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -68,6 +69,7 @@ class DCATUpdateQueryTest {
 
     @Test
     void testAddDataset() {
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").build();
@@ -130,6 +132,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddBlazegraph() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").withServices(Service.BLAZEGRAPH).build();
@@ -210,6 +213,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddDataSubset() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
@@ -245,6 +249,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddDataSubsetSkipping() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
@@ -279,6 +284,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataSimple() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -291,6 +297,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataPrefixOnly() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -303,6 +310,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataPrefix() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -315,6 +323,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataMissingPrefixes() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -328,6 +337,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataUseBuiltinPrefix() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -341,6 +351,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataOverrideBuiltinPrefixes() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -356,6 +367,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataFromFile() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -388,6 +400,7 @@ class DCATUpdateQueryTest {
     @Test
     void testRemovingDataset() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
 
         Dataset dataset1;
@@ -444,6 +457,10 @@ class DCATUpdateQueryTest {
     private void writeOntopConfig(String name) {
         OntopClient.writeEndpointConfig(
                 new OntopEndpointConfig(name, StackClient.prependStackName(name).replace('_', '-'), "5678"));
+    }
+
+    private void writeRdf4jConfig() {
+        Rdf4jClient.writeEndpointConfig(new OntopEndpointConfig("rdf4j", "rdf4j", "8080"));
     }
 
     private void buildAndRunQuery(Dataset dataset) {

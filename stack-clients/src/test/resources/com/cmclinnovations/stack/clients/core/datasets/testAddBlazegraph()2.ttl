@@ -32,7 +32,16 @@
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/1d051cc6-5282-4643-abce-ad25231a13a0> .
+                <https://theworldavatar.io/kg/1d051cc6-5282-4643-abce-ad25231a13a0> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b1";
+        <http://purl.org/dc/terms/title>
+                "testDataset";
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/6697ff0a-159e-489d-ba25-b3404ce5c670> .
 
 <https://theworldavatar.io/kg/59a7bf24-e8f8-4edf-a284-ae6fb6a25112>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
