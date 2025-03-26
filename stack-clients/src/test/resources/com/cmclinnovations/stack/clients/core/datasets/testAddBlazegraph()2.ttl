@@ -39,7 +39,7 @@
         <http://purl.org/dc/terms/identifier>
                 "f1af3c55-3139-4225-80d7-a899895437b1";
         <http://purl.org/dc/terms/title>
-                "testDataset";
+                "testDataset (Dataset)";
         <http://www.w3.org/ns/dcat#servesDataset>
                 <https://theworldavatar.io/kg/6697ff0a-159e-489d-ba25-b3404ce5c670> .
 

@@ -52,6 +52,6 @@
         <http://purl.org/dc/terms/identifier>
                 "f1af3c55-3139-4225-80d7-a899895437b2";
         <http://purl.org/dc/terms/title>
-                "testDataset2";
+                "testDataset2 (Dataset)";
         <http://www.w3.org/ns/dcat#servesDataset>
                 <https://theworldavatar.io/kg/fa2d6338-0986-4a31-bc65-405a253b5d73> .

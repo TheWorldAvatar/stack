@@ -3,7 +3,6 @@ package com.cmclinnovations.stack.clients.rdf4j;
 import java.util.Collection;
 
 import org.eclipse.rdf4j.federated.repository.FedXRepositoryConfigBuilder;
-import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
 import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryConfig;

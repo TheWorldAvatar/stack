@@ -232,7 +232,7 @@ final class DCATUpdateQuery {
 
     private void addRDF4JServer(Dataset dataset) {
         boolean used = dataset.usesBlazegraph() || dataset.usesOntop();
-        String name = dataset.getName();
+        String name = dataset.getName() + " (Dataset)";
         String urlPrefix = Rdf4jClient.getInstance().readEndpointConfig().getServerServiceUrl() + "/repositories";
         addService(rdf4jServiceVar, name, SparqlConstants.RDF4J_SERVICE, null, null, urlPrefix, used);
     }
@@ -261,7 +261,7 @@ final class DCATUpdateQuery {
                 serviceTriples.andHas(DCAT.ENDPOINT_URL, Rdf.iri(url));
             } else if (null != urlPrefix) {
                 Variable serviceUrlVar = createVar(serviceVar, "url");
-                Expressions.bind(Expressions.concat(Rdf.literalOf(urlPrefix), existingServiceLiteral), serviceUrlVar);
+                Expressions.bind(Expressions.concat(Rdf.literalOf(urlPrefix), serviceLiteral), serviceUrlVar);
                 serviceTriples.andHas(DCAT.ENDPOINT_URL, serviceUrlVar);
             }
             if (null != postgisRelation) {
