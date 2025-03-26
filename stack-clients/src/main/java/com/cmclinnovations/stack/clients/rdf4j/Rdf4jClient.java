@@ -1,8 +1,13 @@
 package com.cmclinnovations.stack.clients.rdf4j;
 
+import java.util.Collection;
+
+import org.eclipse.rdf4j.federated.repository.FedXRepositoryConfigBuilder;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
 import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryConfig;
+
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 
@@ -49,6 +54,11 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
     public void createSparqlRepository(String id, String title, String queryEndpointUrl, String updateEndpointUrl) {
         RepositoryConfig config = new RepositoryConfig(id, title,
                 new SPARQLRepositoryConfig(queryEndpointUrl, updateEndpointUrl));
+        manager.addRepositoryConfig(config);
+    }
+
+    public void createFederatedRepository(String id, String title, Collection<String> repoIds) {
+        RepositoryConfig config = FedXRepositoryConfigBuilder.create().withResolvableEndpoint(repoIds).build(id, title);
         manager.addRepositoryConfig(config);
     }
 

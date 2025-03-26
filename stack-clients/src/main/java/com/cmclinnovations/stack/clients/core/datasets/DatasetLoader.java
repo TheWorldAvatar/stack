@@ -123,6 +123,41 @@ public class DatasetLoader {
                         jOb.getString(idVar.getVarName()),
                         jOb.getString(titleVar.getVarName()),
                         jOb.getString(urlVar.getVarName())));
+
+        String rdf4jServiceId = getRdf4jServiceIdFromKg(datasetName);
+        if (null == rdf4jServiceId)
+            return;
+
+        if (queryResult.length() == 1) {
+            String url = queryResult.getJSONObject(0).getString(urlVar.getVarName());
+            rdf4jClient.createSparqlRepository(rdf4jServiceId, datasetName, url);
+        } else if (queryResult.length() > 1) {
+            List<String> ids = IntStream.range(0, queryResult.length())
+                    .mapToObj(queryResult::getJSONObject).map(jOb -> jOb.getString(idVar.getVarName()))
+                    .collect(Collectors.toList());
+            rdf4jClient.createFederatedRepository(rdf4jServiceId, datasetName, ids);
+        }
+    }
+
+    private String getRdf4jServiceIdFromKg(String datasetName) {
+        Variable idVar = SparqlBuilder.var("id");
+
+        Variable serviceVar = SparqlBuilder.var("service");
+
+        SelectQuery query = Queries.SELECT(idVar)
+                .where(
+                        serviceVar.isA(SparqlConstants.RDF4J_SERVICE)
+                                .andHas(PropertyPathBuilder.of(DCAT.SERVES_DATASET).then(DCTERMS.TITLE).build(),
+                                        datasetName)
+                                .andHas(DCTERMS.IDENTIFIER, idVar));
+
+        JSONArray result = BlazegraphClient.getInstance().getRemoteStoreClient(catalogNamespace)
+                .executeQuery(query.getQueryString());
+
+        if (result.length() == 0)
+            return null;
+        else
+            return result.getJSONObject(0).getString(idVar.getVarName());
     }
 
     private void configurePostgres(Dataset dataset, List<DataSubset> dataSubsets) {
