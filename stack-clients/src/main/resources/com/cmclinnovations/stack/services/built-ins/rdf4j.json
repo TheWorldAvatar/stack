@@ -4,7 +4,19 @@
         "Name": "rdf4j",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "eclipse/rdf4j-workbench:5.1.2"
+                "Image": "eclipse/rdf4j-workbench:5.1.2",
+                "Healthcheck": {
+                    "Test": [
+                        "CMD",
+                        "curl",
+                        "-f",
+                        "http://localhost:8080/rdf4j-server"
+                    ],
+                    "Interval": 1000000000,
+                    "Timeout": 1000000000,
+                    "Retries": 10,
+                    "StartPeriod": 3000000000
+                }
             }
         }
     },
