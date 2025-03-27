@@ -34,7 +34,6 @@ import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import uk.ac.cam.cares.jps.base.derivation.ValuesPattern;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 public class DatasetLoader {
