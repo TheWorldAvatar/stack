@@ -9,6 +9,8 @@ services:
         target: /geoserver
       - source: ontop
         target: /ontop
+      - source: rdf4j
+        target: /rdf4j
 
 secrets:
   blazegraph:
@@ -22,4 +24,7 @@ secrets:
     external: true
   ontop:
     name: ${STACK_NAME}_ontop
+    external: true
+  rdf4j:
+    name: ${STACK_NAME}_rdf4j
     external: true

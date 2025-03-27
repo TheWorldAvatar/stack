@@ -1,11 +1,22 @@
 package com.cmclinnovations.stack.clients.core.datasets;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.eclipse.rdf4j.model.vocabulary.DCAT;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.propertypath.builder.PropertyPathBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.core.SparqlBuilder;
+import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
+import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
+import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
+import org.eclipse.rdf4j.sparqlbuilder.rdf.Iri;
+import org.json.JSONArray;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
@@ -14,16 +25,22 @@ import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
+import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.services.OntopService;
 import com.cmclinnovations.stack.services.ServiceManager;
 import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 public class DatasetLoader {
 
     private static final ServiceManager serviceManager = new ServiceManager(false);
+
+    private static final ObjectMapper objectMapper = JsonHelper.getMapper();
 
     private final String catalogNamespace;
 
@@ -42,6 +59,7 @@ public class DatasetLoader {
         Stream<Dataset> selectedDatasets = DatasetReader.getStackSpecificDatasets(allDatasets, selectedDatasetName);
 
         loadDatasets(selectedDatasets);
+
     }
 
     public void loadDatasets(Collection<Dataset> selectedDatasets) {
@@ -76,6 +94,92 @@ public class DatasetLoader {
                     .executeUpdate(new DCATUpdateQuery().getUpdateQuery(dataset));
 
             runRules(dataset, directory);
+
+            createSparqlEndpointRdf4jRepos(dataset.getName());
+        }
+    }
+
+    private class ServiceDescription {
+        private String id;
+        private String title;
+        private String url;
+        private Iri type;
+
+        public String getId() {
+            return id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public Iri getType() {
+            return type;
+        }
+
+    }
+
+    private void createSparqlEndpointRdf4jRepos(String datasetName) {
+        List<ServiceDescription> serviceDescriptions = getServiceDescriptions(datasetName);
+
+        Rdf4jClient rdf4jClient = Rdf4jClient.getInstance();
+
+        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE)).forEach(
+                sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Blazegraph)", sd.getUrl()));
+
+        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.ONTOP_SERVICE)).forEach(
+                sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Ontop)", sd.getUrl()));
+
+        ServiceDescription rdf4jSD = serviceDescriptions.stream()
+                .filter(sd -> sd.getType().equals(SparqlConstants.RDF4J_SERVICE)).findAny().orElse(null);
+
+        if (null != rdf4jSD) {
+            List<ServiceDescription> federatingSDs = serviceDescriptions.stream()
+                    .filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE)
+                            && sd.getType().equals(SparqlConstants.ONTOP_SERVICE))
+                    .collect(Collectors.toList());
+            if (federatingSDs.size() == 1) {
+                rdf4jClient.createSparqlRepository(rdf4jSD.getId(), rdf4jSD.getTitle(), federatingSDs.get(0).getUrl());
+            } else if (federatingSDs.size() > 1) {
+                List<String> ids = federatingSDs.stream().map(ServiceDescription::getId).collect(Collectors.toList());
+                rdf4jClient.createFederatedRepository(rdf4jSD.getId(), rdf4jSD.getTitle(), ids);
+            }
+        }
+    }
+
+    private List<ServiceDescription> getServiceDescriptions(String datasetName) {
+        Variable idVar = SparqlBuilder.var("id");
+        Variable titleVar = SparqlBuilder.var("title");
+        Variable urlVar = SparqlBuilder.var("url");
+        Variable typeVar = SparqlBuilder.var("type");
+
+        Variable serviceVar = SparqlBuilder.var("service");
+
+        SelectQuery query = Queries.SELECT(idVar, titleVar, urlVar, typeVar)
+                .where(
+                        serviceVar.isA(typeVar)
+                                .andHas(PropertyPathBuilder.of(DCAT.SERVES_DATASET).then(DCTERMS.TITLE).build(),
+                                        datasetName)
+                                .andHas(DCTERMS.IDENTIFIER, idVar)
+                                .andHas(DCTERMS.TITLE, titleVar)
+                                .andHas(DCAT.ENDPOINT_URL, urlVar));
+
+        JSONArray queryResult = BlazegraphClient.getInstance().getRemoteStoreClient(catalogNamespace)
+                .executeQuery(query.getQueryString());
+
+        try {
+            return objectMapper.readValue(queryResult.toString(),
+                    new TypeReference<List<ServiceDescription>>() {
+                    });
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    "Error occurred while reading result of finding the service descriptions for the dataset '"
+                            + datasetName + "''.",
+                    ex);
         }
     }
 

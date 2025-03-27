@@ -6,3 +6,4 @@ gdal
 citydbimpexp
 citytiler
 geoserver
+rdf4j

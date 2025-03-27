@@ -24,7 +24,7 @@
 <https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb>
         rdf:type  <https://theworldavatar.io/kg/service#Blazegraph>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb";
+                "36c185f7-672e-4185-a1d0-29151a3214fb";
         <http://purl.org/dc/terms/title>
                 "testDataset2";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -45,4 +45,15 @@
         <http://www.w3.org/ns/dcat#dataset>
                 <https://theworldavatar.io/kg/2c5e149d-8a6d-4658-ac80-ee23c93ecc35>;
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb> .
+                <https://theworldavatar.io/kg/36c185f7-672e-4185-a1d0-29151a3214fb> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b2> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b2>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b2";
+        <http://purl.org/dc/terms/title>
+                "testDataset2 (Dataset)";
+        <http://www.w3.org/ns/dcat#endpointURL>
+                <http://rdf4j:8080/rdf4j-server/repositories/f1af3c55-3139-4225-80d7-a899895437b2>;
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/fa2d6338-0986-4a31-bc65-405a253b5d73> .
