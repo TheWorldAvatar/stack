@@ -1,5 +1,6 @@
 package com.cmclinnovations.stack.services;
 
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jEndpointConfig;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
@@ -14,6 +15,9 @@ public class Rdf4jService extends ContainerService {
     private static final String DEFAULT_USERNAME = "bg_user";
     private static final String DEFAULT_PORT = "8080";
     private static final String DEFAULT_PASSWORD_FILE = "/run/secrets/rdf4j_password";
+
+    private static final String IN_STACK_REPO_ID = "stack-incoming";
+    private static final String IN_STACK_REPO_NAME = "Stack Repository (Incoming)";
 
     public Rdf4jService(String stackName, ServiceConfig config) {
         super(stackName, config);
@@ -35,5 +39,12 @@ public class Rdf4jService extends ContainerService {
 
         addEndpointConfig(endpointConfig);
 
+    }
+
+    @Override
+    public void doPostStartUpConfiguration() {
+        Rdf4jClient client = Rdf4jClient.getInstance();
+        if (!client.repositoryExists(IN_STACK_REPO_ID))
+            client.createBlankRepository(IN_STACK_REPO_ID, IN_STACK_REPO_NAME);
     }
 }
