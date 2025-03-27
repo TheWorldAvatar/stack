@@ -38,6 +38,7 @@ import com.cmclinnovations.stack.clients.ontop.OntopEndpointConfig;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.BlazegraphContainer;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -170,6 +171,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddGeoServer() {
         writePostGISConfig();
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").withServices(Service.GEOSERVER).build();
@@ -460,7 +462,7 @@ class DCATUpdateQueryTest {
     }
 
     private void writeRdf4jConfig() {
-        Rdf4jClient.writeEndpointConfig(new OntopEndpointConfig("rdf4j", "rdf4j", "8080"));
+        Rdf4jClient.writeEndpointConfig(new Rdf4jEndpointConfig("rdf4j", "rdf4j", "8080", null, null));
     }
 
     private void buildAndRunQuery(Dataset dataset) {
