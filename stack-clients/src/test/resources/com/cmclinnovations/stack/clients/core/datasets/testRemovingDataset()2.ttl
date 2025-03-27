@@ -42,6 +42,8 @@
                 "f1af3c55-3139-4225-80d7-a899895437b1";
         <http://purl.org/dc/terms/title>
                 "testDataset (Dataset)";
+        <http://www.w3.org/ns/dcat#endpointURL>
+                <http://rdf4j:8080/rdf4j-server/repositories/f1af3c55-3139-4225-80d7-a899895437b1>;
         <http://www.w3.org/ns/dcat#servesDataset>
                 <https://theworldavatar.io/kg/45f9a7c7-d7a1-4f49-944d-369bb9f20c68> .
 

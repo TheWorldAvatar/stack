@@ -21,6 +21,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ModelCom;
+import org.eclipse.rdf4j.model.vocabulary.DCAT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -573,6 +574,10 @@ class DCATUpdateQueryTest {
                         e -> ResourceFactory.createPlainLiteral(
                                 e.getKey().toString().substring(e.getKey().toString().lastIndexOf("/") + 1)),
                         e -> ResourceFactory.createPlainLiteral("The UUID in the URI as a literal!"))));
+
+        specificToGeneric
+                .putAll(modelIn.listObjectsOfProperty(ResourceFactory.createProperty(DCAT.ENDPOINT_URL.stringValue()))
+                        .toSet().stream().collect(Collectors.toMap(s -> s, s -> ResourceFactory.createResource())));
 
         List<Literal> dateTimes = modelIn.listObjects().toSet().stream().filter(o -> o.isLiteral())
                 .map(o -> o.asLiteral()).filter(o -> o.getDatatype().equals(XSDDatatype.XSDdateTime))

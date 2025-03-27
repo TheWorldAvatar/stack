@@ -8,6 +8,7 @@ import org.eclipse.rdf4j.model.vocabulary.DCAT;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.XSD;
 import org.eclipse.rdf4j.sparqlbuilder.constraint.Expressions;
+import org.eclipse.rdf4j.sparqlbuilder.constraint.SparqlFunction;
 import org.eclipse.rdf4j.sparqlbuilder.core.SparqlBuilder;
 import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.ModifyQuery;
@@ -233,7 +234,7 @@ final class DCATUpdateQuery {
     private void addRDF4JServer(Dataset dataset) {
         boolean used = dataset.usesBlazegraph() || dataset.usesOntop();
         String name = dataset.getName() + " (Dataset)";
-        String urlPrefix = Rdf4jClient.getInstance().readEndpointConfig().getServerServiceUrl() + "/repositories";
+        String urlPrefix = Rdf4jClient.getInstance().readEndpointConfig().getServerServiceUrl() + "/repositories/";
         addService(rdf4jServiceVar, name, SparqlConstants.RDF4J_SERVICE, null, null, urlPrefix, used);
     }
 
@@ -256,21 +257,6 @@ final class DCATUpdateQuery {
                     .andHas(DCTERMS.IDENTIFIER, serviceLiteral)
                     .andHas(DCAT.SERVES_DATASET, datasetVar);
 
-            // Insert optional triples
-            if (null != url) {
-                serviceTriples.andHas(DCAT.ENDPOINT_URL, Rdf.iri(url));
-            } else if (null != urlPrefix) {
-                Variable serviceUrlVar = createVar(serviceVar, "url");
-                Expressions.bind(Expressions.concat(Rdf.literalOf(urlPrefix), serviceLiteral), serviceUrlVar);
-                serviceTriples.andHas(DCAT.ENDPOINT_URL, serviceUrlVar);
-            }
-            if (null != postgisRelation) {
-                serviceTriples.andHas(postgisRelation, postgisServiceVar);
-            }
-            query.insert(serviceTriples);
-            // Insert link from the dataset
-            query.insert(datasetVar.has(DCAT.HAS_SERVICE, serviceVar));
-
             query.where(GraphPatterns.and(
                     // Look for existing instance of this service
                     existingServiceVar.isA(type)
@@ -287,6 +273,22 @@ final class DCATUpdateQuery {
             // Create literal from IRI for "identifier"
             query.where(Expressions.bind(Expressions.coalesce(existingServiceLiteral, Rdf.literalOf(newId)),
                     serviceLiteral));
+
+            // Insert optional triples
+            if (null != url) {
+                serviceTriples.andHas(DCAT.ENDPOINT_URL, Rdf.iri(url));
+            } else if (null != urlPrefix) {
+                Variable serviceUrlVar = createVar(serviceVar, "url");
+                query.where(Expressions.bind(Expressions.function(SparqlFunction.IRI,
+                        Expressions.concat(Rdf.literalOf(urlPrefix), serviceLiteral)), serviceUrlVar));
+                serviceTriples.andHas(DCAT.ENDPOINT_URL, serviceUrlVar);
+            }
+            if (null != postgisRelation) {
+                serviceTriples.andHas(postgisRelation, postgisServiceVar);
+            }
+            query.insert(serviceTriples);
+            // Insert link from the dataset
+            query.insert(datasetVar.has(DCAT.HAS_SERVICE, serviceVar));
         } else {
             Variable existingServiceVar = createVar(serviceVar, EXISTING);
             // Insert link from the dataset
