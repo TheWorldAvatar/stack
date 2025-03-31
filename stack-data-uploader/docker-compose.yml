@@ -1,6 +1,6 @@
 services:
   stack-data-uploader:
-    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.43.0-create-incoming-federated-endpoint-per-stack-SNAPSHOT
+    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.44.0-create-outgoing-federated-pre-stack-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password

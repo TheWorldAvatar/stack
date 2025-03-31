@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.43.0-create-incoming-federated-endpoint-per-stack-SNAPSHOT</version>
+    <version>1.44.0-create-outgoing-federated-pre-stack-SNAPSHOT</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
