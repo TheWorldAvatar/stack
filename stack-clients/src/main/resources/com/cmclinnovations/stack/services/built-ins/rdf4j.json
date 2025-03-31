@@ -1,0 +1,21 @@
+{
+    "type": "rdf4j",
+    "ServiceSpec": {
+        "Name": "rdf4j",
+        "TaskTemplate": {
+            "ContainerSpec": {
+                "Image": "eclipse/rdf4j-workbench:5.1.2"
+            }
+        }
+    },
+    "endpoints": {
+        "workbench": {
+            "url": "http://localhost:8080/rdf4j-workbench/",
+            "externalPath": "/rdf4j-workbench/"
+        },
+        "server": {
+            "url": "http://localhost:8080/rdf4j-server/",
+            "externalPath": "/rdf4j-server/"
+        }
+    }
+}

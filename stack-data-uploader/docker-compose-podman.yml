@@ -18,3 +18,6 @@ secrets:
   geoserver:
     name: ${STACK_NAME}_geoserver
     external: true
+  rdf4j:
+    name: ${STACK_NAME}_rdf4j
+    external: true

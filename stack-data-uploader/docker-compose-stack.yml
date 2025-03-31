@@ -41,3 +41,6 @@ secrets:
   geoserver_password:
     name: ${STACK_NAME}_geoserver_password
     external: true
+  rdf4j_password:
+    name: ${STACK_NAME}_rdf4j_password
+    external: true

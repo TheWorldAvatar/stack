@@ -21,6 +21,7 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.impl.ModelCom;
+import org.eclipse.rdf4j.model.vocabulary.DCAT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,8 @@ import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.ontop.OntopEndpointConfig;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
+import com.cmclinnovations.stack.clients.rdf4j.Rdf4jEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.BlazegraphContainer;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -68,6 +71,7 @@ class DCATUpdateQueryTest {
 
     @Test
     void testAddDataset() {
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").build();
@@ -130,6 +134,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddBlazegraph() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").withServices(Service.BLAZEGRAPH).build();
@@ -167,6 +172,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddGeoServer() {
         writePostGISConfig();
+        writeRdf4jConfig();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1").withServices(Service.GEOSERVER).build();
@@ -210,6 +216,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddDataSubset() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
@@ -245,6 +252,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddDataSubsetSkipping() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
@@ -279,6 +287,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataSimple() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -291,6 +300,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataPrefixOnly() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -303,6 +313,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataPrefix() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -315,6 +326,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataMissingPrefixes() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -328,6 +340,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataUseBuiltinPrefix() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -341,6 +354,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataOverrideBuiltinPrefixes() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -356,6 +370,7 @@ class DCATUpdateQueryTest {
     @Test
     void testAddMetadataFromFile() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
 
         Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                 .withDatasetDirectory("test1")
@@ -388,6 +403,7 @@ class DCATUpdateQueryTest {
     @Test
     void testRemovingDataset() {
         writeBlazegraphConfig();
+        writeRdf4jConfig();
         ObjectMapper mapper = JsonHelper.getMapper();
 
         Dataset dataset1;
@@ -444,6 +460,10 @@ class DCATUpdateQueryTest {
     private void writeOntopConfig(String name) {
         OntopClient.writeEndpointConfig(
                 new OntopEndpointConfig(name, StackClient.prependStackName(name).replace('_', '-'), "5678"));
+    }
+
+    private void writeRdf4jConfig() {
+        Rdf4jClient.writeEndpointConfig(new Rdf4jEndpointConfig("rdf4j", "rdf4j", "8080", null, null));
     }
 
     private void buildAndRunQuery(Dataset dataset) {
@@ -548,16 +568,21 @@ class DCATUpdateQueryTest {
     private Model genericiseModel(Model modelIn) {
         Map<RDFNode, RDFNode> specificToGeneric = modelIn.listSubjects().toSet().stream()
                 .collect(Collectors.toMap(s -> s, s -> ResourceFactory.createResource()));
-        specificToGeneric.entrySet().stream()
-                .collect(Collectors.toMap(e -> ResourceFactory.createPlainLiteral(e.getKey().toString()),
-                        e -> ResourceFactory.createPlainLiteral(e.getValue().toString())));
+        // TODO: Come up with way to do this that does not involve parsing the IRI
+        specificToGeneric.putAll(specificToGeneric.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> ResourceFactory.createPlainLiteral(
+                                e.getKey().toString().substring(e.getKey().toString().lastIndexOf("/") + 1)),
+                        e -> ResourceFactory.createPlainLiteral("The UUID in the URI as a literal!"))));
+
+        specificToGeneric
+                .putAll(modelIn.listObjectsOfProperty(ResourceFactory.createProperty(DCAT.ENDPOINT_URL.stringValue()))
+                        .toSet().stream().collect(Collectors.toMap(s -> s, s -> ResourceFactory.createResource())));
+
         List<Literal> dateTimes = modelIn.listObjects().toSet().stream().filter(o -> o.isLiteral())
                 .map(o -> o.asLiteral()).filter(o -> o.getDatatype().equals(XSDDatatype.XSDdateTime))
                 .sorted((o1, o2) -> ((XSDDateTime) o1.getValue()).compare((XSDDateTime) o2.getValue()))
                 .collect(Collectors.toList());
-        specificToGeneric.putAll(specificToGeneric.entrySet().stream()
-                .collect(Collectors.toMap(e -> ResourceFactory.createPlainLiteral(e.getKey().toString()),
-                        e -> ResourceFactory.createPlainLiteral("An URI as a literal!"))));
         specificToGeneric.putAll(dateTimes.stream().collect(
                 Collectors.toMap(dt -> dt,
                         dt -> ResourceFactory.createTypedLiteral(

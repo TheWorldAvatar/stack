@@ -2,3 +2,4 @@ testing_temp/
 **/target/
 WEB-INF/
 log*.xml
+port.txt

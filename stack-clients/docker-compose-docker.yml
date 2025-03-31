@@ -5,6 +5,7 @@ services:
       - postgis
       - geoserver
       - ontop
+      - rdf4j
 
 configs:
   blazegraph:
@@ -18,4 +19,7 @@ configs:
     external: true
   ontop:
     name: ${STACK_NAME}_ontop
+    external: true
+  rdf4j:
+    name: ${STACK_NAME}_rdf4j
     external: true

@@ -21,12 +21,23 @@
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#service>
-                <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d> , <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881> .
+                <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d> , <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881> , <https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1> .
+
+<https://theworldavatar.io/kg/f1af3c55-3139-4225-80d7-a899895437b1>
+        rdf:type  <https://theworldavatar.io/kg/service#RDF4J>;
+        <http://purl.org/dc/terms/identifier>
+                "f1af3c55-3139-4225-80d7-a899895437b1";
+        <http://purl.org/dc/terms/title>
+                "testDataset (Dataset)";
+        <http://www.w3.org/ns/dcat#endpointURL>
+                <http://rdf4j:8080/rdf4j-server/repositories/f1af3c55-3139-4225-80d7-a899895437b1>;
+        <http://www.w3.org/ns/dcat#servesDataset>
+                <https://theworldavatar.io/kg/c96f5363-0933-4b4d-80a7-0dafb1e9599e> .
 
 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>
         rdf:type  <https://theworldavatar.io/kg/service#PostGIS>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d";
+                "7dc9e69c-cc10-4305-b57a-5ba44023781d";
         <http://purl.org/dc/terms/title>
                 "testDataset";
         <http://www.w3.org/ns/dcat#endpointURL>
@@ -37,7 +48,7 @@
 <https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881>
         rdf:type  <https://theworldavatar.io/kg/service#Ontop>;
         <http://purl.org/dc/terms/identifier>
-                "https://theworldavatar.io/kg/1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
+                "1c1c3934-cd98-4048-bfc8-b6e8e9a2d881";
         <http://purl.org/dc/terms/requires>
                 <https://theworldavatar.io/kg/7dc9e69c-cc10-4305-b57a-5ba44023781d>;
         <http://purl.org/dc/terms/title>
