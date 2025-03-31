@@ -42,7 +42,7 @@ public class Rdf4jService extends ContainerService {
     }
 
     @Override
-    public void doPostStartUpConfiguration() {
+    public void doEveryTimePostStartUpConfiguration() {
         Rdf4jClient client = Rdf4jClient.getInstance();
         if (!client.hasRepositoryConfig(IN_STACK_REPO_ID))
             client.createBlankRepository(IN_STACK_REPO_ID, IN_STACK_REPO_TITLE);

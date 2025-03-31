@@ -57,7 +57,7 @@ public final class GeoServerService extends ContainerService {
     }
 
     @Override
-    public void doPostStartUpConfiguration() {
+    public void doFirstTimePostStartUpConfiguration() {
         Builder settingsRequestBuilder = createBaseSettingsRequestBuilder();
 
         Optional<JsonNode> settings = getExistingSettings(settingsRequestBuilder);

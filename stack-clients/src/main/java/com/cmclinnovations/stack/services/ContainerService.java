@@ -93,8 +93,14 @@ public class ContainerService extends AbstractService {
         endpointConfigs.forEach(this::writeEndpointConfig);
     }
 
-    public void doPostStartUpConfiguration() {
+    public void doFirstTimePostStartUpConfiguration() {
         // Do nothing by default, override if container needs post-startup configuration
+        // only if the container was not originally present
+    }
+
+    public void doEveryTimePostStartUpConfiguration() {
+        // Do nothing by default, override if container needs post-startup configuration
+        // even if the container is already present
     }
 
     public final String getEnvironmentVariable(String key) {
