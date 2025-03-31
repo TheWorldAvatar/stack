@@ -12,7 +12,7 @@ public class Rdf4jService extends ContainerService {
     private static final String RDF4J_USER_KEY = "RDF4J_USER";
     private static final String RDF4J_PASSWORD_FILE_KEY = "RDF4J_PASSWORD_FILE";
 
-    private static final String DEFAULT_USERNAME = "bg_user";
+    private static final String DEFAULT_USERNAME = "rdf4j_user";
     private static final String DEFAULT_PORT = "8080";
     private static final String DEFAULT_PASSWORD_FILE = "/run/secrets/rdf4j_password";
 
