@@ -10,6 +10,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.cmclinnovations.stack.clients.utils.BlazegraphContainer;
+import com.cmclinnovations.stack.services.BlazegraphService;
 
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
@@ -75,7 +76,7 @@ class BlazegraphClientTest {
     @Test
     void testGetEndpoint() {
         BlazegraphEndpointConfig endpoint = blazegraphClient.readEndpointConfig();
-        Assertions.assertEquals(blazegraph.getURL(), endpoint.getUrl("kb"));
+        Assertions.assertEquals(blazegraph.getURL(), endpoint.getUrl(BlazegraphService.CATALOG_NAMESPACE));
     }
 
     @Test
