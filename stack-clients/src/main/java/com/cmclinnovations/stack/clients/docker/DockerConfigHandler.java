@@ -3,11 +3,15 @@ package com.cmclinnovations.stack.clients.docker;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
 import com.cmclinnovations.stack.clients.core.EndpointConfig;
 import com.cmclinnovations.stack.clients.core.StackClient;
+import com.cmclinnovations.stack.clients.rdf4j.ExternalEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,6 +77,31 @@ public class DockerConfigHandler {
             }
         }
         throw new RuntimeException("No Docker config file with name '" + endpointName + "' exists.");
+    }
+
+    public static final List<ExternalEndpointConfig> readExternalEndpointConfig() {
+        Path configFilePath = StackClient.STACK_CONFIG_DIR.resolve("external_endpoints");
+
+        try (Stream<Path> files = Files.list(configFilePath)) {
+            return files.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().endsWith(".json"))
+                    .map(path -> {
+                        if (Files.exists(path)) {
+                            try {
+                                return objectMapper.readValue(path.toFile(), ExternalEndpointConfig.class);
+                            } catch (IOException ex) {
+                                throw new RuntimeException("Failed to read external endpoint config file with name '"
+                                        + path.getFileName() + "'.", ex);
+                            }
+                        }
+                        throw new RuntimeException(
+                                "No external endpoint config file with name '" + path.getFileName() + "' exists.");
+                    })
+                    .collect(Collectors.toList());
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to read external endpoints file(s).", ex);
+        }
+
     }
 
 }
