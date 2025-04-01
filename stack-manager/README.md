@@ -371,8 +371,8 @@ With the following key
 
 ```mermaid
 graph TB
-    fed("Federated Sparql Endpoint")
-    non_fed(["Non-federated Sparql Endpoint"])
+    fed("Federated SPARQL repository")
+    non_fed(["Non-federated SPARQL endpoint"])
 
     fed -."Federation".-> non_fed
     non_fed --"SPARQL query"--> fed
