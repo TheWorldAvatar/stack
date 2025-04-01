@@ -303,7 +303,7 @@ This repository will persist for long as the dataset does.
 An incoming stack repository federates across each [dataset repository](#dataset-repository) in a stack.
 This repository will be used by external clients querying data in this stack.
 When a new dataset is added to this stack its dataset repository will be added to this federation.
-This repository will persist for as long as stack does.
+This repository will persist for as long as stack does but changes as datasets are added and removed.
 
 This repository can be accessed at external to the stack at `http://localhost:<PORT>/rdf4j-server/repositories/stack-incoming/`.
 
@@ -311,10 +311,8 @@ This repository can be accessed at external to the stack at `http://localhost:<P
 
 An outgoing stack endpoint is a federation between internal and external endpoints.
 This endpoint will be used by agents internal to this stack, accessing internal and external data.
-It is not used by external clients in case loops are caused with other Access Agents.
-
-The challenge of querying from external endpoints is that there are potentially very many of these endpoints and they could have performance difficulties.
-There are two potential implementations to address this question in different ways.
+It is not used by external clients in case loops are caused with other stacks.
+This repository will persist for as long as stack does but changes as datasets are added and removed.
 
 This repository can be accessed at internal to the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
 
