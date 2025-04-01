@@ -286,6 +286,103 @@ The format of the stack configuration file is as follows:
 
 > NOTE: When adding services to the `includes` and `excludes` sections, use the file name (excluding the `.json` file extension) from the stack config files, rather than the name specified in `ServiceSpec`.
 
+## Federated SPARQL repositories
+
+An RDF4J server is added to each stack and allows for SPARQL federation across all sparql endpoints within a TWA Stack as well as external endpoints and other TWA Stacks.
+
+## Repositories
+
+### Dataset repository
+
+A dataset repository is one that federates across each endpoint related to a dataset in a stack.
+When a new dataset is added to this stack a new federated dataset repository will be added.
+This repository will persist for long as the dataset does.
+
+### Incoming stack repository
+
+An incoming stack repository federates across each [dataset repository](#dataset-repository) in a stack.
+This repository will be used by external clients querying data in this stack.
+When a new dataset is added to this stack its dataset repository will be added to this federation.
+This repository will persist for as long as stack does.
+
+This repository can be accessed at external to the stack at `http://localhost:<PORT>/rdf4j-server/repositories/stack-incoming/`.
+
+### Outgoing stack endpoint
+
+An outgoing stack endpoint is a federation between internal and external endpoints.
+This endpoint will be used by agents internal to this stack, accessing internal and external data.
+It is not used by external clients in case loops are caused with other Access Agents.
+
+The challenge of querying from external endpoints is that there are potentially very many of these endpoints and they could have performance difficulties.
+There are two potential implementations to address this question in different ways.
+
+This repository can be accessed at internal to the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
+
+## Design
+
+The diagram below illustrates how each of the federated repositories are related to each other.
+
+```mermaid
+graph TB
+    subgraph Stack 2
+        subgraph Access Agent
+            outgoing-2(Outgoing) -.-> incoming-2(Incoming)
+            incoming-2 -.-> DC(Dataset C)
+        end
+        DC -.-> DCO([Dataset C Ontop])
+        agent-2{Agent} --> outgoing-2
+    end
+    
+    subgraph Stack 1
+        subgraph Access Agent
+            outgoing-1(Outgoing) -.-> incoming-1(Incoming)
+            incoming-1 -.-> DA(Dataset A)
+            incoming-1 -.-> DB(Dataset B)
+        end
+        DA -.-> DAB([Dataset A Blazegraph])
+        DB -.-> DBB([Dataset B Blazegraph])
+        DB -.-> DBO([Dataset B Ontop])
+        agent-1{Agent} --> outgoing-1
+    end
+
+    outgoing-1 -.-> incoming-2
+    outgoing-2 -.-> incoming-1
+    ex_non_fed(["External e.g. osm"])
+    outgoing-1 -.-> ex_non_fed([External])
+    outgoing-2 -.-> ex_non_fed
+
+
+    style outgoing-1 fill:#0e7e44, stroke:#ffffff
+    style incoming-1 fill:#0e7e44, stroke:#ffffff
+    style outgoing-2 fill:#0e7e44, stroke:#ffffff
+    style incoming-2 fill:#0e7e44, stroke:#ffffff
+
+    style DA fill:#0e7e44, stroke:#ffffff
+    style DB fill:#0e7e44, stroke:#ffffff
+    style DC fill:#0e7e44, stroke:#ffffff
+
+    style DAB fill:#0d6c7e, stroke:#ffffff
+    style DBB fill:#0d6c7e, stroke:#ffffff
+    style DBO fill:#0d6c7e, stroke:#ffffff
+    style DCO fill:#0d6c7e, stroke:#ffffff
+    
+    style ex_non_fed fill:#0d6c7e, stroke:#ffffff
+```
+
+With the following key
+
+```mermaid
+graph TB
+    fed("Federated Sparql Endpoint")
+    non_fed(["Non-federated Sparql Endpoint"])
+
+    fed -."Federation".-> non_fed
+    non_fed --"SPARQL query"--> fed
+
+    style fed fill:#0e7e44, stroke:#ffffff
+    style non_fed fill:#0d6c7e, stroke:#ffffff
+```
+
 ## Example - including a visualisation
 
 This example explains how to spin up a TWA-VF based visualisation container within a stack. The visualisation container requires a volume called `vis-files` to be populated and secrets `mapbox_username`, and `mapbox_api_key` to be created.
