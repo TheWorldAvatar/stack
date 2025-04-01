@@ -87,7 +87,7 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
     }
 
     private void addRepositoryConfig(RepositoryConfig config) {
-        if (manager.getInitializedRepositoryIDs().contains(config.getID()))
+        if (hasRepositoryConfig(config.getID()))
             manager.removeRepository(config.getID());
         manager.addRepositoryConfig(config);
     }
