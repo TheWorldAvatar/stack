@@ -8,6 +8,8 @@ public class BlazegraphService extends ContainerService {
 
     public static final String TYPE = "blazegraph";
 
+    public static final String CATALOG_NAMESPACE = "kb";
+
     private static final String BLAZEGRAPH_USER_KEY = "BLAZEGRAPH_USER";
     private static final String BLAZEGRAPH_PASSWORD_FILE_KEY = "BLAZEGRAPH_PASSWORD_FILE";
 

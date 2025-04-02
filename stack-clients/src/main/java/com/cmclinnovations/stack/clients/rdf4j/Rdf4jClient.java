@@ -1,11 +1,14 @@
 package com.cmclinnovations.stack.clients.rdf4j;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.rdf4j.federated.repository.FedXRepositoryConfigBuilder;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
+import org.eclipse.rdf4j.repository.config.RepositoryImplConfig;
 import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
+import org.eclipse.rdf4j.repository.sail.config.SailRepositoryConfig;
 import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryConfig;
+import org.eclipse.rdf4j.sail.memory.config.MemoryStoreConfig;
 
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
@@ -47,18 +50,45 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
 
     public void createSparqlRepository(String id, String title, String queryEndpointUrl) {
         RepositoryConfig config = new RepositoryConfig(id, title, new SPARQLRepositoryConfig(queryEndpointUrl));
-        manager.addRepositoryConfig(config);
+        addRepositoryConfig(config);
     }
 
     public void createSparqlRepository(String id, String title, String queryEndpointUrl, String updateEndpointUrl) {
         RepositoryConfig config = new RepositoryConfig(id, title,
                 new SPARQLRepositoryConfig(queryEndpointUrl, updateEndpointUrl));
-        manager.addRepositoryConfig(config);
+        addRepositoryConfig(config);
     }
 
-    public void createFederatedRepository(String id, String title, Collection<String> repoIds) {
-        RepositoryConfig config = FedXRepositoryConfigBuilder.create().withResolvableEndpoint(repoIds).build(id, title);
-        manager.addRepositoryConfig(config);
+    public void createFederatedRepository(String id, String title, List<String> repoIds) {
+        if (repoIds.isEmpty())
+            createBlankRepository(id, title);
+        else if (repoIds.size() == 1)
+            createCopyOfRepository(repoIds.get(0), id, title);
+        else {
+            RepositoryConfig config = FedXRepositoryConfigBuilder.create().withResolvableEndpoint(repoIds).build(id,
+                    title);
+            addRepositoryConfig(config);
+        }
     }
 
+    public void createBlankRepository(String id, String title) {
+        RepositoryConfig config = new RepositoryConfig(id, title, new SailRepositoryConfig(new MemoryStoreConfig()));
+        addRepositoryConfig(config);
+    }
+
+    public void createCopyOfRepository(String sourceId, String targetId, String targetTitle) {
+        RepositoryImplConfig implConfig = manager.getRepositoryConfig(sourceId).getRepositoryImplConfig();
+        RepositoryConfig config = new RepositoryConfig(targetId, targetTitle, implConfig);
+        addRepositoryConfig(config);
+    }
+
+    public boolean hasRepositoryConfig(String id) {
+        return manager.hasRepositoryConfig(id);
+    }
+
+    private void addRepositoryConfig(RepositoryConfig config) {
+        if (hasRepositoryConfig(config.getID()))
+            manager.removeRepository(config.getID());
+        manager.addRepositoryConfig(config);
+    }
 }

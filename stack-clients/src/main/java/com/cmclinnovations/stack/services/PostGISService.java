@@ -45,7 +45,7 @@ public final class PostGISService extends ContainerService {
     }
 
     @Override
-    public void doPostStartUpConfiguration() {
+    public void doFirstTimePostStartUpConfiguration() {
         writePGPASSFile();
 
         copyJDBCDriverToVolume();

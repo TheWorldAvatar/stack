@@ -232,8 +232,12 @@ public class DockerService extends AbstractService
         service.doPreStartUpConfiguration();
     }
 
-    public void doPostStartUpConfiguration(ContainerService service) {
-        service.doPostStartUpConfiguration();
+    public void doFirstTimePostStartUpConfiguration(ContainerService service) {
+        service.doFirstTimePostStartUpConfiguration();
+    }
+
+    public void doEveryTimePostStartUpConfiguration(ContainerService service) {
+        service.doEveryTimePostStartUpConfiguration();
     }
 
     public void writeEndpointConfigs(ContainerService service) {

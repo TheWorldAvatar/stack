@@ -21,7 +21,7 @@ public final class CityTilerService extends ContainerService {
     }
 
     @Override
-    public void doPostStartUpConfiguration() {
+    public void doFirstTimePostStartUpConfiguration() {
 
         DockerClient dockerClient = DockerClient.getInstance();
 

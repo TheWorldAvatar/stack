@@ -15,7 +15,6 @@ import org.eclipse.rdf4j.sparqlbuilder.core.SparqlBuilder;
 import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
-import org.eclipse.rdf4j.sparqlbuilder.rdf.Iri;
 import org.json.JSONArray;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
@@ -27,7 +26,9 @@ import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.cmclinnovations.stack.services.BlazegraphService;
 import com.cmclinnovations.stack.services.OntopService;
+import com.cmclinnovations.stack.services.Rdf4jService;
 import com.cmclinnovations.stack.services.ServiceManager;
 import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
@@ -49,7 +50,7 @@ public class DatasetLoader {
     }
 
     public DatasetLoader() {
-        this("kb");
+        this(BlazegraphService.CATALOG_NAMESPACE);
     }
 
     public void loadInputDatasets(Path configPath, String selectedDatasetName) {
@@ -60,6 +61,22 @@ public class DatasetLoader {
 
         loadDatasets(selectedDatasets);
 
+        createIncomingStackRepository();
+
+    }
+
+    private void createIncomingStackRepository() {
+        Rdf4jClient rdf4jClient = Rdf4jClient.getInstance();
+
+        List<ServiceDescription> serviceDescriptions = getServiceDescriptions();
+
+        List<String> ids = serviceDescriptions.stream()
+                .filter(sd -> sd.getType().equals(SparqlConstants.RDF4J_SERVICE_STRING))
+                .map(ServiceDescription::getId).collect(Collectors.toList());
+        ids.add(Rdf4jService.DATASET_CATALOG_REPO_ID);
+        if (!ids.isEmpty()) {
+            rdf4jClient.createFederatedRepository(Rdf4jService.IN_STACK_REPO_ID, Rdf4jService.IN_STACK_REPO_TITLE, ids);
+        }
     }
 
     public void loadDatasets(Collection<Dataset> selectedDatasets) {
@@ -99,11 +116,11 @@ public class DatasetLoader {
         }
     }
 
-    private class ServiceDescription {
+    private static class ServiceDescription {
         private String id;
         private String title;
         private String url;
-        private Iri type;
+        private String type;
 
         public String getId() {
             return id;
@@ -117,7 +134,7 @@ public class DatasetLoader {
             return url;
         }
 
-        public Iri getType() {
+        public String getType() {
             return type;
         }
 
@@ -128,27 +145,31 @@ public class DatasetLoader {
 
         Rdf4jClient rdf4jClient = Rdf4jClient.getInstance();
 
-        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE)).forEach(
-                sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Blazegraph)", sd.getUrl()));
+        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE_STRING))
+                .forEach(sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Blazegraph)",
+                        sd.getUrl()));
 
-        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.ONTOP_SERVICE)).forEach(
-                sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Ontop)", sd.getUrl()));
+        serviceDescriptions.stream().filter(sd -> sd.getType().equals(SparqlConstants.ONTOP_SERVICE_STRING))
+                .forEach(sd -> rdf4jClient.createSparqlRepository(sd.getId(), sd.getTitle() + " (Ontop)", sd.getUrl()));
 
         ServiceDescription rdf4jSD = serviceDescriptions.stream()
-                .filter(sd -> sd.getType().equals(SparqlConstants.RDF4J_SERVICE)).findAny().orElse(null);
+                .filter(sd -> sd.getType().equals(SparqlConstants.RDF4J_SERVICE_STRING)).findAny()
+                .orElse(null);
 
         if (null != rdf4jSD) {
-            List<ServiceDescription> federatingSDs = serviceDescriptions.stream()
-                    .filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE)
-                            && sd.getType().equals(SparqlConstants.ONTOP_SERVICE))
-                    .collect(Collectors.toList());
-            if (federatingSDs.size() == 1) {
-                rdf4jClient.createSparqlRepository(rdf4jSD.getId(), rdf4jSD.getTitle(), federatingSDs.get(0).getUrl());
-            } else if (federatingSDs.size() > 1) {
-                List<String> ids = federatingSDs.stream().map(ServiceDescription::getId).collect(Collectors.toList());
-                rdf4jClient.createFederatedRepository(rdf4jSD.getId(), rdf4jSD.getTitle(), ids);
+            List<String> ids = serviceDescriptions.stream()
+                    .filter(sd -> sd.getType().equals(SparqlConstants.BLAZEGRAPH_SERVICE_STRING)
+                            || sd.getType().equals(SparqlConstants.ONTOP_SERVICE_STRING))
+                    .map(ServiceDescription::getId).collect(Collectors.toList());
+            if (!ids.isEmpty()) {
+                rdf4jClient.createFederatedRepository(rdf4jSD.getId(), rdf4jSD.getTitle(),
+                        ids);
             }
         }
+    }
+
+    private List<ServiceDescription> getServiceDescriptions() {
+        return getServiceDescriptions(null);
     }
 
     private List<ServiceDescription> getServiceDescriptions(String datasetName) {
@@ -162,11 +183,13 @@ public class DatasetLoader {
         SelectQuery query = Queries.SELECT(idVar, titleVar, urlVar, typeVar)
                 .where(
                         serviceVar.isA(typeVar)
-                                .andHas(PropertyPathBuilder.of(DCAT.SERVES_DATASET).then(DCTERMS.TITLE).build(),
-                                        datasetName)
                                 .andHas(DCTERMS.IDENTIFIER, idVar)
                                 .andHas(DCTERMS.TITLE, titleVar)
                                 .andHas(DCAT.ENDPOINT_URL, urlVar));
+
+        if (null != datasetName)
+            query.where(serviceVar.has(PropertyPathBuilder.of(DCAT.SERVES_DATASET).then(DCTERMS.TITLE).build(),
+                    datasetName));
 
         JSONArray queryResult = BlazegraphClient.getInstance().getRemoteStoreClient(catalogNamespace)
                 .executeQuery(query.getQueryString());
@@ -177,8 +200,7 @@ public class DatasetLoader {
                     });
         } catch (IOException ex) {
             throw new RuntimeException(
-                    "Error occurred while reading result of finding the service descriptions for the dataset '"
-                            + datasetName + "''.",
+                    "Error occurred while reading result of finding the service descriptions.",
                     ex);
         }
     }
