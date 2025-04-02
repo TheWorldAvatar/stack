@@ -26,6 +26,7 @@ import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.cmclinnovations.stack.services.BlazegraphService;
 import com.cmclinnovations.stack.services.OntopService;
 import com.cmclinnovations.stack.services.Rdf4jService;
 import com.cmclinnovations.stack.services.ServiceManager;
@@ -49,7 +50,7 @@ public class DatasetLoader {
     }
 
     public DatasetLoader() {
-        this("kb");
+        this(BlazegraphService.CATALOG_NAMESPACE);
     }
 
     public void loadInputDatasets(Path configPath, String selectedDatasetName) {
@@ -72,6 +73,7 @@ public class DatasetLoader {
         List<String> ids = serviceDescriptions.stream()
                 .filter(sd -> sd.getType().equals(SparqlConstants.RDF4J_SERVICE_STRING))
                 .map(ServiceDescription::getId).collect(Collectors.toList());
+        ids.add(Rdf4jService.DATASET_CATALOG_REPO_ID);
         if (!ids.isEmpty()) {
             rdf4jClient.createFederatedRepository(Rdf4jService.IN_STACK_REPO_ID, Rdf4jService.IN_STACK_REPO_TITLE, ids);
         }
