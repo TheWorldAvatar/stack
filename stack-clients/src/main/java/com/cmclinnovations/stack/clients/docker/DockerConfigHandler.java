@@ -3,6 +3,7 @@ package com.cmclinnovations.stack.clients.docker;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,24 +83,30 @@ public class DockerConfigHandler {
     public static final List<ExternalEndpointConfig> readExternalEndpointConfig() {
         Path configFilePath = StackClient.STACK_CONFIG_DIR.resolve("external_endpoints");
 
-        try (Stream<Path> files = Files.list(configFilePath)) {
-            return files.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".json"))
-                    .map(path -> {
-                        if (Files.exists(path)) {
-                            try {
-                                return objectMapper.readValue(path.toFile(), ExternalEndpointConfig.class);
-                            } catch (IOException ex) {
-                                throw new RuntimeException("Failed to read external endpoint config file with name '"
-                                        + path.getFileName() + "'.", ex);
+        if (!Files.exists(configFilePath)) {
+            return Collections.emptyList();
+        } else {
+            try (Stream<Path> files = Files.list(configFilePath)) {
+                return files.filter(Files::isRegularFile)
+                        .filter(path -> path.toString().endsWith(".json"))
+                        .map(path -> {
+                            if (Files.exists(path)) {
+                                try {
+                                    return objectMapper.readValue(path.toFile(), ExternalEndpointConfig.class);
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(
+                                            "Failed to read external endpoint config file with name '"
+                                                    + path.getFileName() + "'.",
+                                            ex);
+                                }
                             }
-                        }
-                        throw new RuntimeException(
-                                "No external endpoint config file with name '" + path.getFileName() + "' exists.");
-                    })
-                    .collect(Collectors.toList());
-        } catch (IOException ex) {
-            throw new RuntimeException("Failed to read external endpoints file(s).", ex);
+                            throw new RuntimeException(
+                                    "No external endpoint config file with name '" + path.getFileName() + "' exists.");
+                        })
+                        .collect(Collectors.toList());
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to read external endpoints file(s).", ex);
+            }
         }
 
     }
