@@ -343,42 +343,35 @@ graph TB
         agent-1{Agent} --> outgoing-1
     end
 
-    outgoing-1 -.-> incoming-2
-    outgoing-2 -.-> incoming-1
-    ex_non_fed(["External e.g. osm"])
+    outgoing-1:::fed -.-> incoming-2:::fed
+    outgoing-2:::fed -.-> incoming-1:::fed
+
+    ex_non_fed(["External e.g. osm"]):::nonfed
     outgoing-1 -.-> ex_non_fed([External])
     outgoing-2 -.-> ex_non_fed
 
-
-    style outgoing-1 fill:#0e7e44, stroke:#ffffff
-    style incoming-1 fill:#0e7e44, stroke:#ffffff
-    style outgoing-2 fill:#0e7e44, stroke:#ffffff
-    style incoming-2 fill:#0e7e44, stroke:#ffffff
-
-    style DA fill:#0e7e44, stroke:#ffffff
-    style DB fill:#0e7e44, stroke:#ffffff
-    style DC fill:#0e7e44, stroke:#ffffff
-
-    style DAB fill:#0d6c7e, stroke:#ffffff
-    style DBB fill:#0d6c7e, stroke:#ffffff
-    style DBO fill:#0d6c7e, stroke:#ffffff
-    style DCO fill:#0d6c7e, stroke:#ffffff
+    classDef fed fill:#0e7e44, stroke:#ffffff, color:#fff
+    class DA,DB,DC fed
     
-    style ex_non_fed fill:#0d6c7e, stroke:#ffffff
+    classDef nonfed fill:#0d6c7e, stroke:#ffffff, color:#fff
+    class DAB,DBB,DBO,DCO nonfed
+
 ```
 
 With the following key
 
 ```mermaid
 graph TB
-    fed("Federated SPARQL repository")
-    non_fed(["Non-federated SPARQL endpoint"])
+    classDef fed fill:#0e7e44, stroke:#ffffff, color:#fff
+    
+    classDef nonfed fill:#0d6c7e, stroke:#ffffff, color:#fff
+
+    fed("Federated SPARQL repository"):::fed
+    non_fed(["Non-federated SPARQL endpoint"]):::nonfed
 
     fed -."Federation".-> non_fed
     non_fed --"SPARQL query"--> fed
 
-    style fed fill:#0e7e44, stroke:#ffffff
-    style non_fed fill:#0d6c7e, stroke:#ffffff
 ```
 
 ## Example - including a visualisation
