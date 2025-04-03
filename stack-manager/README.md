@@ -119,7 +119,7 @@ An example of the structure of this file, the one for the Ontop container, is as
 The three top-level nodes are:
 
 * `"type"`(not used in the example above): This is used to run container specific Java code when the container is started and should be ignored for user-specified containers.
-* `"ServiceSpec"`: This is based on the Docker API container creation request format documented [here]("ServiceSpec").
+* `"ServiceSpec"`: This is based on the Docker API container creation request format documented [here][ServiceSpec].
   To specification of `"Configs"` and `"Secrets"` has been simplified so that only the name is required.
 * `"endpoints"`: This is where mappings between the internal URLs and the externally accessible paths can be specified.
   The internal URL should be the one you would use if you were logged into the container and the external path is appended to `http://localhost:3838`
@@ -495,3 +495,4 @@ You will need permission to push to the CMCL package repository to be able to bu
 
 <!-- Links -->
 [resources directory]: ../stack-clients/src/main/resources/com/cmclinnovations/stack/services/built-ins/
+[ServiceSpec]: https://docs.docker.com/reference/api/engine/latest/#tag/Service/operation/ServiceCreate
