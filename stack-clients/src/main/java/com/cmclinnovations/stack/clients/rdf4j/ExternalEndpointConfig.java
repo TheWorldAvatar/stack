@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class ExternalEndpointConfig extends AbstractEndpointConfig {
     private final String id;
-    private final String endpoint;
+    private final String url;
 
     protected ExternalEndpointConfig() {
         this(null, null, null);
@@ -16,11 +16,11 @@ public class ExternalEndpointConfig extends AbstractEndpointConfig {
     public ExternalEndpointConfig(String id, String name, String endpoint) {
         super(name);
         this.id = id;
-        this.endpoint = endpoint;
+        this.url = endpoint;
     }
 
-    public String getEndpoint() {
-        return endpoint;
+    public String getUrl() {
+        return url;
     }
 
     public String getId() {

@@ -65,7 +65,7 @@ public class Rdf4jService extends ContainerService {
 
         List<ExternalEndpointConfig> externalEndpointConfig = readExternalEndpointConfig();
         externalEndpointConfig.forEach(
-                config -> client.createSparqlRepository(config.getId(), config.getName(), config.getEndpoint()));
+                config -> client.createSparqlRepository(config.getId(), config.getName(), config.getUrl()));
         List<String> ids = externalEndpointConfig.stream().map(ExternalEndpointConfig::getId)
                 .collect(Collectors.toList());
         ids.add(IN_STACK_REPO_ID);
