@@ -119,7 +119,7 @@ An example of the structure of this file, the one for the Ontop container, is as
 The three top-level nodes are:
 
 * `"type"`(not used in the example above): This is used to run container specific Java code when the container is started and should be ignored for user-specified containers.
-* `"ServiceSpec"`: This is based on the Docker API container creation request format documented [here]("ServiceSpec").
+* `"ServiceSpec"`: This is based on the Docker API container creation request format documented [here][ServiceSpec].
   To specification of `"Configs"` and `"Secrets"` has been simplified so that only the name is required.
 * `"endpoints"`: This is where mappings between the internal URLs and the externally accessible paths can be specified.
   The internal URL should be the one you would use if you were logged into the container and the external path is appended to `http://localhost:3838`
@@ -286,6 +286,94 @@ The format of the stack configuration file is as follows:
 
 > NOTE: When adding services to the `includes` and `excludes` sections, use the file name (excluding the `.json` file extension) from the stack config files, rather than the name specified in `ServiceSpec`.
 
+## Federated SPARQL repositories
+
+An RDF4J server is added to each stack and allows for SPARQL federation across all sparql endpoints within a TWA Stack as well as external endpoints and other TWA Stacks.
+
+## Repositories
+
+### Dataset repository
+
+A dataset repository is one that federates across each endpoint related to a dataset in a stack.
+When a new dataset is added to this stack a new federated dataset repository will be added.
+This repository will persist for long as the dataset does.
+
+### Incoming stack repository
+
+An incoming stack repository federates across each [dataset repository](#dataset-repository) in a stack.
+This repository will be used by external clients querying data in this stack.
+When a new dataset is added to this stack its dataset repository will be added to this federation.
+This repository will persist for as long as stack does but changes as datasets are added and removed.
+
+This repository can be accessed at external to the stack at `http://localhost:<PORT>/rdf4j-server/repositories/stack-incoming/`.
+
+### Outgoing stack endpoint
+
+An outgoing stack endpoint is a federation between internal and external endpoints.
+This endpoint will be used by agents internal to this stack, accessing internal and external data.
+It is not used by external clients in case loops are caused with other stacks.
+This repository will persist for as long as stack does but changes if external endpoints are added and removed.
+
+This repository can be accessed at internal to the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
+
+## Design
+
+The diagram below illustrates how each of the federated repositories are related to each other.
+
+```mermaid
+graph TB
+    subgraph Stack 2
+        subgraph Access Agent
+            outgoing-2(Outgoing) -.-> incoming-2(Incoming)
+            incoming-2 -.-> DC(Dataset C)
+        end
+        DC -.-> DCO([Dataset C Ontop])
+        agent-2{Agent} --> outgoing-2
+    end
+    
+    subgraph Stack 1
+        subgraph Access Agent
+            outgoing-1(Outgoing) -.-> incoming-1(Incoming)
+            incoming-1 -.-> DA(Dataset A)
+            incoming-1 -.-> DB(Dataset B)
+        end
+        DA -.-> DAB([Dataset A Blazegraph])
+        DB -.-> DBB([Dataset B Blazegraph])
+        DB -.-> DBO([Dataset B Ontop])
+        agent-1{Agent} --> outgoing-1
+    end
+
+    outgoing-1:::fed -.-> incoming-2:::fed
+    outgoing-2:::fed -.-> incoming-1:::fed
+
+    ex_non_fed(["External e.g. osm"]):::nonfed
+    outgoing-1 -.-> ex_non_fed([External])
+    outgoing-2 -.-> ex_non_fed
+
+    classDef fed fill:#0e7e44, stroke:#ffffff, color:#fff
+    class DA,DB,DC fed
+    
+    classDef nonfed fill:#0d6c7e, stroke:#ffffff, color:#fff
+    class DAB,DBB,DBO,DCO nonfed
+
+```
+
+With the following key
+
+```mermaid
+graph TB
+    classDef fed fill:#0e7e44, stroke:#ffffff, color:#fff
+    
+    classDef nonfed fill:#0d6c7e, stroke:#ffffff, color:#fff
+
+    fed("Federated SPARQL repository"):::fed
+    non_fed(["Non-federated SPARQL endpoint"]):::nonfed
+
+    fed -."Federation".-> non_fed
+    non_fed --"SPARQL query"--> fed
+
+```
+
 ## Example - including a visualisation
 
 This example explains how to spin up a TWA-VF based visualisation container within a stack. The visualisation container requires a volume called `vis-files` to be populated and secrets `mapbox_username`, and `mapbox_api_key` to be created.
@@ -400,3 +488,4 @@ You will need permission to push to the CMCL package repository to be able to bu
 
 <!-- Links -->
 [resources directory]: ../stack-clients/src/main/resources/com/cmclinnovations/stack/services/built-ins/
+[ServiceSpec]: https://docs.docker.com/reference/api/engine/latest/#tag/Service/operation/ServiceCreate

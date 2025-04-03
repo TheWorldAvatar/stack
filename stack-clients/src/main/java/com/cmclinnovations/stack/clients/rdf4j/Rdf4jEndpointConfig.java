@@ -1,6 +1,7 @@
 package com.cmclinnovations.stack.clients.rdf4j;
 
 import com.cmclinnovations.stack.clients.core.PasswordEndpointConfig;
+import com.cmclinnovations.stack.services.Rdf4jService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -48,6 +49,21 @@ public class Rdf4jEndpointConfig extends PasswordEndpointConfig {
     @JsonIgnore
     public String getWorkbenchServiceUrl() {
         return getServiceUrl() + "/rdf4j-workbench";
+    }
+
+    @JsonIgnore
+    public String getRepositoryUrl(String repositoryUrl) {
+        return getServerServiceUrl() + "/repositories/" + repositoryUrl;
+    }
+
+    @JsonIgnore
+    public String getIncomingRepositoryUrl() {
+        return getRepositoryUrl(Rdf4jService.IN_STACK_REPO_ID);
+    }
+
+    @JsonIgnore
+    public String getOutgoingRepositoryUrl() {
+        return getRepositoryUrl(Rdf4jService.OUT_STACK_REPO_ID);
     }
 
 }
