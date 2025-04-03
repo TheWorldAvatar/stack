@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
-import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.core.datasets.CopyDatasetQuery;
 import com.cmclinnovations.stack.clients.utils.SparqlRulesFile;
 import com.cmclinnovations.stack.clients.utils.TempFile;
@@ -30,10 +29,6 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     public static final String ONTOP_SPARQL_RULES_FILE = "ONTOP_SPARQL_RULES_FILE";
 
     private static Map<String, OntopClient> instances = new HashMap<>();
-
-    public static OntopClient getInstance() {
-        return getInstance(EndpointNames.ONTOP);
-    }
 
     public static OntopClient getInstance(String containerName) {
         return instances.computeIfAbsent(containerName, OntopClient::new);

@@ -279,7 +279,7 @@ public class DatasetLoader {
             ontopMappings.forEach(mapping -> ontopClient.updateOBDA(directory.resolve(mapping)));
 
             if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
-                OntopClient defaultOntopClient = OntopClient.getInstance();
+                OntopClient defaultOntopClient = OntopClient.getInstance(EndpointNames.ONTOP);
                 ontopMappings.forEach(mapping -> defaultOntopClient.updateOBDA(directory.resolve(mapping)));
             }
 
