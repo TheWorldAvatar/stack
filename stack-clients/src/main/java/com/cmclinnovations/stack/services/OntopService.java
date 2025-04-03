@@ -110,7 +110,7 @@ public final class OntopService extends ContainerService {
     @Override
     public void doFirstTimePostStartUpConfiguration() {
         DockerClient dockerClient = DockerClient.getInstance();
-        String containerId = dockerClient.getContainerId(containerName);
+        String containerId = getContainerId();
         dockerClient.createComplexCommand(containerId, "chown", "ontop:ontop", String.join(" ", configDirs))
                 .withUser("root").exec();
 

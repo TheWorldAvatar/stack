@@ -44,7 +44,7 @@ public final class CityTilerService extends ContainerService {
 
             patch = patch.replaceAll("\\r\\n?", "\n");
 
-            String execId = dockerClient.createComplexCommand(dockerClient.getContainerId(TYPE), "git", "apply", "-")
+            String execId = dockerClient.createComplexCommand(getContainerId(), "git", "apply", "-")
                     .withHereDocument(patch)
                     .withOutputStream(outputStream)
                     .withErrorStream(errorStream)
