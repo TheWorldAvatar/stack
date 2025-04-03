@@ -114,7 +114,7 @@ public final class OntopService extends ContainerService {
         dockerClient.createComplexCommand(containerId, "chown", "ontop:ontop", String.join(" ", configDirs))
                 .withUser("root").exec();
 
-        OntopClient ontopClient = OntopClient.getInstance();
+        OntopClient ontopClient = OntopClient.getInstance(containerName);
         configFiles.forEach(f -> {
             if (!fileExists(f)) {
                 String extension = FilenameUtils.getExtension(f);
