@@ -1,6 +1,6 @@
 services:
   stack-client:
-    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.43.0
+    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.43.1-fix-ontop-empty-file-creation-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password
