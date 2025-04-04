@@ -78,6 +78,10 @@ public class ContainerService extends AbstractService {
         this.containerId = containerId;
     }
 
+    final protected String getContainerId() {
+        return containerId;
+    }
+
     final void setDockerClient(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
