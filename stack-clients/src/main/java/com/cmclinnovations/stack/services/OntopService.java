@@ -99,11 +99,13 @@ public final class OntopService extends ContainerService {
             containerSpec.withMounts(mounts);
         }
         for (String dir : configDirs) {
-            mounts.add(new Mount()
-                    .withSource(containerName)
-                    .withTarget(dir)
-                    .withType(MountType.VOLUME)
-                    .withReadOnly(false));
+            if (mounts.stream().map(Mount::getTarget).noneMatch(dir::equals)) {
+                mounts.add(new Mount()
+                        .withSource(containerName)
+                        .withTarget(dir)
+                        .withType(MountType.VOLUME)
+                        .withReadOnly(false));
+            }
         }
     }
 
