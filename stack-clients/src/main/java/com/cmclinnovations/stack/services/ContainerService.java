@@ -18,6 +18,7 @@ import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.docker.DockerClient;
 import com.cmclinnovations.stack.clients.docker.DockerClient.ComplexCommand;
 import com.cmclinnovations.stack.clients.docker.DockerConfigHandler;
+import com.cmclinnovations.stack.clients.rdf4j.ExternalEndpointConfig;
 import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.github.dockerjava.api.model.ContainerSpec;
@@ -176,6 +177,10 @@ public class ContainerService extends AbstractService {
 
     public <E extends EndpointConfig> E readEndpointConfig(String endpointName, Class<E> endpointConfigClass) {
         return DockerConfigHandler.readEndpointConfig(endpointName, endpointConfigClass);
+    }
+
+    public List<ExternalEndpointConfig> readExternalEndpointConfig() {
+        return DockerConfigHandler.readExternalEndpointConfig();
     }
 
     /**
