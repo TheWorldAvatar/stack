@@ -28,6 +28,10 @@
         "server": {
             "url": "http://localhost:8080/rdf4j-server/",
             "externalPath": "/rdf4j-server/"
+        },
+        "query": {
+            "url": "http://localhost:8080/rdf4j-server/repositories/stack-incoming",
+            "externalPath": "/sparql/query"
         }
     }
 }
