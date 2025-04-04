@@ -5,6 +5,18 @@
         "TaskTemplate": {
             "ContainerSpec": {
                 "Image": "eclipse/rdf4j-workbench:5.1.2",
+                "Mounts": [
+                    {
+                        "Type": "volume",
+                        "Source": "rdf4j-data",
+                        "Target": "/var/rdf4j"
+                    },
+                    {
+                        "Type": "volume",
+                        "Source": "rdf4j-logs",
+                        "Target": "/usr/local/tomcat/logs"
+                    }
+                ],
                 "Healthcheck": {
                     "Test": [
                         "CMD",
