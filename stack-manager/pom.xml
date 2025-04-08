@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.46.2-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT</version>
+    <version>1.46.2</version>
 
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.46.2-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT</version>
+            <version>1.46.2</version>
         </dependency>
 
         <dependency>
