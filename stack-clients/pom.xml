@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.45.1-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT</version>
+    <version>1.46.2-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>

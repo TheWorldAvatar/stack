@@ -1,6 +1,6 @@
 services:
   stack-client:
-    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.45.1-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT
+    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.46.2-no-external-external-endpoint-persistent-copy-of-incoming-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password
