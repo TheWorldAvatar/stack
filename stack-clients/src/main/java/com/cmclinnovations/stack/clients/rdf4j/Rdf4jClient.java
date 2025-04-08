@@ -74,12 +74,6 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
         addRepositoryConfig(config);
     }
 
-    public void createCopyOfRepository(String sourceId, String targetId, String targetTitle) {
-        RepositoryImplConfig implConfig = manager.getRepositoryConfig(sourceId).getRepositoryImplConfig();
-        RepositoryConfig config = new RepositoryConfig(targetId, targetTitle, implConfig);
-        addRepositoryConfig(config);
-    }
-
     public boolean hasRepositoryConfig(String id) {
         return manager.hasRepositoryConfig(id);
     }
