@@ -62,8 +62,6 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
     public void createFederatedRepository(String id, String title, List<String> repoIds) {
         if (repoIds.isEmpty())
             createBlankRepository(id, title);
-        else if (repoIds.size() == 1)
-            createCopyOfRepository(repoIds.get(0), id, title);
         else {
             RepositoryConfig config = FedXRepositoryConfigBuilder.create().withResolvableEndpoint(repoIds).build(id,
                     title);
