@@ -319,10 +319,10 @@ public class PodmanService extends DockerService {
     @Override
     protected Optional<Container> getContainerIfCreated(String containerName) {
 
-        Optional<ListContainer> container;
-        do {
+        Optional<ListContainer> potentialContainer;
+        while (true) {
             try {
-                container = new ContainersApi(getClient().getPodmanClient())
+                potentialContainer = new ContainersApi(getClient().getPodmanClient())
                         .containerListLibpod(true, 1, null, null, null, null,
                                 URLEncoder.encode("{\"name\":[\"" + containerName + "\"],\"pod\":[\""
                                         + getPodName(containerName) + "\"]}", StandardCharsets.UTF_8))
@@ -331,10 +331,29 @@ public class PodmanService extends DockerService {
                 throw new RuntimeException("Failed to retrieve state of Container '" + containerName + "'.", ex);
             }
 
-        } while (container.isEmpty());
-
-        String containerId = container.get().getId();
-        return getContainerFromID(containerId);
+            if (!potentialContainer.isEmpty()) {
+                ListContainer container = potentialContainer.get();
+                String state = container.getState();
+                String status = container.getStatus();
+                switch (state) {
+                    case "created":
+                    case "restarting":
+                        break;
+                    case "running":
+                        if (!(status.isEmpty() || status.equals("healthy"))) {
+                            break;
+                        }
+                    case "exited":
+                        return getContainerFromID(container.getId());
+                    case "removing":
+                    case "paused":
+                    case "dead":
+                    default:
+                        throw new RuntimeException("Failed to start container '" + containerName
+                                + "'.\nState is: '" + state + "'\nStatus is: '" + status + "'");
+                }
+            }
+        }
     }
 
 }
