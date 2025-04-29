@@ -309,6 +309,8 @@ public class PodmanService extends DockerService {
                 Schema2HealthConfig healthConfig = new Schema2HealthConfig()
                         .test(healthCheck.getTest())
                         .startPeriod(healthCheck.getStartPeriod().intValue())
+                        // TODO: Podman only supports "startInterval" from v5 which we can use yet.
+                        // .startInterval(healthCheck.getStartInterval().intValue())
                         .interval(healthCheck.getInterval().intValue())
                         .timeout(healthCheck.getTimeout().intValue())
                         .retries(healthCheck.getRetries().longValue());
