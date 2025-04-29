@@ -33,6 +33,7 @@ import com.cmclinnovations.swagger.podman.model.Namespace;
 import com.cmclinnovations.swagger.podman.model.PerNetworkOptions;
 import com.cmclinnovations.swagger.podman.model.PodSpecGenerator;
 import com.cmclinnovations.swagger.podman.model.PortMapping;
+import com.cmclinnovations.swagger.podman.model.Schema2HealthConfig;
 import com.cmclinnovations.swagger.podman.model.Secret;
 import com.cmclinnovations.swagger.podman.model.SecretInfoReport;
 import com.cmclinnovations.swagger.podman.model.SpecGenerator;
@@ -42,6 +43,7 @@ import com.github.dockerjava.api.model.ContainerSpecConfig;
 import com.github.dockerjava.api.model.ContainerSpecFile;
 import com.github.dockerjava.api.model.ContainerSpecSecret;
 import com.github.dockerjava.api.model.EndpointSpec;
+import com.github.dockerjava.api.model.HealthCheck;
 import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.NetworkAttachmentConfig;
 import com.github.dockerjava.api.model.PortConfig;
@@ -296,9 +298,25 @@ public class PodmanService extends DockerService {
             }
             containerSpecGenerator.setLabels(containerSpec.getLabels());
 
+            // Copy across the restart policy
             ServiceRestartPolicy restartPolicy = serviceSpec.getTaskTemplate().getRestartPolicy();
             containerSpecGenerator.setRestartPolicy(restartPolicyMap.get(restartPolicy.getCondition()));
             containerSpecGenerator.setRestartTries((Integer) restartPolicy.getMaxAttempts().intValue());
+
+            // Copy across any user specified health check
+            HealthCheck healthCheck = containerSpec.getHealthCheck();
+            if (healthCheck != null) {
+                Schema2HealthConfig healthConfig = new Schema2HealthConfig()
+                        .test(healthCheck.getTest())
+                        .startPeriod(healthCheck.getStartPeriod().intValue())
+                        // TODO: Podman only supports "startInterval" from v5, which we can't use yet.
+                        // .startInterval(healthCheck.getStartInterval().intValue())
+                        .interval(healthCheck.getInterval().intValue())
+                        .timeout(healthCheck.getTimeout().intValue())
+                        .retries(healthCheck.getRetries().longValue());
+
+                containerSpecGenerator.setHealthconfig(healthConfig);
+            }
 
             try {
                 ContainersApi containersApi = new ContainersApi(getClient().getPodmanClient());
@@ -319,10 +337,10 @@ public class PodmanService extends DockerService {
     @Override
     protected Optional<Container> getContainerIfCreated(String containerName) {
 
-        Optional<ListContainer> container;
-        do {
+        Optional<ListContainer> potentialContainer;
+        while (true) {
             try {
-                container = new ContainersApi(getClient().getPodmanClient())
+                potentialContainer = new ContainersApi(getClient().getPodmanClient())
                         .containerListLibpod(true, 1, null, null, null, null,
                                 URLEncoder.encode("{\"name\":[\"" + containerName + "\"],\"pod\":[\""
                                         + getPodName(containerName) + "\"]}", StandardCharsets.UTF_8))
@@ -331,10 +349,29 @@ public class PodmanService extends DockerService {
                 throw new RuntimeException("Failed to retrieve state of Container '" + containerName + "'.", ex);
             }
 
-        } while (container.isEmpty());
-
-        String containerId = container.get().getId();
-        return getContainerFromID(containerId);
+            if (!potentialContainer.isEmpty()) {
+                ListContainer container = potentialContainer.get();
+                String state = container.getState();
+                String status = container.getStatus();
+                switch (state) {
+                    case "created":
+                    case "restarting":
+                        break;
+                    case "running":
+                        if (!(status.isEmpty() || status.equals("healthy"))) {
+                            break;
+                        }
+                    case "exited":
+                        return getContainerFromID(container.getId());
+                    case "removing":
+                    case "paused":
+                    case "dead":
+                    default:
+                        throw new RuntimeException("Failed to start container '" + containerName
+                                + "'.\nState is: '" + state + "'\nStatus is: '" + status + "'");
+                }
+            }
+        }
     }
 
 }
