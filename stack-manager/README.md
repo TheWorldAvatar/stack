@@ -316,6 +316,29 @@ This repository will persist for as long as the stack does but will change if an
 
 This repository can be accessed from inside the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
 
+External endpoints can be registered in a stack by specifying an ID, display name, and the URL of the endpoint in a JSON file in the directory `stack-manager/inputs/config/external_endpoints/`.
+As mentioned above, when referencing another stack it is recommended to point to its incoming endpoint as pointing to its outgoing one might cause a loop.
+
+For example to include a stack called "test2" in the outgoing federation you would add this file:
+
+```json
+{
+    "id": "test2",
+    "name": "Second test stack",
+    "url": "https://test2.theworldavatar.io/sparql/query"
+}
+```
+
+To include the OpenStreetMap SPARQL endpoint in the outgoing federation you could add a file like this one:
+
+```json
+{
+    "id": "openstreetmap-qlever",
+    "name": "OSM QLever",
+    "url": "https://qlever.cs.uni-freiburg.de/api/osm-planet"
+}
+```
+
 ### Design
 
 The diagram below illustrates how each of the federated repositories are related to each other.
