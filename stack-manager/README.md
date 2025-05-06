@@ -290,15 +290,15 @@ The format of the stack configuration file is as follows:
 
 An RDF4J server is added to each stack and allows for SPARQL federation across all sparql endpoints within a TWA Stack as well as external endpoints and other TWA Stacks.
 
-## Repositories
+### Repositories
 
-### Dataset repository
+#### Dataset repository
 
 A dataset repository is one that federates across each endpoint related to a dataset in a stack.
 When a new dataset is added to this stack a new federated dataset repository will be added.
 This repository will persist for long as the dataset does.
 
-### Incoming stack repository
+#### Incoming stack repository
 
 An incoming stack repository federates across each [dataset repository](#dataset-repository) in a stack.
 This repository will be used by external clients querying data in this stack.
@@ -307,7 +307,7 @@ This repository will persist for as long as stack does but changes as datasets a
 
 This repository can be accessed at external to the stack at `http://localhost:<PORT>/rdf4j-server/repositories/stack-incoming/`.
 
-### Outgoing stack endpoint
+#### Outgoing stack endpoint
 
 An outgoing stack endpoint is a federation between internal and external endpoints.
 This endpoint will be used by agents internal to this stack, accessing internal and external data.
@@ -316,7 +316,7 @@ This repository will persist for as long as stack does but changes if external e
 
 This repository can be accessed at internal to the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
 
-## Design
+### Design
 
 The diagram below illustrates how each of the federated repositories are related to each other.
 
