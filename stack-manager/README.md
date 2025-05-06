@@ -305,16 +305,16 @@ This repository will be used by external clients querying data in this stack.
 When a new dataset is added to this stack its dataset repository will be added to this federation.
 This repository will persist for as long as stack does but changes as datasets are added and removed.
 
-This repository can be accessed at external to the stack at `http://localhost:<PORT>/rdf4j-server/repositories/stack-incoming/`.
+This repository can be accessed from outside the stack at `http://localhost:<PORT>/sparql/query`.
 
 #### Outgoing stack endpoint
 
 An outgoing stack endpoint is a federation between internal and external endpoints.
-This endpoint will be used by agents internal to this stack, accessing internal and external data.
-It is not used by external clients in case loops are caused with other stacks.
-This repository will persist for as long as stack does but changes if external endpoints are added and removed.
+This endpoint should be used by agents internal to this stack when accessing internal and external data.
+It should not be used by external clients in case loops are created between stacks.
+This repository will persist for as long as the stack does but will change if any external endpoints are added or removed.
 
-This repository can be accessed at internal to the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
+This repository can be accessed from inside the stack at `http://<STACK NAME>-rdf4j:8080/rdf4j-server/repositories/stack-outgoing/`.
 
 ### Design
 
