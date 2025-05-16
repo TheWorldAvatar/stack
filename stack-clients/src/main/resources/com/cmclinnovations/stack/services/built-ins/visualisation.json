@@ -4,12 +4,17 @@
         "Name": "visualisation",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "ghcr.io/cambridge-cares/twa-vf:4",
+                "Image": "ghcr.io/theworldavatar/viz:5.25.0-bugfix-SNAPSHOT",
                 "Mounts": [
                     {
                         "Type": "volume",
                         "Source": "vis-files",
                         "Target": "/var/www/html"
+                    },
+                    {
+                        "Type": "volume",
+                        "Source": "vis-previous-state",
+                        "Target": "/twa/.public_hash/previous-state-of-public-folder"
                     }
                 ],
                 "Secrets": [
