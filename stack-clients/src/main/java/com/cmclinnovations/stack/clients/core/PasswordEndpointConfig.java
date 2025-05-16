@@ -10,7 +10,7 @@ public class PasswordEndpointConfig extends AbstractEndpointConfig {
 
     private final String passwordFile;
 
-    protected PasswordEndpointConfig(String name, String passwordFile) {
+    public PasswordEndpointConfig(String name, String passwordFile) {
         super(name);
         this.passwordFile = passwordFile;
     }
