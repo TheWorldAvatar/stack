@@ -1,6 +1,6 @@
 services:
   stack-data-uploader:
-    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.46.4
+    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.47.0-separate-podman-lib-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password
