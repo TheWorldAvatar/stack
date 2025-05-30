@@ -57,3 +57,9 @@ If you find that logging out of your session kills your containers, try enabling
 ```console
 sudo loginctl enable-linger <user>
 ```
+
+Do not use `./stack.sh build` (or run `podman-compose build` or `podman build` directly). At time of writing, there are multiple issues, including "image not known" errors if the image URL does not exist already, and format errors when pushing to/pulling from GitHub. The recommended work-around is to build and push on a separate system using Docker, and then downloading the image via `podman pull`.
+
+At time of writing, podman does not support NFS. If you see a warning about a network file system, it may recommend setting `force_mask="700"` in `~/.config/containers/storage.conf` to suppress the warning. Do not do this - it does not work. In fact, setting this `force_mask` can cause file ownership and permission issues that prevent some containers (e.g. postgis) from starting. Instead, make sure that `graphroot` in your `storage.conf` is set to a non-NFS folder (and comment out or remove any `force_mask` setting, if applicable).
+
+Warnings about `sub*id` files must not be ignored. It is essential that the files `/etc/subuid` and `/etc/subgid` exist and are populated with appropriate content, e.g. `<user>:100000:65536`. This should be the case by default. Otherwise, containers may fail to start due to permission denied errors resulting from incorrect file ownership.
