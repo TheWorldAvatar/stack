@@ -4,7 +4,7 @@
         "Name": "rdf4j",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "eclipse/rdf4j-workbench:5.1.2",
+                "Image": "eclipse/rdf4j-workbench:5.1.3",
                 "Mounts": [
                     {
                         "Type": "volume",
