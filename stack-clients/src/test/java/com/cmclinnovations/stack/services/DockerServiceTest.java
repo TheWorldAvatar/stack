@@ -14,7 +14,7 @@ public class DockerServiceTest {
     @BeforeClass
     public static void setup() throws IOException {
         manager = new ServiceManager();
-        manager.loadConfig(ServiceConfig.class.getResource("defaults/docker.json"));
+        manager.loadConfig(ServiceConfig.class.getResource("builtins/docker.json"));
         service = manager.initialiseService("TestStack", "docker");
     }
 }
