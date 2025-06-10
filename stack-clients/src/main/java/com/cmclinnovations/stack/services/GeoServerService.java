@@ -46,6 +46,7 @@ public final class GeoServerService extends ContainerService {
         }
 
         setEnvironmentVariableIfAbsent("RUN_UNPRIVILEGED", "true");
+        setEnvironmentVariableIfAbsent("CHANGE_OWNERSHIP_ON_FOLDERS", "/opt /opt/geoserver_data/" + " /geotiffs");
 
         try {
             geoserverEndpointConfig = new RESTEndpointConfig("geoserver",
