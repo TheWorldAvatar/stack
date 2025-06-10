@@ -20,6 +20,8 @@ import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public final class GeoServerService extends ContainerService {
 
@@ -64,10 +66,11 @@ public final class GeoServerService extends ContainerService {
 
         if (settings.isPresent()) {
             updateSettings(settingsRequestBuilder, settings.get());
-
-            updatePassword();
         }
 
+        addUrlCheck();
+
+        updatePassword();
     }
 
     private Builder createRequestBuilder(String path) {
@@ -179,7 +182,33 @@ public final class GeoServerService extends ContainerService {
                     "Failed to process send/recieve message as part of GeoServer password update request.", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // set interrupt flag
-            throw new RuntimeException("GeoServer password update request was interupted.", ex);
+            throw new RuntimeException("GeoServer password update request was interrupted.", ex);
+        }
+    }
+
+    private void addUrlCheck() {
+
+        Builder requestBuilder = createRequestBuilder("urlchecks");
+
+        ObjectNode urlCheck = JsonNodeFactory.instance.objectNode();
+        urlCheck.putObject("regexUrlCheck")
+                .put("name", "Local GeoTiffs")
+                .put("description", "Enable the reading of Geotiffs from inside the container.")
+                .put("enabled", true)
+                .put("regex", "^file:/geotiffs/.*$");
+
+        HttpRequest settingsPutRequest = requestBuilder
+                .POST(BodyPublishers.ofString(urlCheck.toString()))
+                .header("content-type", "application/json")
+                .build();
+        try {
+            httpClient.send(settingsPutRequest, BodyHandlers.discarding());
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    "Failed to process send/receive message as part of GeoServer urlChecks update request.", ex);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt(); // set interrupt flag
+            throw new RuntimeException("GeoServer urlChecks update request was interrupted.", ex);
         }
     }
 
