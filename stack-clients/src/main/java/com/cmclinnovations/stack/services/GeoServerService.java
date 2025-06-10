@@ -1,6 +1,5 @@
 package com.cmclinnovations.stack.services;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -16,7 +15,6 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.cmclinnovations.stack.clients.core.RESTEndpointConfig;
-import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,6 +43,8 @@ public final class GeoServerService extends ContainerService {
             passwordFile = DEFAULT_ADMIN_PASSWORD_FILE;
         }
 
+        setEnvironmentVariableIfAbsent("RUN_UNPRIVILEGED", "true");
+
         try {
             geoserverEndpointConfig = new RESTEndpointConfig("geoserver",
                     new URL("http", getHostName(), 8080, "/geoserver/"),
@@ -68,12 +68,6 @@ public final class GeoServerService extends ContainerService {
             updatePassword();
         }
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        createComplexCommand("chown", "-R", "tomcat:tomcat", GeoServerClient.SERVING_DIRECTORY.toString())
-                .withUser("root")
-                .withOutputStream(outputStream)
-                .withErrorStream(outputStream)
-                .exec();
     }
 
     private Builder createBaseSettingsRequestBuilder() {
