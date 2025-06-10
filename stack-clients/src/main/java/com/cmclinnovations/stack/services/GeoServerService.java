@@ -125,10 +125,10 @@ public final class GeoServerService extends ContainerService {
                         "Failed to parse response from GeoServer get settings request as JSON.", ex);
             } catch (IOException ex) {
                 throw new RuntimeException(
-                        "Failed to process send/recieve message as part of GeoServer get settings request.", ex);
+                        "Failed to process send/receive message as part of GeoServer get settings request.", ex);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt(); // set interrupt flag
-                throw new RuntimeException("GeoServer get settings request was interupted.", ex);
+                throw new RuntimeException("GeoServer get settings request was interrupted.", ex);
             }
         } while (!serverReady);
 
@@ -180,7 +180,7 @@ public final class GeoServerService extends ContainerService {
             httpClient.send(passwordPutRequest, BodyHandlers.discarding());
         } catch (IOException ex) {
             throw new RuntimeException(
-                    "Failed to process send/recieve message as part of GeoServer password update request.", ex);
+                    "Failed to process send/receive message as part of GeoServer password update request.", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // set interrupt flag
             throw new RuntimeException("GeoServer password update request was interrupted.", ex);
