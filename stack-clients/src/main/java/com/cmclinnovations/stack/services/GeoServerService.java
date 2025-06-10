@@ -15,6 +15,7 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.cmclinnovations.stack.clients.core.RESTEndpointConfig;
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -29,6 +30,7 @@ public final class GeoServerService extends ContainerService {
 
     private static final String ADMIN_USERNAME = "admin";
     private static final String DEFAULT_ADMIN_PASSWORD_FILE = "/run/secrets/geoserver_password";
+    private static final String CHANGE_OWNERSHIP_ON_FOLDERS_KEY = "CHANGE_OWNERSHIP_ON_FOLDERS";
 
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     // Convert username:password to Base64 String.
@@ -46,7 +48,13 @@ public final class GeoServerService extends ContainerService {
         }
 
         setEnvironmentVariableIfAbsent("RUN_UNPRIVILEGED", "true");
-        setEnvironmentVariableIfAbsent("CHANGE_OWNERSHIP_ON_FOLDERS", "/opt /opt/geoserver_data/" + " /geotiffs");
+
+        String changeOwnershipOnFoldersValue = getEnvVarFromImage(inspectImage(getImage()),
+                CHANGE_OWNERSHIP_ON_FOLDERS_KEY)
+                .map(value -> value + " ")
+                .orElse("") + StackClient.GEOTIFFS_DIR;
+
+        setEnvironmentVariableIfAbsent(CHANGE_OWNERSHIP_ON_FOLDERS_KEY, changeOwnershipOnFoldersValue);
 
         try {
             geoserverEndpointConfig = new RESTEndpointConfig("geoserver",
