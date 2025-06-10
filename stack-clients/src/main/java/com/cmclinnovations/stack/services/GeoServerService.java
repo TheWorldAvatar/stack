@@ -58,7 +58,7 @@ public final class GeoServerService extends ContainerService {
 
     @Override
     public void doFirstTimePostStartUpConfiguration() {
-        Builder settingsRequestBuilder = createBaseSettingsRequestBuilder();
+        Builder settingsRequestBuilder = createRequestBuilder("settings");
 
         Optional<JsonNode> settings = getExistingSettings(settingsRequestBuilder);
 
@@ -70,26 +70,23 @@ public final class GeoServerService extends ContainerService {
 
     }
 
-    private Builder createBaseSettingsRequestBuilder() {
-        // Get the existing settings (otherwise some of them get modified)
-        Builder settingsRequestBuilder;
+    private Builder createRequestBuilder(String path) {
         try {
-            settingsRequestBuilder = HttpRequest
-                    .newBuilder(new URL("http", getHostName(), 8080, "/geoserver/rest/settings").toURI())
+            return HttpRequest
+                    .newBuilder(new URL("http", getHostName(), 8080, "/geoserver/rest/" + path).toURI())
                     .header("Authorization", "basic " + DEFAULT_AUTHORIZATION)
                     .header("accept", "application/json");
         } catch (MalformedURLException | URISyntaxException ex) {
-            throw new RuntimeException("Failed to construct URL for updating GeoServer global settings.", ex);
+            throw new RuntimeException("Failed to construct URL for updating GeoServer.", ex);
         }
-        return settingsRequestBuilder;
     }
 
-    private Optional<JsonNode> getExistingSettings(Builder settingsRequestBuilder) {
+    private Optional<JsonNode> getExistingSettings(Builder requestBuilder) {
 
         // Return "empty" to signal that no further REST calls need to be made
         Optional<JsonNode> settings = Optional.empty();
 
-        HttpRequest settingsGetRequest = settingsRequestBuilder.build();
+        HttpRequest settingsGetRequest = requestBuilder.build();
 
         ObjectMapper objectMapper = JsonHelper.getMapper();
 
@@ -134,7 +131,7 @@ public final class GeoServerService extends ContainerService {
         return settings;
     }
 
-    private void updateSettings(Builder settingsRequestBuilder, JsonNode settings) {
+    private void updateSettings(Builder requestBuilder, JsonNode settings) {
         // Add global setting so that the the GeoServer web interface still works
         // through the reverse-proxy.
         settings.withObject("/global/settings")
@@ -142,7 +139,7 @@ public final class GeoServerService extends ContainerService {
                 .put("useHeadersProxyURL", true)
                 .put("numDecimals", 6);
 
-        HttpRequest settingsPutRequest = settingsRequestBuilder
+        HttpRequest settingsPutRequest = requestBuilder
                 .PUT(BodyPublishers.ofString(settings.toString()))
                 .header("content-type", "application/json")
                 .build();
@@ -154,7 +151,7 @@ public final class GeoServerService extends ContainerService {
                     "Failed to process send/receive message as part of GeoServer settings update request.", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // set interrupt flag
-            throw new RuntimeException("GeoServer settings update request was interupted.", ex);
+            throw new RuntimeException("GeoServer settings update request was interrupted.", ex);
         }
     }
 
