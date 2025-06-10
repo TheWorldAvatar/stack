@@ -45,7 +45,11 @@
                     {
                         "SecretName": "postgis_password"
                     }
-                ]
+                ],
+                "Healthcheck": {
+                    "Interval": 20000000000,
+                    "Retries": 10
+                }
             }
         }
     },
