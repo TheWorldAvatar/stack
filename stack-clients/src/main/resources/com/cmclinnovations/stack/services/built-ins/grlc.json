@@ -1,0 +1,32 @@
+{
+    "type": "grlc",
+    "ServiceSpec": {
+        "Name": "grlc",
+        "TaskTemplate": {
+            "ContainerSpec": {
+                "Image": "docker.io/clariah/grlc:v1.3.10",
+                "Mounts": [
+                    {
+                        "Type": "volume",
+                        "Source": "grlc-config",
+                        "Target": "/home/grlc/queries"
+                    }
+                ]
+            }
+        }
+    },
+    "endpoints": {
+        "ui": {
+            "url": "http://localhost:80/api-local/",
+            "externalPath": "/api/ui/"
+        },
+        "api": {
+            "url": "http://localhost:80/api-local/",
+            "externalPath": "/api/api-local/"
+        },
+        "static": {
+            "url": "http://localhost:80/static/",
+            "externalPath": "/api/static/"
+        }
+    }
+}
