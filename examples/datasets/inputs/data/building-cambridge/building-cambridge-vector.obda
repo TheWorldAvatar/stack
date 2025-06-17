@@ -1,0 +1,101 @@
+[PrefixDeclaration]
+owl:		http://www.w3.org/2002/07/owl#
+grp:		http://www.opengis.net/citygml/cityobjectgroup/2.0/
+sf:		http://www.opengis.net/ont/sf#
+bldg:		http://www.opengis.net/citygml/building/2.0/
+obda:		https://w3id.org/obda/vocabulary#
+xsd:		http://www.w3.org/2001/XMLSchema#
+rdfs:		http://www.w3.org/2000/01/rdf-schema#
+rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
+www:		http://www.w3.org/2001/
+geo:		http://www.opengis.net/ont/geosparql#
+city:		http://cui.unige.ch/citygml/2.0/
+xml:		http://www.w3.org/XML/1998/namespace
+twa:        https://theworldavatar.io/kg/
+
+[MappingDeclaration] @collection [[
+
+mappingId	Non-Solid Geometry
+target		city:geometry/{"id"} a sf:Polygon ; geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> {geometry_wkt}"^^geo:wktLiteral ; geo:hasMetricArea {"area_sqm"}^^www:XMLSchema#double . 
+source		SELECT "id", ST_ASTEXT(ST_TRANSFORM("geom", 4326)) AS "geometry_wkt", ST_AREA("geom") AS "area_sqm"
+			FROM "public"."surface_geometry"
+
+mappingId	Surface Geometry - Parent
+target		city:geometry/{"id"} grp:parent city:geometry/{"parent_id"} . 
+source		SELECT "id", "id" AS "parent_id"
+			FROM "public"."surface_geometry"
+
+mappingId	Building
+target		twa:Building/{uuid} obda:isCanonicalIRIOf city:Building/{"id"} .
+            city:Building/{"id"} a bldg:Building ; bldg:measuredHeight {"measured_height"}^^www:XMLSchema#double ; bldg:class {"class"}^^www:XMLSchema#string . 
+source		SELECT "id", "uuid", "height" AS "measured_height", 26 AS "class"
+            FROM "public"."building"
+
+mappingId	Building - LoDFootprint
+target		city:Building/{"id"} bldg:lod0FootPrint city:geometry/{"lod0_footprint_id"} . 
+source		SELECT "id", "footprint_id" AS "lod0_footprint_id"
+			FROM "public"."building"
+
+mappingId	Surface Geometry to Building
+target		city:Building/{"cityobject_id"} geo:hasGeometry city:geometry/{"footprint_id"} . 
+source		SELECT "id" AS "cityobject_id", "footprint_id"
+			FROM "public"."building"
+
+mappingId	BuildingRoofSurface
+target		twa:RoofSurface/{uuid} obda:isCanonicalIRIOf city:RoofSurface/{"id"} .
+            city:RoofSurface/{"id"} a bldg:RoofSurface . 
+source		SELECT id, uuid
+			FROM "public"."surface_geometry"
+			WHERE surface_type='roof'
+
+mappingId	BuildingGroundSurface
+target		twa:GroundSurface/{uuid} obda:isCanonicalIRIOf city:GroundSurface/{"id"} .
+            city:GroundSurface/{"id"} a bldg:GroundSurface . 
+source		SELECT id, uuid
+			FROM "public"."surface_geometry"
+			WHERE surface_type='ground'
+
+mappingId	BuildingWallSurface
+target		twa:WallSurface/{uuid} obda:isCanonicalIRIOf city:WallSurface/{"id"} .
+            city:WallSurface/{"id"} a bldg:WallSurface . 
+source		SELECT id, uuid
+			FROM "public"."surface_geometry"
+			WHERE surface_type='wall'
+
+mappingId	Surface Geometry to City Object - roof surface
+target		city:RoofSurface/{"cityobject_id"} geo:hasGeometry city:geometry/{"id"} . 
+source		SELECT "id" AS "cityobject_id", "id"
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'roof'
+
+mappingId	Surface Geometry to City Object - ground surface
+target		city:GroundSurface/{"cityobject_id"} geo:hasGeometry city:geometry/{"id"} . 
+source		SELECT "id" AS "cityobject_id", "id"
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'ground'
+
+mappingId	Surface Geometry to City Object - wall surface
+target		city:WallSurface/{"cityobject_id"} geo:hasGeometry city:geometry/{"id"} . 
+source		SELECT "id" AS "cityobject_id", "id"
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'wall'
+
+mappingId	Building bounded by Roof surface
+target		city:Building/{"building_id"} bldg:boundedBy city:RoofSurface/{"thematic_surface_id"} . 
+source		SELECT building_id, id AS thematic_surface_id
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'roof'
+
+mappingId	Building bounded by Ground surface
+target		city:Building/{"building_id"} bldg:boundedBy city:GroundSurface/{"thematic_surface_id"} . 
+source		SELECT building_id, id AS thematic_surface_id
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'ground'
+
+mappingId	Building bounded by Wall surface
+target		city:Building/{"building_id"} bldg:boundedBy city:WallSurface/{"thematic_surface_id"} . 
+source		SELECT building_id, id AS thematic_surface_id
+			FROM "public"."surface_geometry"
+			WHERE "surface_type" = 'wall'
+
+]]

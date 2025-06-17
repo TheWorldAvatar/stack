@@ -1,0 +1,21 @@
+[PrefixDeclaration]
+building:   http://theworldavatar.io/BuildingWallSurface/
+os:         http://data.ordnancesurvey.co.uk/ontology/spatialrelations/
+owl:        http://www.w3.org/2002/07/owl#
+rdf:        http://www.w3.org/1999/02/22-rdf-syntax-ns#
+xml:        http://www.w3.org/XML/1998/namespace
+xsd:        http://www.w3.org/2001/XMLSchema#
+obda:       https://w3id.org/obda/vocabulary#
+rdfs:       http://www.w3.org/2000/01/rdf-schema#
+city:		http://cui.unige.ch/citygml/2.0/
+
+[MappingDeclaration] @collection [[
+mappingId       Asset-mapping-TOID-UPRN
+target          city:Building/{"id"} os:hasTOID {os_topo_toid}^^xsd:string ;
+				os:hasUPRN {uprn}^^xsd:integer .
+source          SELECT "public"."building"."id", "public"."building"."os_topo_toid", "public"."TOID_UPRN_MatchingTable"."IDENTIFIER_1" as uprn
+                FROM "public"."building" JOIN "public"."TOID_UPRN_MatchingTable" ON
+				"public"."building"."os_topo_toid" = "public"."TOID_UPRN_MatchingTable"."IDENTIFIER_2"
+
+
+]]
