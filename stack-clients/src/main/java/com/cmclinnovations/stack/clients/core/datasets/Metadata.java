@@ -39,12 +39,17 @@ class Metadata {
     }
 
     Optional<@Nonnull TriplePattern> getTriplePatterns() {
+        return getTriplePatterns(null);
+    }
+
+    Optional<@Nonnull TriplePattern> getTriplePatterns(String varName) {
 
         return triplePatterns
                 // Remove blank entry
                 .filter(Predicate.not(String::isBlank))
                 // Ensure that the last triple pattern ends with a "."
                 .map(tp -> tp.replaceFirst("([^.\\s])\\s*\\.?\\s*$", "$1 ."))
+                .map(tp -> null != varName ? tp.replaceAll("\\?dataSubset ", "\\?" + varName + " ") : tp)
                 // Wrap the triple patterns for RDF4J
                 .map(tp -> new TriplePattern() {
                     @Override
@@ -54,7 +59,7 @@ class Metadata {
 
                     @Override
                     public TriplePattern andHas(RdfPredicateObjectList... lists) {
-                        throw new UnsupportedOperationException("Unsupported methodandHas'");
+                        throw new UnsupportedOperationException("Unsupported method 'andHas'");
                     }
                 });
     }

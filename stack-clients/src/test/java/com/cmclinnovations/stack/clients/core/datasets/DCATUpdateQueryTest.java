@@ -43,6 +43,7 @@ import com.cmclinnovations.stack.clients.rdf4j.Rdf4jEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.BlazegraphContainer;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
@@ -55,13 +56,15 @@ class DCATUpdateQueryTest {
 
     private static final RemoteStoreClient remoteStoreClient = blazegraph.getRemoteStoreClient();
 
+    private static final ObjectMapper mapper = JsonHelper.getMapper();
+
     private String testName;
-    private Map<String, Integer> fileIndecies = new HashMap<>();
+    private Map<String, Integer> fileIndices = new HashMap<>();
 
     @BeforeEach
     void setUp(TestInfo testInfo) {
         testName = testInfo.getDisplayName();
-        fileIndecies.put(testName, 0);
+        fileIndices.put(testName, 0);
     }
 
     @BeforeEach
@@ -217,7 +220,7 @@ class DCATUpdateQueryTest {
     void testAddDataSubset() {
         writeBlazegraphConfig();
         writeRdf4jConfig();
-        ObjectMapper mapper = JsonHelper.getMapper();
+
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1")
@@ -253,7 +256,7 @@ class DCATUpdateQueryTest {
     void testAddDataSubsetSkipping() {
         writeBlazegraphConfig();
         writeRdf4jConfig();
-        ObjectMapper mapper = JsonHelper.getMapper();
+
         Assertions.assertAll(() -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
                     .withDatasetDirectory("test1")
@@ -293,6 +296,22 @@ class DCATUpdateQueryTest {
                 .withDatasetDirectory("test1")
                 .withRdfType("http://theworldavatar.com/ontology/ontocredo/ontocredo.owl#TBox")
                 .withMetadataRDF(new Metadata(Map.of(), Optional.of("<http://p/a> <http://q/b> <http://r/c>")))
+                .build();
+        buildAndRunQuery(dataset);
+    }
+
+    @Test
+    void testAddMetadataToDataSubsetSimple() throws JsonMappingException, JsonProcessingException {
+        writeBlazegraphConfig();
+        writeRdf4jConfig();
+
+        Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing")
+                .withDatasetDirectory("test1")
+                .withRdfType("http://theworldavatar.com/ontology/ontocredo/ontocredo.owl#TBox")
+                .withDataSubsets(List.of(mapper.readValue(
+                        "{\"type\": \"tboxcsv\",\"name\":\"Tbox1\",\"description\":\"A realy awsome TBox.\",\"subdirectory\":\"tbox\",\"additionalMetadata\": {\"prefixes\": {}, \"triplePatterns\": \"?dataSubset <http://t/b> <http://u/c>\"}}",
+                        TBoxCSV.class)))
+                .withMetadataRDF(new Metadata(Map.of(), Optional.of("?dataset <http://q/b> <http://r/c>")))
                 .build();
         buildAndRunQuery(dataset);
     }
@@ -404,7 +423,6 @@ class DCATUpdateQueryTest {
     void testRemovingDataset() {
         writeBlazegraphConfig();
         writeRdf4jConfig();
-        ObjectMapper mapper = JsonHelper.getMapper();
 
         Dataset dataset1;
         Dataset dataset2;
@@ -510,7 +528,7 @@ class DCATUpdateQueryTest {
 
     private String getMessage(String message, Model expected, Model actual) {
         StringBuilder stringBuilder = new StringBuilder(testName);
-        stringBuilder.append(" ").append(fileIndecies.get(testName)).append(" ").append(message);
+        stringBuilder.append(" ").append(fileIndices.get(testName)).append(" ").append(message);
 
         stringBuilder.append("\nExpected:\n").append(toTurtle(expected));
 
@@ -520,7 +538,7 @@ class DCATUpdateQueryTest {
     }
 
     private void checkExpectedFile(Model results) {
-        fileIndecies.computeIfPresent(testName, (n, i) -> i + 1);
+        fileIndices.computeIfPresent(testName, (n, i) -> i + 1);
         Path dirPath = getCheckedDir();
         Path path = dirPath.resolve(getExpectedFilename());
 
@@ -542,7 +560,7 @@ class DCATUpdateQueryTest {
     }
 
     private String getExpectedFilename() {
-        return testName + fileIndecies.get(testName) + ".ttl";
+        return testName + fileIndices.get(testName) + ".ttl";
     }
 
     private Path getCheckedDir() {
