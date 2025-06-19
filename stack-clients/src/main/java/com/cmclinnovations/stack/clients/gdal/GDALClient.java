@@ -70,7 +70,8 @@ public class GDALClient extends ContainerClient {
     }
 
     private String computePGSQLSourceString(String database) {
-        return "PG:dbname=" + database + " host=" + postgreSQLEndpoint.getHostName()
+        return "PG:dbname=" + database
+                + " host=" + postgreSQLEndpoint.getHostName() + "," + postgreSQLEndpoint.getHostName()
                 + " port=" + postgreSQLEndpoint.getPort() + " user=" + postgreSQLEndpoint.getUsername()
                 + " password=" + postgreSQLEndpoint.getPassword();
     }
