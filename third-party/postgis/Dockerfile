@@ -14,8 +14,10 @@ ENV CITYDBVERSION=${CITYDB_VERSION}
 # Copy SQL scripts
 WORKDIR /3dcitydb
 COPY SQLScripts .
-COPY DockerScripts/* /docker-entrypoint-initdb.d/
-RUN chmod 644 /docker-entrypoint-initdb.d/10_postgis.sh
+# This script needs to be executed
+COPY --chmod=500 --chown=postgres DockerScripts/3dcitydb-initdb.sh /docker-entrypoint-initdb.d/
+# This script needs to be sourced
+COPY --chmod=400 --chown=postgres DockerScripts/10_postgis.sh /docker-entrypoint-initdb.d/
 
 # Set labels
 LABEL maintainer="Bruno Willenborg"
