@@ -52,7 +52,7 @@ public final class GeoServerService extends ContainerService {
         String changeOwnershipOnFoldersValue = getEnvVarFromImage(inspectImage(getImage()),
                 CHANGE_OWNERSHIP_ON_FOLDERS_KEY)
                 .map(value -> value + " ")
-                .orElse("") + StackClient.GEOTIFFS_DIR;
+                .orElse("") + StackClient.GEOTIFFS_DIR + " " + StackClient.MULTIDIM_GEOSPATIAL_DIR;
 
         setEnvironmentVariableIfAbsent(CHANGE_OWNERSHIP_ON_FOLDERS_KEY, changeOwnershipOnFoldersValue);
 
