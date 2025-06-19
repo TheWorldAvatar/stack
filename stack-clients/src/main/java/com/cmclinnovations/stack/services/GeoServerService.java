@@ -1,6 +1,5 @@
 package com.cmclinnovations.stack.services;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
@@ -16,12 +15,14 @@ import java.util.Base64;
 import java.util.Optional;
 
 import com.cmclinnovations.stack.clients.core.RESTEndpointConfig;
-import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public final class GeoServerService extends ContainerService {
 
@@ -29,6 +30,7 @@ public final class GeoServerService extends ContainerService {
 
     private static final String ADMIN_USERNAME = "admin";
     private static final String DEFAULT_ADMIN_PASSWORD_FILE = "/run/secrets/geoserver_password";
+    private static final String CHANGE_OWNERSHIP_ON_FOLDERS_KEY = "CHANGE_OWNERSHIP_ON_FOLDERS";
 
     private static final HttpClient httpClient = HttpClient.newHttpClient();
     // Convert username:password to Base64 String.
@@ -45,6 +47,15 @@ public final class GeoServerService extends ContainerService {
             passwordFile = DEFAULT_ADMIN_PASSWORD_FILE;
         }
 
+        setEnvironmentVariableIfAbsent("RUN_UNPRIVILEGED", "true");
+
+        String changeOwnershipOnFoldersValue = getEnvVarFromImage(inspectImage(getImage()),
+                CHANGE_OWNERSHIP_ON_FOLDERS_KEY)
+                .map(value -> value + " ")
+                .orElse("") + StackClient.GEOTIFFS_DIR + " " + StackClient.MULTIDIM_GEOSPATIAL_DIR;
+
+        setEnvironmentVariableIfAbsent(CHANGE_OWNERSHIP_ON_FOLDERS_KEY, changeOwnershipOnFoldersValue);
+
         try {
             geoserverEndpointConfig = new RESTEndpointConfig("geoserver",
                     new URL("http", getHostName(), 8080, "/geoserver/"),
@@ -58,44 +69,36 @@ public final class GeoServerService extends ContainerService {
 
     @Override
     public void doFirstTimePostStartUpConfiguration() {
-        Builder settingsRequestBuilder = createBaseSettingsRequestBuilder();
+        Builder settingsRequestBuilder = createRequestBuilder("settings");
 
         Optional<JsonNode> settings = getExistingSettings(settingsRequestBuilder);
 
         if (settings.isPresent()) {
             updateSettings(settingsRequestBuilder, settings.get());
-
-            updatePassword();
         }
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        createComplexCommand("chown", "-R", "tomcat:tomcat", GeoServerClient.SERVING_DIRECTORY.toString())
-                .withUser("root")
-                .withOutputStream(outputStream)
-                .withErrorStream(outputStream)
-                .exec();
+        addUrlCheck();
+
+        updatePassword();
     }
 
-    private Builder createBaseSettingsRequestBuilder() {
-        // Get the existing settings (otherwise some of them get modified)
-        Builder settingsRequestBuilder;
+    private Builder createRequestBuilder(String path) {
         try {
-            settingsRequestBuilder = HttpRequest
-                    .newBuilder(new URL("http", getHostName(), 8080, "/geoserver/rest/settings").toURI())
+            return HttpRequest
+                    .newBuilder(new URL("http", getHostName(), 8080, "/geoserver/rest/" + path).toURI())
                     .header("Authorization", "basic " + DEFAULT_AUTHORIZATION)
                     .header("accept", "application/json");
         } catch (MalformedURLException | URISyntaxException ex) {
-            throw new RuntimeException("Failed to construct URL for updating GeoServer global settings.", ex);
+            throw new RuntimeException("Failed to construct URL for updating GeoServer.", ex);
         }
-        return settingsRequestBuilder;
     }
 
-    private Optional<JsonNode> getExistingSettings(Builder settingsRequestBuilder) {
+    private Optional<JsonNode> getExistingSettings(Builder requestBuilder) {
 
         // Return "empty" to signal that no further REST calls need to be made
         Optional<JsonNode> settings = Optional.empty();
 
-        HttpRequest settingsGetRequest = settingsRequestBuilder.build();
+        HttpRequest settingsGetRequest = requestBuilder.build();
 
         ObjectMapper objectMapper = JsonHelper.getMapper();
 
@@ -130,17 +133,17 @@ public final class GeoServerService extends ContainerService {
                         "Failed to parse response from GeoServer get settings request as JSON.", ex);
             } catch (IOException ex) {
                 throw new RuntimeException(
-                        "Failed to process send/recieve message as part of GeoServer get settings request.", ex);
+                        "Failed to process send/receive message as part of GeoServer get settings request.", ex);
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt(); // set interrupt flag
-                throw new RuntimeException("GeoServer get settings request was interupted.", ex);
+                throw new RuntimeException("GeoServer get settings request was interrupted.", ex);
             }
         } while (!serverReady);
 
         return settings;
     }
 
-    private void updateSettings(Builder settingsRequestBuilder, JsonNode settings) {
+    private void updateSettings(Builder requestBuilder, JsonNode settings) {
         // Add global setting so that the the GeoServer web interface still works
         // through the reverse-proxy.
         settings.withObject("/global/settings")
@@ -148,7 +151,7 @@ public final class GeoServerService extends ContainerService {
                 .put("useHeadersProxyURL", true)
                 .put("numDecimals", 6);
 
-        HttpRequest settingsPutRequest = settingsRequestBuilder
+        HttpRequest settingsPutRequest = requestBuilder
                 .PUT(BodyPublishers.ofString(settings.toString()))
                 .header("content-type", "application/json")
                 .build();
@@ -160,7 +163,7 @@ public final class GeoServerService extends ContainerService {
                     "Failed to process send/receive message as part of GeoServer settings update request.", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // set interrupt flag
-            throw new RuntimeException("GeoServer settings update request was interupted.", ex);
+            throw new RuntimeException("GeoServer settings update request was interrupted.", ex);
         }
     }
 
@@ -185,10 +188,36 @@ public final class GeoServerService extends ContainerService {
             httpClient.send(passwordPutRequest, BodyHandlers.discarding());
         } catch (IOException ex) {
             throw new RuntimeException(
-                    "Failed to process send/recieve message as part of GeoServer password update request.", ex);
+                    "Failed to process send/receive message as part of GeoServer password update request.", ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt(); // set interrupt flag
-            throw new RuntimeException("GeoServer password update request was interupted.", ex);
+            throw new RuntimeException("GeoServer password update request was interrupted.", ex);
+        }
+    }
+
+    private void addUrlCheck() {
+
+        Builder requestBuilder = createRequestBuilder("urlchecks");
+
+        ObjectNode urlCheck = JsonNodeFactory.instance.objectNode();
+        urlCheck.putObject("regexUrlCheck")
+                .put("name", "Local GeoTiffs")
+                .put("description", "Enable the reading of Geotiffs from inside the container.")
+                .put("enabled", true)
+                .put("regex", "^file:/geotiffs/.*$");
+
+        HttpRequest settingsPutRequest = requestBuilder
+                .POST(BodyPublishers.ofString(urlCheck.toString()))
+                .header("content-type", "application/json")
+                .build();
+        try {
+            httpClient.send(settingsPutRequest, BodyHandlers.discarding());
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    "Failed to process send/receive message as part of GeoServer urlChecks update request.", ex);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt(); // set interrupt flag
+            throw new RuntimeException("GeoServer urlChecks update request was interrupted.", ex);
         }
     }
 

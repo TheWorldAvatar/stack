@@ -296,6 +296,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                         indexerProperties.getBytes());
 
                 sendFilesContent(containerId, files, geotiffDir.toString());
+                createComplexCommand(containerId, "chown", "-R", "tomcat:tomcat", StackClient.GEOTIFFS_DIR).exec();
             } catch (IOException ex) {
                 throw new RuntimeException(
                         "The 'datastore.properties' and 'indexer.properties' files for the GeoServer coverage datastore '"

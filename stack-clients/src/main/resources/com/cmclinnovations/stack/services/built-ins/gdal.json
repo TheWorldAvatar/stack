@@ -3,7 +3,7 @@
         "Name": "gdal",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "ghcr.io/osgeo/gdal:alpine-normal-3.8.3",
+                "Image": "ghcr.io/osgeo/gdal:alpine-normal-3.11.0",
                 "Command": [
                     "tail",
                     "-f",
