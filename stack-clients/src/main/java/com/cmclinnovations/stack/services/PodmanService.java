@@ -193,6 +193,15 @@ public class PodmanService extends DockerService {
 
         String containerName = serviceSpec.getName();
         ContainerSpec containerSpec = serviceSpec.getTaskTemplate().getContainerSpec();
+
+        ImageData imageConfig;
+        try {
+            imageConfig = new ImagesApi(getClient()
+                    .getPodmanClient()).imageInspectLibpod(containerSpec.getImage());
+        } catch (ApiException e) {
+            throw new RuntimeException("Failed to retrieve image info '" + containerSpec.getImage() + "'.", e);
+        }
+
         PodSpecGenerator podSpecGenerator = new PodSpecGenerator()
                 .name(getPodName(containerName))
                 .hostname(containerName);
@@ -309,14 +318,17 @@ public class PodmanService extends DockerService {
             // Copy across any user specified health check
             HealthCheck healthCheck = containerSpec.getHealthCheck();
             if (healthCheck != null) {
-                Schema2HealthConfig healthConfig = new Schema2HealthConfig()
-                        .test(healthCheck.getTest())
-                        .startPeriod(healthCheck.getStartPeriod())
-                        // TODO: Podman only supports "startInterval" from v5, which we can't use yet.
-                        // .startInterval(healthCheck.getStartInterval())
-                        .interval(healthCheck.getInterval())
-                        .timeout(healthCheck.getTimeout())
-                        .retries(Optional.ofNullable(healthCheck.getRetries()).map(Integer::longValue).orElse(null));
+                Schema2HealthConfig healthConfig = (null != imageConfig && null != imageConfig.getHealthcheck())
+                        ? imageConfig.getHealthcheck()
+                        : new Schema2HealthConfig()
+                                .test(healthCheck.getTest())
+                                .startPeriod(healthCheck.getStartPeriod())
+                                // TODO: Podman only supports "startInterval" from v5, which we can't use yet.
+                                // .startInterval(healthCheck.getStartInterval())
+                                .interval(healthCheck.getInterval())
+                                .timeout(healthCheck.getTimeout())
+                                .retries(Optional.ofNullable(healthCheck.getRetries()).map(Integer::longValue)
+                                        .orElse(null));
 
                 containerSpecGenerator.setHealthconfig(healthConfig);
             }
