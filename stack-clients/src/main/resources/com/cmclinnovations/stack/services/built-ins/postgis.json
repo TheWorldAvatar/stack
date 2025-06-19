@@ -13,7 +13,7 @@
                 "Command": [
                     "sh",
                     "-c",
-                    "sed -i 's/postgis-3,timescaledb/postgis-3/' /var/lib/postgresql/data/postgresql.conf; docker-entrypoint.sh postgres"
+                    "sed -i 's/postgis-3,timescaledb/postgis-3/' /var/lib/postgresql/data/postgresql.conf; docker-entrypoint.sh postgres -c shared_buffers=1GB -c max_connections=200"
                 ],
                 "Mounts": [
                     {
