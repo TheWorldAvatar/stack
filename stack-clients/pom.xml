@@ -22,10 +22,6 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.release>11</maven.compiler.release>
-
-        <!--podman.file>https://storage.googleapis.com/libpod-master-releases/swagger-v4.3.yaml</podman.file-->
-        <podman.file>${project.basedir}/src/main/swagger/podman/swagger-v4.3.yaml</podman.file>
-
     </properties>
 
     <!-- Repository locations to fetch from -->
@@ -56,7 +52,7 @@
         <dependency>
             <groupId>io.theworldavatar</groupId>
             <artifactId>podman-java-client</artifactId>
-            <version>4.4.0</version>
+            <version>4.4.0-1</version>
         </dependency>
 
         <dependency>
