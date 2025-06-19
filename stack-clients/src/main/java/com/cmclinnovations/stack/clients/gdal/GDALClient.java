@@ -71,8 +71,10 @@ public class GDALClient extends ContainerClient {
 
     private String computePGSQLSourceString(String database) {
         return "PG:dbname=" + database
+        // Duplicate hostname to introduce a retry if the first connection fails
                 + " host=" + postgreSQLEndpoint.getHostName() + "," + postgreSQLEndpoint.getHostName()
-                + " port=" + postgreSQLEndpoint.getPort() + " user=" + postgreSQLEndpoint.getUsername()
+                + " port=" + postgreSQLEndpoint.getPort()
+                + " user=" + postgreSQLEndpoint.getUsername()
                 + " password=" + postgreSQLEndpoint.getPassword();
     }
 
