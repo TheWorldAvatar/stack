@@ -82,6 +82,7 @@ public class Stack {
 
         if (null != config) {
             StackClient.setHostPath(config.getHostPath());
+            StackClient.setIsolated(config.isIsolated());
         }
     }
 

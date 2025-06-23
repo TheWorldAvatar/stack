@@ -34,6 +34,8 @@ public final class StackClient {
     private static final Map<String, String> stackNameLabelMap;
     private static String hostPath;
 
+    private static boolean isolated = false;
+
     static {
         String envVarStackName = System.getenv(StackClient.STACK_NAME_KEY);
         stackName = (null != envVarStackName) ? envVarStackName : "Test-Stack";
@@ -146,6 +148,14 @@ public final class StackClient {
 
     public static String getHostPath() {
         return hostPath;
+    }
+
+    public static boolean isIsolated() {
+        return isolated;
+    }
+
+    public static void setIsolated(boolean isolated) {
+        StackClient.isolated = isolated;
     }
 
 }
