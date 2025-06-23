@@ -3,7 +3,7 @@
     "Name": "rml-mapper",
     "TaskTemplate": {
       "ContainerSpec": {
-        "Image": "rmlio/rmlmapper-java:v7.3.1",
+        "Image": "rmlio/rmlmapper-java:v7.3.3",
         "Command": [
           "tail",
           "-f",
