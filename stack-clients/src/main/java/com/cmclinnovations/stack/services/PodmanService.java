@@ -19,24 +19,6 @@ import java.util.stream.Stream;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.docker.PodmanClient;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
-import io.theworldavatar.swagger.podman.ApiException;
-import io.theworldavatar.swagger.podman.api.ContainersApi;
-import io.theworldavatar.swagger.podman.api.PodsApi;
-import io.theworldavatar.swagger.podman.api.SecretsApi;
-import io.theworldavatar.swagger.podman.model.ContainerCreateResponse;
-import io.theworldavatar.swagger.podman.model.IDResponse;
-import io.theworldavatar.swagger.podman.model.ListContainer;
-import io.theworldavatar.swagger.podman.model.ListPodsReport;
-import io.theworldavatar.swagger.podman.model.MountPoint;
-import io.theworldavatar.swagger.podman.model.NamedVolume;
-import io.theworldavatar.swagger.podman.model.Namespace;
-import io.theworldavatar.swagger.podman.model.PerNetworkOptions;
-import io.theworldavatar.swagger.podman.model.PodSpecGenerator;
-import io.theworldavatar.swagger.podman.model.PortMapping;
-import io.theworldavatar.swagger.podman.model.Schema2HealthConfig;
-import io.theworldavatar.swagger.podman.model.Secret;
-import io.theworldavatar.swagger.podman.model.SecretInfoReport;
-import io.theworldavatar.swagger.podman.model.SpecGenerator;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.ContainerSpec;
 import com.github.dockerjava.api.model.ContainerSpecConfig;
@@ -51,6 +33,27 @@ import com.github.dockerjava.api.model.PortConfigProtocol;
 import com.github.dockerjava.api.model.ServiceRestartCondition;
 import com.github.dockerjava.api.model.ServiceRestartPolicy;
 import com.github.dockerjava.api.model.ServiceSpec;
+
+import io.theworldavatar.swagger.podman.ApiException;
+import io.theworldavatar.swagger.podman.api.ContainersApi;
+import io.theworldavatar.swagger.podman.api.ImagesApi;
+import io.theworldavatar.swagger.podman.api.PodsApi;
+import io.theworldavatar.swagger.podman.api.SecretsApi;
+import io.theworldavatar.swagger.podman.model.ContainerCreateResponse;
+import io.theworldavatar.swagger.podman.model.IDResponse;
+import io.theworldavatar.swagger.podman.model.ImageData;
+import io.theworldavatar.swagger.podman.model.ListContainer;
+import io.theworldavatar.swagger.podman.model.ListPodsReport;
+import io.theworldavatar.swagger.podman.model.MountPoint;
+import io.theworldavatar.swagger.podman.model.NamedVolume;
+import io.theworldavatar.swagger.podman.model.Namespace;
+import io.theworldavatar.swagger.podman.model.PerNetworkOptions;
+import io.theworldavatar.swagger.podman.model.PodSpecGenerator;
+import io.theworldavatar.swagger.podman.model.PortMapping;
+import io.theworldavatar.swagger.podman.model.Schema2HealthConfig;
+import io.theworldavatar.swagger.podman.model.Secret;
+import io.theworldavatar.swagger.podman.model.SecretInfoReport;
+import io.theworldavatar.swagger.podman.model.SpecGenerator;
 
 public class PodmanService extends DockerService {
 
@@ -190,6 +193,15 @@ public class PodmanService extends DockerService {
 
         String containerName = serviceSpec.getName();
         ContainerSpec containerSpec = serviceSpec.getTaskTemplate().getContainerSpec();
+
+        ImageData imageConfig;
+        try {
+            imageConfig = new ImagesApi(getClient()
+                    .getPodmanClient()).imageInspectLibpod(containerSpec.getImage());
+        } catch (ApiException e) {
+            throw new RuntimeException("Failed to retrieve image info '" + containerSpec.getImage() + "'.", e);
+        }
+
         PodSpecGenerator podSpecGenerator = new PodSpecGenerator()
                 .name(getPodName(containerName))
                 .hostname(containerName);
@@ -306,14 +318,17 @@ public class PodmanService extends DockerService {
             // Copy across any user specified health check
             HealthCheck healthCheck = containerSpec.getHealthCheck();
             if (healthCheck != null) {
-                Schema2HealthConfig healthConfig = new Schema2HealthConfig()
-                        .test(healthCheck.getTest())
-                        .startPeriod(healthCheck.getStartPeriod().intValue())
-                        // TODO: Podman only supports "startInterval" from v5, which we can't use yet.
-                        // .startInterval(healthCheck.getStartInterval().intValue())
-                        .interval(healthCheck.getInterval().intValue())
-                        .timeout(healthCheck.getTimeout().intValue())
-                        .retries(healthCheck.getRetries().longValue());
+                Schema2HealthConfig healthConfig = (null != imageConfig && null != imageConfig.getHealthcheck())
+                        ? imageConfig.getHealthcheck()
+                        : new Schema2HealthConfig()
+                                .test(healthCheck.getTest())
+                                .startPeriod(healthCheck.getStartPeriod())
+                                // TODO: Podman only supports "startInterval" from v5, which we can't use yet.
+                                // .startInterval(healthCheck.getStartInterval())
+                                .interval(healthCheck.getInterval())
+                                .timeout(healthCheck.getTimeout())
+                                .retries(Optional.ofNullable(healthCheck.getRetries()).map(Integer::longValue)
+                                        .orElse(null));
 
                 containerSpecGenerator.setHealthconfig(healthConfig);
             }

@@ -18,7 +18,7 @@ if [[ -f "docker-compose-build-test.yml" ]]; then
     # Build the test image
     ${COMPOSE_EXECUTABLE} -f docker-compose-stack.yml -f docker-compose.yml -f docker-compose-build.yml -f docker-compose-build-test.yml build --build-arg CACHEBUST="${CACHEBUST}" "$@"
     # Get the image names and iterate over them
-    for test_image in $(${COMPOSE_EXECUTABLE} -f docker-compose-stack.yml -f docker-compose.yml -f docker-compose-build.yml -f docker-compose-build-test.yml convert --images); do
+    for test_image in $(${COMPOSE_EXECUTABLE} -f docker-compose-stack.yml -f docker-compose.yml -f docker-compose-build.yml -f docker-compose-build-test.yml config --images); do
         # Run the test image
         ${EXECUTABLE} run --rm --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock "$test_image"
         # Remove the test image
