@@ -8,7 +8,7 @@ export EXTERNAL_PORT="EXTERNAL_PORT should only be required at runtime!"
 
 # Remove existing services started from this directory
 if [ "$EXECUTABLE" == "docker" ]; then
-    for SERVICE in $(${COMPOSE_EXECUTABLE} -f docker-compose-stack.yml -f docker-compose.yml convert --services); do
+    for SERVICE in $(${COMPOSE_EXECUTABLE} -f docker-compose-stack.yml -f docker-compose.yml config --services); do
         if [ -n "$(${EXECUTABLE} service ls -q -f "name=${STACK_NAME}_${SERVICE}")" ]; then
             ${EXECUTABLE} service rm "${STACK_NAME}_${SERVICE}" > /dev/null
         fi

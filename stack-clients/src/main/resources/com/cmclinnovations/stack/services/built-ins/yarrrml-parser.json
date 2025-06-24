@@ -3,7 +3,7 @@
     "Name": "yarrrml-parser",
     "TaskTemplate": {
       "ContainerSpec": {
-        "Image": "rmlio/yarrrml-parser:1.7.2",
+        "Image": "rmlio/yarrrml-parser:1.10.0",
         "Command": [
           "tail",
           "-f",
