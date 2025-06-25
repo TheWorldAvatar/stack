@@ -2,9 +2,8 @@ SET
     search_path TO public,
     citydb;
 
-DROP TABLE IF EXISTS "public"."raw_building_XtoCityDB";
-
-DROP TABLE IF EXISTS "public"."raw_surface_XtoCityDB";
+DROP TABLE IF EXISTS "public"."raw_building_XtoCityDB",
+"public"."raw_surface_XtoCityDB";
 
 CREATE TABLE "public"."raw_building_XtoCityDB" AS (
     SELECT
@@ -23,6 +22,14 @@ CREATE TABLE "public"."raw_building_XtoCityDB" AS (
         ST_Area("{footprint}") > '{minArea}'
         AND "{height}" IS NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_raw_building_gmlid ON "public"."raw_building_XtoCityDB" ("gmlid");
+
+CREATE INDEX IF NOT EXISTS idx_raw_building_oldid ON "public"."raw_building_XtoCityDB" ("{IDval}");
+
+CREATE INDEX IF NOT EXISTS idx_raw_building_geom ON "public"."raw_building_XtoCityDB" USING GIST ("geom");
+
+ANALYZE "public"."raw_building_XtoCityDB";
 
 CREATE TABLE "public"."raw_surface_XtoCityDB" AS (
     SELECT
@@ -53,3 +60,11 @@ CREATE TABLE "public"."raw_surface_XtoCityDB" AS (
                 ) AS "table1"
         ) AS "table2"
 );
+
+CREATE INDEX IF NOT EXISTS idx_raw_surface_gmlid ON "public"."raw_surface_XtoCityDB" ("gmlid");
+
+CREATE INDEX IF NOT EXISTS idx_raw_surface_building_gmlid ON "public"."raw_surface_XtoCityDB" ("building_gmlid");
+
+CREATE INDEX IF NOT EXISTS idx_raw_surface_geom ON "public"."raw_surface_XtoCityDB" USING GIST ("geom");
+
+ANALYZE "public"."raw_surface_XtoCityDB";
