@@ -52,7 +52,7 @@ The structure of this directory is described in the [Datasets and subsets](#data
 Create a JSON file in the [`inputs/config/`](./inputs/config/) directory to define how the data is to be uploaded.
 The structure of this file is described in the [The Dataset configuration file](#the-dataset-configuration-file) section.
 
-#### 5. Running the data uploader
+### 5. Running the data uploader
 
 From a terminal in the [`stack-data-uploader`](.) directory, start the `stack-data-uploader` container by running the following:
 
@@ -280,7 +280,7 @@ An example of a style specification in the configuration file is:
 ### `"ontologyDataset"`
 
 Specify a list of datasets that serve as ontologies for this dataset.
-These are treated like [`"externalDatasets"`](#externalDatasets) but the contents of the Blazegraph endpoint of that dataset is added as an [Ontop ontology](https://ontop-vkg.org/guide/concepts.html#ontology) and/or loaded into the relevant triplestore namespace.
+These are treated like [`"externalDatasets"`](#externaldatasets) but the contents of the Blazegraph endpoint of that dataset is added as an [Ontop ontology](https://ontop-vkg.org/guide/concepts.html#ontology) and/or loaded into the relevant triplestore namespace.
 
 ### `"mappings"`
 
@@ -325,7 +325,7 @@ The icons can be found at `GEOSERVER_URL/www/icons` and the "other files" (being
 }
 ```
 
-Notes: 
+Notes:
 
 - If you want to reference icons uploaded in this way from a GeoServer `.sld` file, you will need to use stack-internal URLs, e.g.:
 
@@ -579,25 +579,17 @@ There are no configurable options for this process, the namespace the data is ad
 
 The `"rml"` data type should be used to load RDF triples from CSV files using [YARRRML rules](https://rml.io/yarrrml/), into a specified SPARQL endpoint namespace (defined in the parent dataset). Users must deploy both the `rml-mapper` and `yarrrml-parser` services within their stack, and provide resources as matching `.yml` and `.csv` file pairs with identical names for the loader to associate them.
 
-> [!IMPORTANT]  
-> Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
+> :warning: **Warning**: Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
 
-> [!TIP]  
-> Users can make use of the [default functions in RML Mapper](https://rml.io/docs/rmlmapper/default-functions/) as functions in their YARRRML rules. Please read the test `.yml` files if you require compliant samples.
+> :memo: **Note**: Users can make use of the [default functions in RML Mapper](https://rml.io/docs/rmlmapper/default-functions/) as functions in their YARRRML rules. Please read the test `.yml` files if you require compliant samples.
 
 The data loader performs the following steps when uploading csv data and rules:
 
-1. YARRRML loading
+1. **YARRRML loading**: The loader automatically populates the sources and targets fields following the csv data file names and the namespace defined in the parent dataset.
 
-The loader automatically populates the sources and targets fields following the csv data file names and the namespace defined in the parent dataset.
+2. **YARRRML to RML**: It converts the generated [YARRRML rules](https://rml.io/yarrrml/) into [RML rules](https://rml.io/specs/rml/) using the [YARRRML Parser tool](https://github.com/RMLio/yarrrml-parser).
 
-2. YARRRML -> RML
-
-It converts the generated [YARRRML rules](https://rml.io/yarrrml/) into [RML rules](https://rml.io/specs/rml/) using the [YARRRML Parser tool](https://github.com/RMLio/yarrrml-parser).
-
-3. RML upload
-
-It reads the [RML rules](https://rml.io/specs/rml/) using the [RMLMapper tool](https://github.com/RMLio/rmlmapper-java) to convert the csv data files into RDF triples. These triples are then subsequently uploaded to the specified namespace to the Blazegraph database within the stack.
+3. **RML upload**: It reads the [RML rules](https://rml.io/specs/rml/) using the [RMLMapper tool](https://github.com/RMLio/rmlmapper-java) to convert the csv data files into RDF triples. These triples are then subsequently uploaded to the specified namespace to the Blazegraph database within the stack.
 
 ### TBox CSV Data
 
