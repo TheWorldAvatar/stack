@@ -1,0 +1,42 @@
+{
+    "database": "postgres",
+    "workspace": "the_world_avatar",
+    "datasetDirectory": "building-cambridge",
+    "dataSubsets": [
+        {
+            "type": "Vector",
+            "skip": true,
+            "subdirectory": "vector",
+            "table": "building-cambridge",
+            "sql": "@/inputs/config/building-cambridge-vector-preprocess.sql",
+            "geoServerSettings": {
+                "virtualTable": {
+                    "name": "mapbox_layer",
+                    "sql": "@/inputs/config/mapbox-footprint-building-cambridge-vector.sql",
+                    "escapeSql": false,
+                    "geometry": {
+                        "name": "geometry",
+                        "type": "Polygon",
+                        "srid": 27700
+                    }
+                },
+                "defaultStyle": "polygon"
+            }
+        },
+        {
+            "type": "tabular",
+            "skip": false,
+            "subdirectory": "tabular",
+            "table": "TOID_UPRN_MatchingTable",
+            "ogr2ogrOptions": {
+                "layerCreationOptions": {
+                    "schema": "public"
+                }
+            }
+        }
+    ],
+    "mappings": [
+        "building-cambridge-vector.obda",
+        "vector-toid-uprn.obda"
+    ]
+}

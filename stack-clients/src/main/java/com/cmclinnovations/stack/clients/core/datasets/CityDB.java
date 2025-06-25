@@ -37,6 +37,8 @@ public class CityDB extends GeoServerDataSubset {
     @JsonProperty
     private boolean augmentData = true;
     @JsonProperty
+    private boolean unlogWhenAugment = true;
+    @JsonProperty
     private boolean discoverThematicSurface = false;
     @JsonProperty
     private double critAreaRatio = 0.1;
@@ -109,8 +111,10 @@ public class CityDB extends GeoServerDataSubset {
 
     protected void augmentData(String database) {
 
-        logger.info("Setting tables to unlogged for better write performance...");
-        CityDBClient.getInstance().unlogTable(database);
+        if (unlogWhenAugment) {
+            logger.info("Setting tables to unlogged for better write performance...");
+            CityDBClient.getInstance().unlogTable(database);
+        }
 
         if (discoverThematicSurface) {
             logger.info("Discovering thematic surface...");
@@ -121,8 +125,10 @@ public class CityDB extends GeoServerDataSubset {
         logger.info("Adding building footprint...");
         CityDBClient.getInstance().addFootprint(database);
 
-        logger.info("Setting tables to logged...");
-        CityDBClient.getInstance().relogTable(database);
+        if (unlogWhenAugment) {
+            logger.info("Setting tables to logged...");
+            CityDBClient.getInstance().relogTable(database);
+        }
     }
 
     @Override

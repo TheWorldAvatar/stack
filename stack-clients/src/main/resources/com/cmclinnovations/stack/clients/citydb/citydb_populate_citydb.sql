@@ -2,6 +2,11 @@ SET
     search_path TO public,
     citydb;
 
+DROP TABLE IF EXISTS "public"."building_without_footprint_CityDB",
+"public"."precise_footprint_CityDB",
+"public"."footprint_soup_CityDB",
+"public"."fp_parent";
+
 INSERT INTO
     "citydb"."cityobject" (
         "objectclass_id",
@@ -198,6 +203,130 @@ SET
 WHERE
     "root_id" IS NULL;
 
-DROP TABLE IF EXISTS "public"."raw_building_XtoCityDB";
+-- create footprint
+CREATE TABLE public."building_without_footprint_CityDB" AS (
+    SELECT
+        c.id,
+        c.gmlid,
+        ST_Zmin(c.envelope) AS zmin
+    FROM
+        cityobject AS c
+        JOIN "public"."raw_building_XtoCityDB" AS r ON c.gmlid = r.gmlid
+);
 
-DROP TABLE IF EXISTS "public"."raw_surface_XtoCityDB";
+CREATE TABLE public."precise_footprint_CityDB" AS (
+    SELECT
+        b.id AS building_id,
+        ST_Union(
+            ST_MakeValid(ST_Force2D(s.geom)),
+            0.00000001
+        ) AS U
+    FROM
+        "public"."raw_surface_XtoCityDB" AS s
+        JOIN "public"."building_without_footprint_CityDB" AS b ON b.gmlid = s.building_gmlid
+    WHERE
+        s.class = 35
+    GROUP BY
+        building_id
+);
+
+CREATE TABLE public."footprint_soup_CityDB" AS (
+    SELECT
+        b.id,
+        b.gmlid,
+        ST_Force3D(
+            (
+                ST_Dump(p.U)
+            ).geom,
+            b.zmin
+        ) AS geometry
+    FROM
+        "public"."building_without_footprint_CityDB" AS b
+        LEFT JOIN public."precise_footprint_CityDB" AS p ON b.id = p.building_id
+);
+
+WITH temp AS (
+    INSERT INTO
+        citydb.surface_geometry (
+            gmlid,
+            is_solid,
+            is_composite,
+            is_triangulated,
+            is_xlink,
+            is_reverse,
+            cityobject_id
+        ) (
+            SELECT
+                b.gmlid || '_footprint',
+                0,
+                0,
+                0,
+                0,
+                0,
+                b.id
+            FROM
+                "public"."building_without_footprint_CityDB" AS b
+        ) RETURNING id AS footprint_id,
+        cityobject_id AS bid,
+        gmlid
+)
+SELECT
+    footprint_id,
+    bid,
+    gmlid INTO TABLE public.fp_parent
+FROM
+    temp;
+
+UPDATE
+    building AS b
+SET
+    lod0_footprint_id = f.footprint_id
+FROM
+    fp_parent AS f
+WHERE
+    b.id = f.bid;
+
+INSERT INTO
+    citydb.surface_geometry (
+        gmlid,
+        parent_id,
+        root_id,
+        is_solid,
+        is_composite,
+        is_triangulated,
+        is_xlink,
+        is_reverse,
+        geometry,
+        cityobject_id
+    ) (
+        SELECT
+            s.gmlid || '_footprint_child',
+            f.footprint_id,
+            f.footprint_id,
+            0,
+            0,
+            0,
+            0,
+            0,
+            s.geometry,
+            s.id
+        FROM
+            public."footprint_soup_CityDB" AS s
+            JOIN public.fp_parent AS f ON s.id = f.bid
+        WHERE
+            GeometryType(geometry) = 'POLYGON'
+    );
+
+UPDATE
+    surface_geometry
+SET
+    root_id = id
+WHERE
+    root_id IS NULL;
+
+DROP TABLE IF EXISTS "public"."raw_building_XtoCityDB",
+"public"."raw_surface_XtoCityDB",
+"public"."building_without_footprint_CityDB",
+"public"."precise_footprint_CityDB",
+"public"."footprint_soup_CityDB",
+"public"."fp_parent";
