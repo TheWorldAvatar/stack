@@ -4,7 +4,7 @@
         "Name": "postgis",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "ghcr.io/cambridge-cares/cambridge-cares/postgis:15-3.4-3.4.1-extra-bundled-snapshot",
+                "Image": "ghcr.io/cambridge-cares/cambridge-cares/postgis:pgrouting-extra-15-3.5-3.8.0-3dcitydb",
                 "Env": [
                     "POSTGRES_HOST_AUTH_METHOD=scram-sha-256",
                     "POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256",
@@ -13,7 +13,7 @@
                 "Command": [
                     "sh",
                     "-c",
-                    "chmod +x /docker-entrypoint-initdb.d/3dcitydb-initdb.sh && docker-entrypoint.sh postgres"
+                    "sed -i 's/postgis-3,timescaledb/postgis-3/' /var/lib/postgresql/data/postgresql.conf; docker-entrypoint.sh postgres -c shared_buffers=1GB -c max_connections=200"
                 ],
                 "Mounts": [
                     {

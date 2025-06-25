@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import javax.annotation.Nonnull;
 
@@ -21,6 +23,8 @@ import com.cmclinnovations.stack.clients.docker.DockerConfigHandler;
 import com.cmclinnovations.stack.clients.rdf4j.ExternalEndpointConfig;
 import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.ContainerSpec;
 import com.github.dockerjava.api.model.ServiceSpec;
 import com.github.dockerjava.api.model.TaskSpec;
@@ -60,6 +64,20 @@ public class ContainerService extends AbstractService {
 
     final String getImage() {
         return getConfig().getImage();
+    }
+
+    protected final InspectImageResponse inspectImage(String imageName) {
+        try (InspectImageCmd inspectImageCmd = DockerClient.getInstance().getInternalClient()
+                .inspectImageCmd(imageName)) {
+            return inspectImageCmd.exec();
+        }
+    }
+
+    protected final Optional<String> getEnvVarFromImage(InspectImageResponse image, String key) {
+        return Stream.of(image.getConfig().getEnv())
+                .filter(env -> env.startsWith(key + "="))
+                .findAny()
+                .map(envVars -> envVars.replace(key + "=", ""));
     }
 
     final ServiceSpec getServiceSpec() {
