@@ -826,16 +826,17 @@ The [cropmap](../examples/datasets/inputs/data/cropmap/ontop_with_comments.obda)
 
 If you do not want the use every config file you can either use `"skip"=true` or name your stack so that the relevant config file is named `<STACK NAME>.json`.
 If you want to use a few config files you can create one master config file named `<STACK NAME>.json` with the following.
-    ```json
-    {
-        "name": "<STACK NAME>",
-        "externalDatasets": [
-            "name of one config file (no .json)",
-            "name of another config file",
-            <...>
-        ]
-    }
-    ```
+
+```json
+{
+    "name": "<STACK NAME>",
+    "externalDatasets": [
+        "name of one config file (no .json)",
+        "name of another config file",
+        // Other extrnal datasets
+    ]
+}
+```
 
 ## Value by File Name
 
