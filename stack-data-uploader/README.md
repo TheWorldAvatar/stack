@@ -736,13 +736,24 @@ This can be used to configure the osm2pgrouting tool as specified [here][osm2pgr
 For OSM data you can add the nodes `waysGeoServerSettings`, `verticesGeoServerSettings`, and `poiGeoServerSettings` nodes within the relevant data subset in the configuration json.
 The nodes that can be added within each are the same as the GeoServer options for [vector data](#vector-data).
 
-## OBDA Mapping File
+## Ontop (OBDA)
 
-The general layout of the file is as follows:
+The stack uses Ontop to enable running SPARQL queries on data stored in relational databases.
 
-### Comments
+The stack-data-uploader will spin up a new Ontop container for each Dataset that specifies an Ontop (OBDA) mapping.
+The name of the new Ontop container will include the name of the Dataset.
 
-Comments are not natively supported in the Ontop OBDA format but the data uploader will strip them out before passing the mappings to Ontop.
+> :memo: **Note**: The stack-data-uploader won't attempt to pull the Ontop image so it must be present on the system before the stack-data-uploader is run.
+
+### OBDA Mapping File
+
+The general layout of the file is as follows, see the [official guide](https://ontop-vkg.org/guide/advanced/mapping-language.html) for more details:
+
+#### Comments
+
+Full-line comments are officially supported in the Ontop OBDA format, specified by placing a `;` character at the beginning of the line.
+
+As comments were not previously officially avaliable the data uploader also supports using the `#` character, however these comments will be stripped out before the mapping is passed to Ontop.
 Comments are started by a `#` character and can appear at the start of a line, that contains no "code", or at the end of one that does.
 When a comment follows "code" the `#` character must be preceded by at least one white-space character.
 For example:
@@ -752,7 +763,7 @@ For example:
 SELECT var1 var2 # Comment following some "code"
 ```
 
-### Prefix Declarations
+#### Prefix Declarations
 
 This is where the RDF prefixes should be defined, these can then be used when specifying triple patterns in the mappings.
 It starts with a `[PrefixDeclaration]` tag, followed by the prefix-IRI base pairs, without angled-brackets `<>`.
@@ -763,7 +774,7 @@ rdf:    http://www.w3.org/1999/02/22-rdf-syntax-ns#
 ex:     http://example.org/
 ```
 
-### Mapping Declarations
+#### Mapping Declarations
 
 The mapping declarations section starts with this line:
 ```[MappingDeclaration] @collection [[```
@@ -771,6 +782,7 @@ and is closed by the following line:
 ```]]```
 
 Each mapping has three parts:
+
 | Label     | Description                                                                                                                                                                                         |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | mappingId | The unique name of the mapping                                                                                                                                                                      |
@@ -813,7 +825,7 @@ For example if the `buildings` table was as follows then the subsequent virtual 
 
 `ex:building/1235 ex:hasId 1235^^xsd:integer`
 
-#### SPARQL Queries on Ontop
+#### SPARQL Queries via Ontop
 
 Ontop supports a wide range of [SPARQL 1.1](https://ontop-vkg.org/guide/compliance.html#sparql-1-1) and [GeoSPARQL 1.0](https://ontop-vkg.org/guide/compliance.html#geosparql-1-0) features.
 The [cropmap](../examples/datasets/inputs/data/cropmap/ontop_with_comments.obda) example OBDA file shows how to use the PostGIS function [`ST_ASTEXT`](https://postgis.net/docs/ST_AsText.html) and the [`http://www.opengis.net/ont/geosparql#wktLiteral`](http://www.opengis.net/ont/geosparql#wktLiteral) to make it possible to run GeoSPARQL queries.
