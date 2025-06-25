@@ -150,7 +150,7 @@ It is possible to specify a custom target path by adding the `File.Name` nodes.
 The example below shows a snippet of a service config file with a secret named `secret_with_default_path` that specifies that the content of the file `stack-manager/inputs/secrets/secret_with_default_path` should be mounted into the container at `/run/secrets/secret_with_default_path`.
 The other secret named `secret_with_custom_path` specifies that the file `stack-manager/inputs/secrets/secret_with_custom_path` should be mounted into the container at `/custom/secret/path`.
 
-```json
+```json5
 {
     "ServiceSpec": {
         ...
@@ -191,7 +191,7 @@ See the [Stack configuration](#stack-configuration) section for instructions on 
 The example below shows a snippet of a service config file with a volume named `vis-files` being mounted into the container at `/var/www/html`.
 The stack-manager will have copied the contents of the `stack-manager/inputs/data/vis-files` directory into that volume before starting the containers.
 
-```json
+```json5
 {
     "ServiceSpec": {
        ...
@@ -224,7 +224,7 @@ This is often useful when developing and debugging a container that doesn't need
 
 The example below shows a snippet of a service config file where the contents of the `stack-manager/inputs/data/fia-queries` directory is mounted into the container at `/app/queries`.
 
-```json
+```json5
 {
     "ServiceSpec": {
        ...
@@ -281,21 +281,21 @@ This option doesn't affect `docker compose` commands so it will still attempt to
 
 The format of the stack configuration file is as follows:
 
-```json
+```json5
 {
-    # Tell the stack-manager not to try to pull images. (default: 'false')
+    // Tell the stack-manager not to try to pull images. (default: 'false')
     "isolated": true,
     "services": {
         "includes": [
-            # List of non-default services to start in addition to the default ones. (Optional)
+            // List of non-default services to start in addition to the default ones. (Optional)
         ],
         "excludes": [
-            # List of default and/or explicitly included services that should not be spun up.
-            # This will cause issues if another service requires one of the excluded ones. (Optional)
+            // List of default and/or explicitly included services that should not be spun up.
+            // This will cause issues if another service requires one of the excluded ones. (Optional)
         ]
     },
     "volumes": {
-        # Key-value pairs of volume name and source directory in the 'stack-manager/inputs/data' directory. (Optional)
+        // Key-value pairs of volume name and source directory in the 'stack-manager/inputs/data' directory. (Optional)
         "<volume name>": "<source directory>"
     }
 }

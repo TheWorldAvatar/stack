@@ -106,7 +106,7 @@ The following table provides a description of each example:
 | [ng-pylons](../examples/datasets/inputs/config/ng-pylons.json)                   | Uploads a [set of Shapefiles](../examples/datasets/inputs/data/ng_pylons/vector/) into the stack as multiple vector layers along a [.csv file](../examples/datasets/inputs/data/ng_pylons/tabular/ng_styling.csv) that contain auxiliary data. Some of the auxiliary data is then used by custom styles ([overhead-lines.sld](../examples/datasets/inputs/config/overhead-lines.sld) and [underground-cables.sld](../examples/datasets/inputs/config/underground-cables.sld)) to dynamically style the lines, towers, and underground cables when served through GeoServer.                                                                                                                                                                             |
 | [population](../examples/datasets/inputs/config/population.json)                 | Uploads [a GeoTiff file](../examples/datasets/inputs/data/population/population/README.md) into the stack as a raster layer, which is served using the default style via GeoServer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | [pylons](../examples/datasets/inputs/config/pylons.json)                         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| [pylons-and-veg](../examples/datasets/inputs/config/pylons-and-veg.json)         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name of another config referencing other `"externalDatasets".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| [pylons-and-veg](../examples/datasets/inputs/config/pylons-and-veg.json)         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name of another config referencing other `"externalDatasets"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | [treesAndHills](../examples/datasets/inputs/config/treesAndHills.json)           | An example of how to use the `"externalDatasets"` node to load multiple datasets by name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | [ukpn-pylons](../examples/datasets/inputs/config/ukpn-pylons.json)               | Uploads a [set of Shapefiles](../examples/datasets/inputs/data/ukpn_pylons/vector/) into the stack as multiple vector layers along with a [.csv file](../examples/datasets/inputs/data/ukpn_pylons/tabular/ukpn_styling.csv) that contain auxiliary data. Some of the auxiliary data is then used by a custom style ([overhead-lines.sld](../examples/datasets/inputs/config/overhead-lines.sld) to dynamically style the lines and towers when served through GeoServer. There is also a OBDA mapping file ([ukpn_ontop.obda](../examples/datasets/inputs/data/ukpn_pylons/ukpn_ontop.obda)), which provides an example of how to make the uploaded data queryable through the Ontop SPARQL endpoint.                                                  |
 | [rdf](../examples/datasets/inputs/config/rdf.json)                               | A wrapper around a collection of examples of loading in [RDF](#rdf-data) data. This includes triples [with](../examples/datasets/inputs/config/triples_with_inference.json) and [without](../examples/datasets/inputs/config/triples.json) inference; [quads](../examples/datasets/inputs/config/quads.json); and [using a properties file](../examples/datasets/inputs/config/triples_using_properties_file.json).                                                                                                                                                                                                                                                                                                                                     |
@@ -827,7 +827,7 @@ The [cropmap](../examples/datasets/inputs/data/cropmap/ontop_with_comments.obda)
 If you do not want the use every config file you can either use `"skip"=true` or name your stack so that the relevant config file is named `<STACK NAME>.json`.
 If you want to use a few config files you can create one master config file named `<STACK NAME>.json` with the following.
 
-```json
+```json5
 {
     "name": "<STACK NAME>",
     "externalDatasets": [
@@ -844,13 +844,13 @@ The stack uploader supports file referencing in the config file on certain value
 This an be done by giving a value of '@' followed by the name of the file containing the text to be used for that value.
 For example one can avoid long SQL queries in their configs by putting them in a file in the [inputs/config](./inputs/config) directory and referencing that file in the following way.
 
-  ```json
-    {
-      <...>
-      "sql": "@/inputs/config/my-sql-query.sql"
-      <...>
-    }
-  ```
+```json5
+{
+    ...
+    "sql": "@/inputs/config/my-sql-query.sql"
+    ...
+}
+```
 
 Note that this file path is the path inside the container.
 
