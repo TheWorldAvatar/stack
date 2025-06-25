@@ -37,7 +37,7 @@ public class CityDB extends GeoServerDataSubset {
     @JsonProperty
     private boolean augmentData = true;
     @JsonProperty
-    private boolean unlogWhenAugment = false;
+    private boolean unlogWhenAugment = true;
     @JsonProperty
     private boolean discoverThematicSurface = false;
     @JsonProperty
