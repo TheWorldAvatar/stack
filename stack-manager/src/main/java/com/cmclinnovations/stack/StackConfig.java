@@ -26,6 +26,9 @@ public class StackConfig {
     @JsonProperty
     private final Map<String, String> volumes = new HashMap<>();
 
+    @JsonProperty
+    private final Boolean isolated = false;
+
     public String getHostPath() {
         return hostPath;
     }
@@ -40,5 +43,9 @@ public class StackConfig {
 
     Map<String, String> getVolumes() {
         return volumes;
+    }
+
+    public boolean isIsolated() {
+        return isolated;
     }
 }
