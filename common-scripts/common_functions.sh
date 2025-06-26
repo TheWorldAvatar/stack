@@ -70,6 +70,11 @@ get_executables(){
 
             EXECUTABLE="podman"
             COMPOSE_EXECUTABLE="podman-compose"
+            # Set runtime directory to a sensible default if it is not already set.
+            # Leaving this unset is likely to cause permission denied errors when
+            # creating the folder for the API socket (see below).
+            # This can happen on platforms where the user login session is not set up properly.
+            export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
             API_SOCK="$XDG_RUNTIME_DIR/podman/podman.sock"
         else
             EXECUTABLE="docker"
