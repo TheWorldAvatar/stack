@@ -833,7 +833,7 @@ If you want to use a few config files you can create one master config file name
     "externalDatasets": [
         "name of one config file (no .json)",
         "name of another config file",
-        // Other extrnal datasets
+        // Other external datasets
     ]
 }
 ```
