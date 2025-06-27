@@ -29,9 +29,11 @@ public class GrafanaService extends ContainerService {
         // Set default password
         setEnvironmentVariableIfAbsent("GF_SECURITY_ADMIN_PASSWORD__FILE", getEnvironmentVariable(PASSWORD_FILE_KEY));
         // Configure the container's url
-        String hostPath = StackClient.getHostPath();
-        setEnvironmentVariableIfAbsent("GF_SERVER_ROOT_URL",
-                ((null != hostPath) ? FileUtils.fixSlashs(hostPath, true, true) : DEFAULT_ROOT_URL) + "analytics/");
+        String serverRootURL = StackClient.getStackHost().getPath()
+                .map(path -> FileUtils.fixSlashs(path, true, true))
+                .orElse(DEFAULT_ROOT_URL)
+                + "analytics/";
+        setEnvironmentVariableIfAbsent("GF_SERVER_ROOT_URL", serverRootURL);
         setEnvironmentVariableIfAbsent("GF_SERVER_SERVE_FROM_SUB_PATH", "false");
         // Enable public access without credentials
         setEnvironmentVariableIfAbsent("GF_AUTH_ANONYMOUS_ENABLED", "true");

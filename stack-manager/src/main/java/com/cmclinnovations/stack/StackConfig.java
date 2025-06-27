@@ -18,7 +18,7 @@ public class StackConfig {
     }
 
     @JsonProperty
-    private final String hostPath = null;
+    private StackHost host = new StackHost();
 
     @JsonProperty("services")
     private final EnumMap<Selector, List<String>> serviceSelectors = new EnumMap<>(Selector.class);
@@ -29,8 +29,13 @@ public class StackConfig {
     @JsonProperty
     private final Boolean isolated = false;
 
-    public String getHostPath() {
-        return hostPath;
+    @JsonProperty("hostName")
+    private void setHostName(String hostName) {
+        host = new StackHost(hostName);
+    }
+
+    public StackHost getHost() {
+        return host;
     }
 
     List<String> getIncludedServices() {

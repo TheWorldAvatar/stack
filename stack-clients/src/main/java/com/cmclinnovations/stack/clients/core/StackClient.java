@@ -3,6 +3,7 @@ package com.cmclinnovations.stack.clients.core;
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.cmclinnovations.stack.StackHost;
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
@@ -32,7 +33,8 @@ public final class StackClient {
     private static final String stackName;
 
     private static final Map<String, String> stackNameLabelMap;
-    private static String hostPath;
+
+    private static StackHost stackHost = new StackHost();
 
     private static boolean isolated = false;
 
@@ -72,6 +74,22 @@ public final class StackClient {
 
     public static Map<String, String> getStackNameLabelMap() {
         return stackNameLabelMap;
+    }
+
+    public static StackHost getStackHost() {
+        return stackHost;
+    }
+
+    public static void setStackHost(StackHost stackHost) {
+        StackClient.stackHost = stackHost;
+    }
+
+    public static boolean isIsolated() {
+        return isolated;
+    }
+
+    public static void setIsolated(boolean isolated) {
+        StackClient.isolated = isolated;
     }
 
     public static boolean isInTest() {
@@ -140,22 +158,6 @@ public final class StackClient {
 
         return new TimeSeriesClient<>(remoteStoreClient, timeClass,
                 postgisConfig.getJdbcURL(database), postgisConfig.getUsername(), postgisConfig.getPassword());
-    }
-
-    public static void setHostPath(String hostPath) {
-        StackClient.hostPath = hostPath;
-    }
-
-    public static String getHostPath() {
-        return hostPath;
-    }
-
-    public static boolean isIsolated() {
-        return isolated;
-    }
-
-    public static void setIsolated(boolean isolated) {
-        StackClient.isolated = isolated;
     }
 
 }
