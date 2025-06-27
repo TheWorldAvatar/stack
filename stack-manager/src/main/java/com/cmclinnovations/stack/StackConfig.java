@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.cmclinnovations.stack.clients.core.StackHost;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class StackConfig {

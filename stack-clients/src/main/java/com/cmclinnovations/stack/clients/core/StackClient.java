@@ -3,7 +3,6 @@ package com.cmclinnovations.stack.clients.core;
 import java.nio.file.Path;
 import java.util.Map;
 
-import com.cmclinnovations.stack.StackHost;
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;

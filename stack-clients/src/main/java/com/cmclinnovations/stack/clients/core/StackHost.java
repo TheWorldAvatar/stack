@@ -1,4 +1,4 @@
-package com.cmclinnovations.stack;
+package com.cmclinnovations.stack.clients.core;
 
 import java.util.Optional;
 
@@ -8,7 +8,7 @@ public final class StackHost {
 
     private final Optional<String> proto;
     private final Optional<String> name;
-    private final Optional<Integer> port;
+    private final Optional<String> port;
     private final Optional<String> path;
 
     public StackHost() {
@@ -30,7 +30,7 @@ public final class StackHost {
         return name;
     }
 
-    public Optional<Integer> getPort() {
+    public Optional<String> getPort() {
         return port;
     }
 
