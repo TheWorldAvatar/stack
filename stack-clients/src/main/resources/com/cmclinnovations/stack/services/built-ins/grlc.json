@@ -16,17 +16,21 @@
         }
     },
     "endpoints": {
-        "ui": {
-            "url": "http://localhost:80/api-local/",
-            "externalPath": "/api/ui/"
-        },
         "api": {
             "url": "http://localhost:80/api-local/",
-            "externalPath": "/api/api-local/"
+            "externalPath": "/rest/"
+        },
+        "ui": {
+            "url": "http://localhost:80/api-local/",
+            "externalPath": "/rest/ui/"
+        },
+        "api-long": {
+            "url": "http://localhost:80/api-local/",
+            "externalPath": "/rest/api-local/"
         },
         "static": {
             "url": "http://localhost:80/static/",
-            "externalPath": "/api/static/"
+            "externalPath": "/rest/static/"
         }
     }
 }
