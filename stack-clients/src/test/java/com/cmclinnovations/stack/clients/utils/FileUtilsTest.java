@@ -13,6 +13,9 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 class FileUtilsTest {
     @Test
@@ -51,7 +54,6 @@ class FileUtilsTest {
                         .collect(Collectors.toList()));
     }
 
-
     private Collection<URI> getExpectedURIs(URL dirURL, Collection<String> expectedFiles)
             throws URISyntaxException, IOException {
         return expectedFiles.stream().map(file -> {
@@ -89,5 +91,53 @@ class FileUtilsTest {
         URL dirURL = new URL("jar", "", FileUtilsTest.class.getResource("files.jar").getPath() + "!/files");
         Collection<URI> expectedURIs = getExpectedURIs(dirURL, List.of("abc.txt"));
         Assertions.assertEquals(expectedURIs, FileUtils.listFiles(dirURL, ".txt"));
+    }
+
+    private static Stream<Arguments> fixSlashesTestProvider() throws IOException {
+        return Stream.of(
+                Arguments.of("/", "", true, true),
+                Arguments.of("/", "", true, false),
+                Arguments.of("/", "", false, true),
+                Arguments.of("", "", false, false),
+                Arguments.of("/path/", "path", true, true),
+                Arguments.of("/path", "path", true, false),
+                Arguments.of("path/", "path", false, true),
+                Arguments.of("path", "path", false, false),
+                Arguments.of("/path/", "/path", true, true),
+                Arguments.of("/path", "/path", true, false),
+                Arguments.of("path/", "/path", false, true),
+                Arguments.of("path", "/path", false, false),
+                Arguments.of("/path/", "path/", true, true),
+                Arguments.of("/path", "path/", true, false),
+                Arguments.of("path/", "path/", false, true),
+                Arguments.of("path", "path/", false, false),
+                Arguments.of("/path/", "/path/", true, true),
+                Arguments.of("/path", "/path/", true, false),
+                Arguments.of("path/", "/path/", false, true),
+                Arguments.of("path", "/path/", false, false),
+                Arguments.of("/path/file/", "path/file", true, true),
+                Arguments.of("/path/file", "path/file", true, false),
+                Arguments.of("path/file/", "path/file", false, true),
+                Arguments.of("path/file", "path/file", false, false),
+                Arguments.of("/path/file/", "/path/file", true, true),
+                Arguments.of("/path/file", "/path/file", true, false),
+                Arguments.of("path/file/", "/path/file", false, true),
+                Arguments.of("path/file", "/path/file", false, false),
+                Arguments.of("/path/file/", "path/file/", true, true),
+                Arguments.of("/path/file", "path/file/", true, false),
+                Arguments.of("path/file/", "path/file/", false, true),
+                Arguments.of("path/file", "path/file/", false, false),
+                Arguments.of("/path/file/", "/path/file/", true, true),
+                Arguments.of("/path/file", "/path/file/", true, false),
+                Arguments.of("path/file/", "/path/file/", false, true),
+                Arguments.of("path/file", "/path/file/", false, false));
+    }
+
+    @ParameterizedTest()
+    @MethodSource("fixSlashesTestProvider")
+    void testFixSlashesEmpty(String expected, String input, boolean leading, boolean trailing) {
+
+        Assertions.assertEquals(expected, FileUtils.fixSlashes(input, leading, trailing));
+
     }
 }
