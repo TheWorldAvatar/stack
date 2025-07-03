@@ -1,8 +1,15 @@
 #!/bin/bash
 
-VERSION=$(cat -s "VERSION" 2>/dev/null)
 MAIN_VERSION=$(curl -s "https://raw.githubusercontent.com/TheWorldAvatar/stack/main/VERSION")
 MAIN_VERSION=1.49.0
+
+# Check if MAIN_VERSION is a semantic version number
+if ! [[ "$MAIN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "No version set on main, skipping version check"
+    exit 0
+fi
+
+VERSION=$(cat -s "VERSION" 2>/dev/null)
 
 if [ "$VERSION" == "" ]; then
     echo -e "\e[31mError\e[0m: VERSION file is empty. Please ensure the correct version number is written here. Version currently on main is: $MAIN_VERSION"
@@ -17,7 +24,7 @@ if [ "$VERSION" == "$MAIN_VERSION" ]; then
     exit 1
 fi
 
-# Check that there's no -SNAPSHOT qualifier and that the version follows the semantic versioning pattern
+# Check that VERSION follows the semantic versioning pattern
 if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     echo -e "\e[31mError\e[0m: VERSION must follow the semantic versioning pattern x.y.z where x, y, and z are numbers"
     exit 1
@@ -65,7 +72,36 @@ POM_FILES=(
 
 for POM in "${POM_FILES[@]}"; do
     if [ -f "$POM" ]; then
-        sed -i -E "0,/<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/s//<version>$VERSION<\/version>/" "$POM"
+        ARTIFACT_ID=$(basename "$(dirname "$POM")")
+        # Update the main <version> for the artifact
+        awk -v ver="$VERSION" -v aid="$ARTIFACT_ID" '
+            BEGIN { found=0 }
+            /<artifactId>/ {
+                if ($0 ~ "<artifactId>" aid "</artifactId>") found=1
+                else found=0
+            }
+            found && /<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/ && !done[aid] {
+                sub(/<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/, "<version>" ver "</version>")
+                done[aid]=1
+            }
+            { print }
+        ' "$POM" > "$POM.tmp" && mv "$POM.tmp" "$POM"
+
+        # If this is stack-manager or stack-data-uploader, update stack-clients dependency version robustly
+        if [[ "$ARTIFACT_ID" == "stack-manager" || "$ARTIFACT_ID" == "stack-data-uploader" ]]; then
+            awk -v ver="$VERSION" '
+                BEGIN { in_dep=0; found=0 }
+                /<dependency>/ { in_dep=1; found=0 }
+                in_dep && /<artifactId>stack-clients<\/artifactId>/ { found=1 }
+                in_dep && found && /<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/ {
+                    sub(/<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/, "<version>" ver "</version>")
+                    found=0
+                }
+                /<\/dependency>/ { in_dep=0; found=0 }
+                { print }
+            ' "$POM" > "$POM.tmp" && mv "$POM.tmp" "$POM"
+        fi
+
         echo "Updated version in $POM to $VERSION"
     else
         echo -e "\e[31mError\e[0m: $POM not found"
