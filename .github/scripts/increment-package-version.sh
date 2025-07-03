@@ -22,12 +22,41 @@ for compose in "${COMPOSE_FILES[@]}"; do
     fi
 done
 
-for pom in "${POM_FILES[@]}"; do
-    if [ -f "$pom" ]; then
-        sed -i.bak -E "s|(<version>).+(</version>)|\1$VERSION\2|" "$pom" && rm "$pom.bak"
-        echo "Updated version in $pom to $VERSION"
+for POM in "${POM_FILES[@]}"; do
+    if [ -f "$POM" ]; then
+        ARTIFACT_ID=$(basename "$(dirname "$POM")")
+        # Update the main <version> for the artifact
+        awk -v ver="$VERSION" -v aid="$ARTIFACT_ID" '
+            BEGIN { found=0 }
+            /<artifactId>/ {
+                if ($0 ~ "<artifactId>" aid "</artifactId>") found=1
+                else found=0
+            }
+            found && /<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/ && !done[aid] {
+                sub(/<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/, "<version>" ver "</version>")
+                done[aid]=1
+            }
+            { print }
+        ' "$POM" > "$POM.tmp" && mv "$POM.tmp" "$POM"
+
+        # If this is stack-manager or stack-data-uploader, update stack-clients dependency version robustly
+        if [[ "$ARTIFACT_ID" == "stack-manager" || "$ARTIFACT_ID" == "stack-data-uploader" ]]; then
+            awk -v ver="$VERSION" '
+                BEGIN { in_dep=0; found=0 }
+                /<dependency>/ { in_dep=1; found=0 }
+                in_dep && /<artifactId>stack-clients<\/artifactId>/ { found=1 }
+                in_dep && found && /<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/ {
+                    sub(/<version>[0-9]+\.[0-9]+\.[0-9]+<\/version>/, "<version>" ver "</version>")
+                    found=0
+                }
+                /<\/dependency>/ { in_dep=0; found=0 }
+                { print }
+            ' "$POM" > "$POM.tmp" && mv "$POM.tmp" "$POM"
+        fi
+
+        echo "Updated version in $POM to $VERSION"
     else
-        echo -e "\e[31mError\e[0m: $pom not found"
+        echo -e "\e[31mError\e[0m: $POM not found"
         exit 1
     fi
 done

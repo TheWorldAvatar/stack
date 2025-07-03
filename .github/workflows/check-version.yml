@@ -4,11 +4,10 @@ on:
   pull_request:
     branches:
       - main
-    # paths:
-      # - stack-clients/src**
-      # - stack-manager/src**
-      # - stack-data-uploader/src**
-      # - VERSION
+    paths:
+      - stack-clients/src**
+      - stack-manager/src**
+      - stack-data-uploader/src**
 
 jobs:
   check-version:
@@ -23,29 +22,32 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ secrets.CI_TRIGGER_PAT_USHCODE }}
-          ## By default, actions/checkout uses the GITHUB_TOKEN secret, but this does not trigger CI which is required after this action, otherwise if the final commit is the twa-bot one, it will not check linting etc before a merge. This PAT ensures that CI is run
 
       - name: Set up Git
         run: |
           git config --global user.email "stack-bot@noreply.theworldavatar.io"
           git config --global user.name "twa-stack-bot"
 
-      - name: Check version incrementation
+      - name: Check VERSION file
         run: |
           chmod +x .github/scripts/check-version.sh
           .github/scripts/check-version.sh
           
-      - name: Save version to environment
+      - name: Save version to github environment
         run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
           
-      - name: Check if package files have been changed by action
+      - name: Set VERSION in pom.xml and docker-compose.yml
+        run: |
+              chmod +x .github/scripts/increment-package-version.sh
+              .github/scripts/increment-package-version.sh
+  
+      - name: Check for changes
         id: changes
         run: |
           git checkout ${{ github.head_ref }}
           git add stack-clients/pom.xml stack-manager/pom.xml stack-data-uploader/pom.xml stack-clients/docker-compose.yml stack-manager/docker-compose.yml stack-data-uploader/docker-compose.yml
           if ! git diff-index --quiet HEAD --; then
-            echo "changes=changes" >> $GITHUB_OUTPUT
+            echo "::set-output name=changes::changes"
           fi
 
       - name: Push auto incremented version changes
@@ -53,6 +55,6 @@ jobs:
         run: |
           git commit -m "Update version to $VERSION in package files"
           git push origin ${{ github.head_ref }}
+        
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_TRIGGER_PAT_USHCODE }}
-          ## Again, use the PAT to trigger CI
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
