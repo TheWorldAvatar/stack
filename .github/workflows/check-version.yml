@@ -1,0 +1,60 @@
+name: Check and Consolidate Version
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - stack-clients/src**
+      - stack-manager/src**
+      - stack-data-uploader/src**
+
+jobs:
+  check-version:
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Git
+        run: |
+          git config --global user.email "stack-bot@noreply.theworldavatar.io"
+          git config --global user.name "twa-stack-bot"
+
+      - name: Check VERSION file
+        run: |
+          chmod +x .github/scripts/check-version.sh
+          .github/scripts/check-version.sh
+          
+      - name: Save version to github environment
+        run: echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+          
+      - name: Set VERSION in pom.xml and docker-compose.yml
+        run: |
+              chmod +x .github/scripts/increment-package-version.sh
+              .github/scripts/increment-package-version.sh
+  
+      - name: Check for changes
+        id: changes
+        run: |
+          git checkout ${{ github.head_ref }}
+          git add stack-clients/pom.xml stack-manager/pom.xml stack-data-uploader/pom.xml stack-clients/docker-compose.yml stack-manager/docker-compose.yml stack-data-uploader/docker-compose.yml
+          if ! git diff-index --quiet HEAD --; then
+            echo "::set-output name=changes::changes"
+          fi
+
+      - name: Push auto incremented version changes
+        if: steps.changes.outputs.changes == 'changes'
+        run: |
+          git commit -m "Update version to $VERSION in package files"
+          git push origin ${{ github.head_ref }}
+        
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
