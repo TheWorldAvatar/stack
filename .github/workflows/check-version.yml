@@ -4,10 +4,10 @@ on:
   pull_request:
     branches:
       - main
-    # paths:
-    #   - stack-clients/src**
-    #   - stack-manager/src**
-    #   - stack-data-uploader/src**
+    paths:
+      - stack-clients/src**
+      - stack-manager/src**
+      - stack-data-uploader/src**
 
 jobs:
   check-version:

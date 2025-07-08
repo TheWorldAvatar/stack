@@ -2,7 +2,6 @@
 
 VERSION=$(cat -s "VERSION" 2>/dev/null)
 MAIN_VERSION=$(curl -s "https://raw.githubusercontent.com/TheWorldAvatar/stack/main/VERSION")
-MAIN_VERSION=1.49.1
 
 if [ "$VERSION" == "" ]; then
     echo -e "\e[31mError\e[0m: VERSION file is empty. Please ensure the correct version number is written here. Version currently on main is: $MAIN_VERSION"
