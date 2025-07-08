@@ -45,6 +45,7 @@ jobs:
       - name: Build stack clients docker image and push to ghcr
         uses: docker/build-push-action@v6
         with:
+          context: stack-clients
           file: stack-clients/Dockerfile
           push: true
           tags: |
@@ -56,6 +57,7 @@ jobs:
       - name: Build stack manager docker image and push to ghcr
         uses: docker/build-push-action@v6
         with:
+          context: stack-manager
           file: stack-manager/Dockerfile
           push: true
           tags: |
@@ -67,6 +69,7 @@ jobs:
       - name: Build stack data uploader docker image and push to ghcr
         uses: docker/build-push-action@v6
         with:
+          context: stack-data-uploader
           file: stack-data-uploader/Dockerfile
           push: true
           tags: |
