@@ -10,7 +10,13 @@
     <version>1.49.0-docker-CI-test</version>
 
     <name>Stack Clients</name>
-    <url>https://theworldavatar.io</url>
+    <url>https://github.com/TheWorldAvatar/stack</url>
+    <scm>
+        <url>https://github.com/TheWorldAvatar/stack</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/TheWorldAvatar/stack/issues</url>
+    </issueManagement>
 
     <parent>
         <groupId>uk.ac.cam.cares.jps</groupId>
