@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
