@@ -6,8 +6,9 @@ FROM maven:3.8.3-adoptopenjdk-11 AS builder
 
 # Use BuildKit secret for settings.xml if available, else use local credentials
 # Copy in Maven settings templates and credentials for local builds
-COPY docker/credentials /root/credentials
-COPY docker/.m2 /root/.m2
+
+# COPY docker/credentials /root/credentials
+# COPY docker/.m2 /root/.m2
 
 # If a secret settings.xml is provided, use it (for CI); otherwise, use the local one
 RUN --mount=type=secret,id=maven_settings,required=false \
