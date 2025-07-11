@@ -45,18 +45,15 @@ CMD ["mvn", "test"]
 
 # Second stage: copy the output into a clean image
 #==================================================================================================
-FROM adoptopenjdk/openjdk11:jre-11.0.13_8 AS agent
-
-# Copy in the entrypoint script
-COPY docker/entrypoint.sh /entrypoint.sh
+FROM adoptopenjdk/openjdk11:jre-11.0.13_8
 
 WORKDIR /app
 
-# Copy the downloaded dependencies from the builder
-COPY --from=builder /root/code/target/lib /app/lib
+COPY target/*.jar /app/
+COPY target/lib /app/lib
 
-# Port for Java debugging
+COPY docker/entrypoint.sh /entrypoint.sh
+
 EXPOSE 5005
 
-# Run the entrypoint script
 ENTRYPOINT ["/entrypoint.sh"]

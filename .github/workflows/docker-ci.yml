@@ -42,8 +42,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate Maven settings.xml for GitHub Packages
-        uses: s4u/maven-settings-action@v3.1.0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Build with Maven (stack-clients)
+        working-directory: stack-clients
+        run: mvn clean package --update-snapshots -DskipTests
 
       - name: Build stack clients docker image and push to ghcr
         uses: docker/build-push-action@v6
@@ -56,8 +63,10 @@ jobs:
             ghcr.io/theworldavatar/stack-clients:${{ env.VERSION }}
             ghcr.io/theworldavatar/stack-clients:${{ env.MAJOR }}
             ghcr.io/theworldavatar/stack-clients:${{ env.MINOR }}
-          secrets: |
-            maven_settings=${{ github.workspace }}/.m2/settings.xml
+
+      - name: Build with Maven (stack-manager)
+        working-directory: stack-manager
+        run: mvn clean package --update-snapshots -DskipTests
 
       - name: Build stack manager docker image and push to ghcr
         uses: docker/build-push-action@v6
@@ -70,6 +79,10 @@ jobs:
             ghcr.io/theworldavatar/stack-manager:${{ env.VERSION }}
             ghcr.io/theworldavatar/stack-manager:${{ env.MAJOR }}
             ghcr.io/theworldavatar/stack-manager:${{ env.MINOR }}
+
+      - name: Build with Maven (stack-data-uploader)
+        working-directory: stack-data-uploader
+        run: mvn clean package --update-snapshots -DskipTests
 
       - name: Build stack data uploader docker image and push to ghcr
         uses: docker/build-push-action@v6
