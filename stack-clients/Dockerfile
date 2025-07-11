@@ -1,7 +1,6 @@
 # Second stage: copy the output into a clean image
 #==================================================================================================
-FROM adoptopenjdk/openjdk11:jre-11.0.13_8
-
+FROM eclipse-temurin:11-jre
 WORKDIR /app
 
 # Copy the built JAR and lib directory from the Maven build
