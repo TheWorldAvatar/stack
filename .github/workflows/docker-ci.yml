@@ -1,0 +1,111 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - code/**
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - uses: s4u/maven-settings-action@v3.1.0
+        with:
+          servers: |
+            [{
+              "id": "github",
+              "username": "${{ github.actor }}",
+              "password": "${{ secrets.GHCR_PAT }}"
+            }]
+
+      - name: Set version variables from file
+        id: read-version
+        run: |
+          if [ -f VERSION ]; then
+            VERSION=$(cat VERSION)
+          else
+            echo "VERSION file not found"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "MAJOR=$(echo $VERSION | cut -d. -f1)" >> $GITHUB_ENV
+          echo "MINOR=$(echo $VERSION | cut -d. -f1).$(echo $VERSION | cut -d. -f2)" >> $GITHUB_ENV
+    
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: 'maven'
+  
+      - name: Build with Maven (stack-clients)
+        working-directory: stack-clients
+        run: mvn clean package --update-snapshots -DskipTests
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build stack clients docker image and push to ghcr
+        uses: docker/build-push-action@v6
+        with:
+          context: stack-clients
+          file: stack-clients/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/theworldavatar/stack-clients:latest
+            ghcr.io/theworldavatar/stack-clients:${{ env.VERSION }}
+            ghcr.io/theworldavatar/stack-clients:${{ env.MAJOR }}
+            ghcr.io/theworldavatar/stack-clients:${{ env.MINOR }}
+
+      - name: Build with Maven (stack-manager)
+        working-directory: stack-manager
+        run: mvn clean package --update-snapshots -DskipTests
+
+      - name: Build stack manager docker image and push to ghcr
+        uses: docker/build-push-action@v6
+        with:
+          context: stack-manager
+          file: stack-manager/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/theworldavatar/stack-manager:latest
+            ghcr.io/theworldavatar/stack-manager:${{ env.VERSION }}
+            ghcr.io/theworldavatar/stack-manager:${{ env.MAJOR }}
+            ghcr.io/theworldavatar/stack-manager:${{ env.MINOR }}
+
+      - name: Build with Maven (stack-data-uploader)
+        working-directory: stack-data-uploader
+        run: mvn clean package --update-snapshots -DskipTests
+
+      - name: Build stack data uploader docker image and push to ghcr
+        uses: docker/build-push-action@v6
+        with:
+          context: stack-data-uploader
+          file: stack-data-uploader/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/theworldavatar/stack-data-uploader:latest
+            ghcr.io/theworldavatar/stack-data-uploader:${{ env.VERSION }}
+            ghcr.io/theworldavatar/stack-data-uploader:${{ env.MAJOR }}
+            ghcr.io/theworldavatar/stack-data-uploader:${{ env.MINOR }}

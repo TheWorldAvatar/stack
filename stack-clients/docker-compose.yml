@@ -1,6 +1,6 @@
 services:
   stack-client:
-    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.49.0
+    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.49.0-docker-CI-test
     secrets:
       - blazegraph_password
       - postgis_password

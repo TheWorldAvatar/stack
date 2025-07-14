@@ -7,10 +7,16 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.49.0</version>
+    <version>1.49.0-docker-CI-test</version>
 
     <name>Stack Manager</name>
-    <url>https://theworldavatar.io</url>
+    <url>https://github.com/TheWorldAvatar/stack-manager</url>
+    <scm>
+        <url>https://github.com/TheWorldAvatar/stack-manager</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/TheWorldAvatar/stack-manager/issues</url>
+    </issueManagement>
 
     <parent>
         <groupId>uk.ac.cam.cares.jps</groupId>
@@ -38,7 +44,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.49.0</version>
+            <version>1.49.0-docker-CI-test</version>
         </dependency>
 
         <dependency>
