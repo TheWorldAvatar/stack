@@ -27,6 +27,13 @@ jobs:
         uses: actions/checkout@v4
 
       - uses: s4u/maven-settings-action@v3.1.0
+        with:
+          servers: |
+            [{
+              "id": "github",
+              "username": "${{ github.actor }}",
+              "password": "${{ secrets.GHCR_PAT }}"
+            }]
 
       - name: Set version variables from file
         id: read-version
