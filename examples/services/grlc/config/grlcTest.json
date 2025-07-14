@@ -1,0 +1,19 @@
+{
+    "services": {
+        "includes": [
+            "grlc"
+        ],
+        "excludes": [
+            "rml-mapper",
+            "yarrrml-parser",
+            "citytiler",
+            "ontop",
+            "adminer",
+            "gdal",
+            "citydbimpexp"
+        ]
+    },
+    "volumes": {
+        "grlc-config": "grlc"
+    }
+}
