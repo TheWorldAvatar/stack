@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.50.0-rest-api-agent-SNAPSHOT</version>
+    <version>1.50.0</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
