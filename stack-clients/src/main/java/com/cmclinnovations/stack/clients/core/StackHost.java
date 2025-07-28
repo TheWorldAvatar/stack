@@ -105,6 +105,7 @@ public final class StackHost {
             return toString();
         }
 
+        @Override
         public String toString() {
             try {
                 // Build the path

@@ -93,6 +93,7 @@ class FileUtilsTest {
         Assertions.assertEquals(expectedURIs, FileUtils.listFiles(dirURL, ".txt"));
     }
 
+    @SuppressWarnings("unused")
     private static Stream<Arguments> fixSlashesTestProvider() throws IOException {
         return Stream.of(
                 Arguments.of("/", "", true, true),
