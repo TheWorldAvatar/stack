@@ -277,6 +277,8 @@ The default value is `false`.
 
 This option doesn't affect `docker compose` commands so it will still attempt to pull the stack-manager and stack-data-uploader images if they are missing.
 
+If an image tag starts with `localhost/` then it will be assumed to be only present locally and so the stack-manager will not try to pull it.
+
 ### File format
 
 The format of the stack configuration file is as follows:

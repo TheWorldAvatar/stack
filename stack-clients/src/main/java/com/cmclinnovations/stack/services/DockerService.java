@@ -544,6 +544,16 @@ public class DockerService extends AbstractService
 
         boolean imageAvailableLocally = isImageAvailableLocally(imageName);
 
+        if (imageName.startsWith("localhost/")) {
+            if (imageAvailableLocally) {
+                logger.info("Local image '" + imageName + "' is available.");
+                return;
+            } else {
+                throw new RuntimeException(
+                        "Image '" + imageName + "' not present and cannot be pulled as it is local.");
+            }
+        }
+
         if (StackClient.isIsolated()) {
             if (imageAvailableLocally) {
                 logger.info("Image '" + imageName
