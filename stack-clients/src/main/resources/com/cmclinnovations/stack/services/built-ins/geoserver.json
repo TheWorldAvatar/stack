@@ -4,7 +4,7 @@
         "Name": "geoserver",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "docker.osgeo.org/geoserver:2.27.0",
+                "Image": "docker.osgeo.org/geoserver:2.27.2",
                 "Env": [
                     "GEOSERVER_CSRF_WHITELIST=localhost",
                     "INSTALL_EXTENSIONS=true",
