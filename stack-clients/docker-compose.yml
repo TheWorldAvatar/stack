@@ -1,6 +1,6 @@
 services:
   stack-client:
-    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.50.1
+    image: ghcr.io/theworldavatar/stack-client${IMAGE_SUFFIX}:1.50.2-bump-geoserver-version-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password
