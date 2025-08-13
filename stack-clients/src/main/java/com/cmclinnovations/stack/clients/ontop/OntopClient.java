@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,13 @@ import org.slf4j.LoggerFactory;
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.datasets.CopyDatasetQuery;
+import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.clients.utils.SparqlRulesFile;
 import com.cmclinnovations.stack.clients.utils.TempFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import it.unibz.inf.ontop.dbschema.impl.json.JsonLens;
+import it.unibz.inf.ontop.dbschema.impl.json.JsonLenses;
 
 public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
 
@@ -27,6 +33,7 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     public static final String ONTOP_MAPPING_FILE = "ONTOP_MAPPING_FILE";
     public static final String ONTOP_ONTOLOGY_FILE = "ONTOP_ONTOLOGY_FILE";
     public static final String ONTOP_SPARQL_RULES_FILE = "ONTOP_SPARQL_RULES_FILE";
+    public static final String ONTOP_LENSES_FILE = "ONTOP_LENSES_FILE";
 
     private static Map<String, OntopClient> instances = new HashMap<>();
 
@@ -95,6 +102,32 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
         } catch (IOException ex) {
             throw new RuntimeException(
                     "Failed to write SPARQL Rules file.", ex);
+        }
+    }
+
+    public void uploadLenses(List<Path> lensesFiles) {
+        String containerId = getContainerId(getContainerName());
+        Path lensesFilePath = getFilePath(containerId, ONTOP_LENSES_FILE);
+        List<JsonLens> mergedRelations = new ArrayList<>();
+
+        ObjectMapper mapper = JsonHelper.getMapper();
+        for (Path lensesFile : lensesFiles) {
+            try {
+                JsonLenses jsonLenses = mapper.readValue(lensesFile.toFile(), JsonLenses.class);
+                mergedRelations.addAll(jsonLenses.relations);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read lenses from file: '" + lensesFile + "'.\n", e);
+            }
+        }
+
+        JsonLenses mergedLenses = new JsonLenses(mergedRelations);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            mapper.writeValue(outputStream, mergedLenses);
+            sendFileContent(containerId, lensesFilePath, outputStream.toByteArray());
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    "Failed to write lenses file.", ex);
         }
     }
 
