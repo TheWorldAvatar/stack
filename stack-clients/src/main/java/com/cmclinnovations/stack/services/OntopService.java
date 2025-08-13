@@ -8,8 +8,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FilenameUtils;
-
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.docker.DockerClient;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
@@ -35,15 +33,12 @@ public final class OntopService extends ContainerService {
     private static final String ONTOP_DB_DRIVER = "ONTOP_DB_DRIVER";
     private static final String ONTOP_DB_USER = "ONTOP_DB_USER";
     private static final String ONTOP_DB_PASSWORD_FILE = "ONTOP_DB_PASSWORD_FILE";
-    private static final String ONTOP_MAPPING_FILE = "ONTOP_MAPPING_FILE";
-    private static final String ONTOP_ONTOLOGY_FILE = "ONTOP_ONTOLOGY_FILE";
-    private static final String ONTOP_SPARQL_RULES_FILE = "ONTOP_SPARQL_RULES_FILE";
 
     private static final String DEFAULT_PORT = "8080";
 
     private final String containerName;
     private final OntopEndpointConfig endpointConfig;
-    private final List<String> configFiles;
+    private final Map<String, String> configFiles;
     private final List<String> configDirs;
 
     public OntopService(String stackName, ServiceConfig config) {
@@ -51,10 +46,13 @@ public final class OntopService extends ContainerService {
 
         containerName = StackClient.removeStackName(getConfig().getName());
 
-        configFiles = List.of(getEnvironmentVariable(ONTOP_MAPPING_FILE), getEnvironmentVariable(ONTOP_ONTOLOGY_FILE),
-                getEnvironmentVariable(ONTOP_SPARQL_RULES_FILE));
+        configFiles = Map.of(
+                OntopClient.ONTOP_MAPPING_FILE, getEnvironmentVariable(OntopClient.ONTOP_MAPPING_FILE),
+                OntopClient.ONTOP_ONTOLOGY_FILE, getEnvironmentVariable(OntopClient.ONTOP_ONTOLOGY_FILE),
+                OntopClient.ONTOP_SPARQL_RULES_FILE, getEnvironmentVariable(OntopClient.ONTOP_SPARQL_RULES_FILE),
+                OntopClient.ONTOP_LENSES_FILE, getEnvironmentVariable(OntopClient.ONTOP_LENSES_FILE));
 
-        configDirs = configFiles.stream().map(s -> Path.of(s).getParent().toString()).distinct()
+        configDirs = configFiles.values().stream().map(fileName -> Path.of(fileName).getParent().toString()).distinct()
                 .collect(Collectors.toList());
 
         endpointConfig = new OntopEndpointConfig(containerName, getHostName(), DEFAULT_PORT);
@@ -88,7 +86,11 @@ public final class OntopService extends ContainerService {
         setEnvironmentVariableIfAbsent("ONTOP_LAZY_INIT", "true");
         setEnvironmentVariableIfAbsent("ONTOP_CORS_ALLOWED_ORIGINS", "*");
         setEnvironmentVariableIfAbsent("ONTOP_DEBUG", "false");
+
         checkEnvironmentVariableNonNull(OntopClient.ONTOP_MAPPING_FILE);
+        checkEnvironmentVariableNonNull(OntopClient.ONTOP_ONTOLOGY_FILE);
+        checkEnvironmentVariableNonNull(OntopClient.ONTOP_SPARQL_RULES_FILE);
+        checkEnvironmentVariableNonNull(OntopClient.ONTOP_LENSES_FILE);
 
     }
 
@@ -117,18 +119,20 @@ public final class OntopService extends ContainerService {
                 .withUser("root").exec();
 
         OntopClient ontopClient = OntopClient.getInstance(containerName);
-        configFiles.forEach(f -> {
-            if (!fileExists(f)) {
-                String extension = FilenameUtils.getExtension(f);
-                switch (extension) {
-                    case "obda":
+        configFiles.forEach((key, fileName) -> {
+            if (!fileExists(fileName)) {
+                switch (key) {
+                    case OntopClient.ONTOP_MAPPING_FILE:
                         ontopClient.updateOBDA(null);
                         break;
-                    case "toml":
+                    case OntopClient.ONTOP_SPARQL_RULES_FILE:
                         ontopClient.uploadRules(List.of());
                         break;
+                    case OntopClient.ONTOP_LENSES_FILE:
+                        ontopClient.uploadLenses(List.of());
+                        break;
                     default:
-                        sendFileContent(f, "".getBytes());
+                        sendFileContent(fileName, "".getBytes());
                         break;
                 }
             }
