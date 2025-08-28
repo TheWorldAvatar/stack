@@ -13,7 +13,10 @@
             "options": {
                 "cwd": "${cwd}/../stack-manager",
                 "shell": {
-                    "executable": "bash"
+                    "executable": "bash",
+                    "args": [
+                        "-c"
+                    ]
                 }
             },
             "group": {
@@ -31,7 +34,10 @@
             "options": {
                 "cwd": "${cwd}/../stack-data-uploader",
                 "shell": {
-                    "executable": "bash"
+                    "executable": "bash",
+                    "args": [
+                        "-c"
+                    ]
                 }
             },
             "group": {
@@ -61,7 +67,10 @@
             ],
             "options": {
                 "shell": {
-                    "executable": "bash"
+                    "executable": "bash",
+                    "args": [
+                        "-c"
+                    ]
                 }
             },
             "group": {
