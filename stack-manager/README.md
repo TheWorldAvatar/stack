@@ -150,7 +150,7 @@ It is possible to specify a custom target path by adding the `File.Name` nodes.
 The example below shows a snippet of a service config file with a secret named `secret_with_default_path` that specifies that the content of the file `stack-manager/inputs/secrets/secret_with_default_path` should be mounted into the container at `/run/secrets/secret_with_default_path`.
 The other secret named `secret_with_custom_path` specifies that the file `stack-manager/inputs/secrets/secret_with_custom_path` should be mounted into the container at `/custom/secret/path`.
 
-```json
+```json5
 {
     "ServiceSpec": {
         ...
@@ -191,7 +191,7 @@ See the [Stack configuration](#stack-configuration) section for instructions on 
 The example below shows a snippet of a service config file with a volume named `vis-files` being mounted into the container at `/var/www/html`.
 The stack-manager will have copied the contents of the `stack-manager/inputs/data/vis-files` directory into that volume before starting the containers.
 
-```json
+```json5
 {
     "ServiceSpec": {
        ...
@@ -224,7 +224,7 @@ This is often useful when developing and debugging a container that doesn't need
 
 The example below shows a snippet of a service config file where the contents of the `stack-manager/inputs/data/fia-queries` directory is mounted into the container at `/app/queries`.
 
-```json
+```json5
 {
     "ServiceSpec": {
        ...
@@ -247,12 +247,16 @@ For more information on how bind mounts work in Docker see [here](https://docs.d
 
 A stack config file, with the same name as the stack being spun up, can be placed in the [stack-manager/inputs/config](./inputs/config/) directory to control what is include when the stack-manager is run.
 
+For example a stack called "test" could be configured by providing a file with the path `stack-manager/inputs/config/test.json`.
+
 ### Custom and optional containers
 
-By default the stack will start the built-in default services and then all of the user-supplied custom services. There are also several optional built-in services
+By default the stack will start the built-in default services and then all of the user-supplied custom services.
+There are also several optional built-in services.
 
-The list of services that are started can be modified by adding them to the  .
-For example a stack called "test" could be configured by providing a file with the path `stack-manager/inputs/config/test.json`.
+The list of services that are started can be modified by adding them to either the `"includes"` or `"excludes"` lists under a `"services"` node in the stack configuration file.
+
+> :memo: **Note**: When adding services to the `includes` and `excludes` sections, use the file name (excluding the `.json` file extension) from the stack config files, rather than the name specified in `ServiceSpec`.
 
 ### Volumes
 
@@ -263,28 +267,41 @@ See the [Mounting data into containers](#mounting-data-into-containers) section 
 
 To remove files or directories from a volume you either need to stop any container that are using it and then remove the volume, or attach a shell to a container that has the volume mounted and delete the files directly.
 
+### Running on isolated systems
+
+Sometimes a stack needs to be run on a system that cannot make outgoing requests, usually for reasons of security.
+
+By default the stack-manager attempts to pull the latest version of each container image that matches the specified tag, which can lead to long waits for the calls to timeout.
+This can be avoided by starting the stack in "isolated" mode by adding `"isolated": true` to the stack configuration file.
+The default value is `false`.
+
+This option doesn't affect `docker compose` commands so it will still attempt to pull the stack-manager and stack-data-uploader images if they are missing.
+
+If an image tag starts with `localhost/` then it will be assumed to be only present locally and so the stack-manager will not try to pull it.
+
 ### File format
 
 The format of the stack configuration file is as follows:
 
-```json
+```json5
 {
+    // Tell the stack-manager not to try to pull images. (default: 'false')
+    "isolated": true,
     "services": {
         "includes": [
-            # List of non-default services to start in addition to the default ones. (Optional)
+            // List of non-default services to start in addition to the default ones. (Optional)
         ],
         "excludes": [
-            # List of default and/or explicitly included services that should not be spun up. This will cause issues if another service requires one of the excluded ones. (Optional)
+            // List of default and/or explicitly included services that should not be spun up.
+            // This will cause issues if another service requires one of the excluded ones. (Optional)
         ]
     },
     "volumes": {
-        # Key-value pairs of volume name and source directory in the 'stack-manager/inputs/data' directory. (Optional)
+        // Key-value pairs of volume name and source directory in the 'stack-manager/inputs/data' directory. (Optional)
         "<volume name>": "<source directory>"
     }
 }
 ```
-
-> NOTE: When adding services to the `includes` and `excludes` sections, use the file name (excluding the `.json` file extension) from the stack config files, rather than the name specified in `ServiceSpec`.
 
 ## Federated SPARQL repositories
 

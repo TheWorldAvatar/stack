@@ -52,7 +52,7 @@ The structure of this directory is described in the [Datasets and subsets](#data
 Create a JSON file in the [`inputs/config/`](./inputs/config/) directory to define how the data is to be uploaded.
 The structure of this file is described in the [The Dataset configuration file](#the-dataset-configuration-file) section.
 
-#### 5. Running the data uploader
+### 5. Running the data uploader
 
 From a terminal in the [`stack-data-uploader`](.) directory, start the `stack-data-uploader` container by running the following:
 
@@ -106,7 +106,7 @@ The following table provides a description of each example:
 | [ng-pylons](../examples/datasets/inputs/config/ng-pylons.json)                   | Uploads a [set of Shapefiles](../examples/datasets/inputs/data/ng_pylons/vector/) into the stack as multiple vector layers along a [.csv file](../examples/datasets/inputs/data/ng_pylons/tabular/ng_styling.csv) that contain auxiliary data. Some of the auxiliary data is then used by custom styles ([overhead-lines.sld](../examples/datasets/inputs/config/overhead-lines.sld) and [underground-cables.sld](../examples/datasets/inputs/config/underground-cables.sld)) to dynamically style the lines, towers, and underground cables when served through GeoServer.                                                                                                                                                                             |
 | [population](../examples/datasets/inputs/config/population.json)                 | Uploads [a GeoTiff file](../examples/datasets/inputs/data/population/population/README.md) into the stack as a raster layer, which is served using the default style via GeoServer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | [pylons](../examples/datasets/inputs/config/pylons.json)                         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| [pylons-and-veg](../examples/datasets/inputs/config/pylons-and-veg.json)         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name of another config referencing other `"externalDatasets".                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| [pylons-and-veg](../examples/datasets/inputs/config/pylons-and-veg.json)         | An example of how to use the `"externalDatasets"` node to load multiple datasets by name of another config referencing other `"externalDatasets"`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | [treesAndHills](../examples/datasets/inputs/config/treesAndHills.json)           | An example of how to use the `"externalDatasets"` node to load multiple datasets by name.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | [ukpn-pylons](../examples/datasets/inputs/config/ukpn-pylons.json)               | Uploads a [set of Shapefiles](../examples/datasets/inputs/data/ukpn_pylons/vector/) into the stack as multiple vector layers along with a [.csv file](../examples/datasets/inputs/data/ukpn_pylons/tabular/ukpn_styling.csv) that contain auxiliary data. Some of the auxiliary data is then used by a custom style ([overhead-lines.sld](../examples/datasets/inputs/config/overhead-lines.sld) to dynamically style the lines and towers when served through GeoServer. There is also a OBDA mapping file ([ukpn_ontop.obda](../examples/datasets/inputs/data/ukpn_pylons/ukpn_ontop.obda)), which provides an example of how to make the uploaded data queryable through the Ontop SPARQL endpoint.                                                  |
 | [rdf](../examples/datasets/inputs/config/rdf.json)                               | A wrapper around a collection of examples of loading in [RDF](#rdf-data) data. This includes triples [with](../examples/datasets/inputs/config/triples_with_inference.json) and [without](../examples/datasets/inputs/config/triples.json) inference; [quads](../examples/datasets/inputs/config/quads.json); and [using a properties file](../examples/datasets/inputs/config/triples_using_properties_file.json).                                                                                                                                                                                                                                                                                                                                     |
@@ -130,7 +130,9 @@ The following table shows the top level nodes allowed in a configuration file.
 | [`"externalDatasets"`](#externaldatasets)       | No*       | `[]`                                     | A list of other datasets' names. Each listed dataset will also be loaded if this dataset is loaded by name                                         |
 | [`"dataSubsets"`](#datasubsets)                 | No*       | `[]`                                     | A list of *data subset* objects                                                                                                                    |
 | [`"styles"`](#styles)                           | No*       | `[]`                                     | A list of GeoServer style file definition objects                                                                                                  |
-| [`"mappings"`](#mappings)                       | No*       | `[]`                                     | A list of Ontop mapping file definition objects                                                                                                    |
+| [`"mappings"`](#mappings)                       | No*       | `[]`                                     | A list of Ontop mapping (OBDA) file names                                                                                                          |
+| [`"rules"`](#rules)                             | No        | `[]`                                     | A list of inference rules file names                                                                                                               |
+| [`"ontopLenses"`](#ontopLenses)                 | No        | `[]`                                     | A list of Ontop "lenses" file names                                                                                                                |
 | [`"staticGeoServerData"`](#staticgeoserverdata) | No        | `null`                                   | An object describing static data to be served by GeoServer                                                                                         |
 
 **\* At least one of these needs to be populated.**
@@ -280,7 +282,7 @@ An example of a style specification in the configuration file is:
 ### `"ontologyDataset"`
 
 Specify a list of datasets that serve as ontologies for this dataset.
-These are treated like [`"externalDatasets"`](#externalDatasets) but the contents of the Blazegraph endpoint of that dataset is added as an [Ontop ontology](https://ontop-vkg.org/guide/concepts.html#ontology) and/or loaded into the relevant triplestore namespace.
+These are treated like [`"externalDatasets"`](#externaldatasets) but the contents of the Blazegraph endpoint of that dataset is added as an [Ontop ontology](https://ontop-vkg.org/guide/concepts.html#ontology) and/or loaded into the relevant triplestore namespace.
 
 ### `"mappings"`
 
@@ -298,6 +300,12 @@ These `.toml` files specify a list of sparql insert queries in the Ontop rules f
 An example of such a file can be found [here](https://github.com/ontop/ontop/blob/f46dabab12aa1e0f0ab9a2b78b16393bee49b9c5/binding/rdf4j/src/test/resources/employee/employee-rules.toml).
 For Blazegraph these insert queries are run once after data is uploaded.
 For Ontop they are assigned as Ontop rules.
+
+### `"ontopLenses"`
+
+Specify list of `.json` files provided as paths relative to the [`"datasetDirectory"`](#datasetdirectory).
+These `.json` files specify a list of Ontop "lenses" in Ontop's custom format.
+Documentation for lenses can be found on the [Ontop website][ontop-lenses].
 
 ### `"staticGeoServerData"`
 
@@ -325,7 +333,7 @@ The icons can be found at `GEOSERVER_URL/www/icons` and the "other files" (being
 }
 ```
 
-Notes: 
+Notes:
 
 - If you want to reference icons uploaded in this way from a GeoServer `.sld` file, you will need to use stack-internal URLs, e.g.:
 
@@ -579,25 +587,17 @@ There are no configurable options for this process, the namespace the data is ad
 
 The `"rml"` data type should be used to load RDF triples from CSV files using [YARRRML rules](https://rml.io/yarrrml/), into a specified SPARQL endpoint namespace (defined in the parent dataset). Users must deploy both the `rml-mapper` and `yarrrml-parser` services within their stack, and provide resources as matching `.yml` and `.csv` file pairs with identical names for the loader to associate them.
 
-> [!IMPORTANT]  
-> Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
+> :warning: **Warning**: Do **NOT** include `sources` or `targets` field in your [YARRRML rules](https://rml.io/yarrrml/). The loader will automatically populate these fields.
 
-> [!TIP]  
-> Users can make use of the [default functions in RML Mapper](https://rml.io/docs/rmlmapper/default-functions/) as functions in their YARRRML rules. Please read the test `.yml` files if you require compliant samples.
+> :memo: **Note**: Users can make use of the [default functions in RML Mapper](https://rml.io/docs/rmlmapper/default-functions/) as functions in their YARRRML rules. Please read the test `.yml` files if you require compliant samples.
 
 The data loader performs the following steps when uploading csv data and rules:
 
-1. YARRRML loading
+1. **YARRRML loading**: The loader automatically populates the sources and targets fields following the csv data file names and the namespace defined in the parent dataset.
 
-The loader automatically populates the sources and targets fields following the csv data file names and the namespace defined in the parent dataset.
+2. **YARRRML to RML**: It converts the generated [YARRRML rules](https://rml.io/yarrrml/) into [RML rules](https://rml.io/specs/rml/) using the [YARRRML Parser tool](https://github.com/RMLio/yarrrml-parser).
 
-2. YARRRML -> RML
-
-It converts the generated [YARRRML rules](https://rml.io/yarrrml/) into [RML rules](https://rml.io/specs/rml/) using the [YARRRML Parser tool](https://github.com/RMLio/yarrrml-parser).
-
-3. RML upload
-
-It reads the [RML rules](https://rml.io/specs/rml/) using the [RMLMapper tool](https://github.com/RMLio/rmlmapper-java) to convert the csv data files into RDF triples. These triples are then subsequently uploaded to the specified namespace to the Blazegraph database within the stack.
+3. **RML upload**: It reads the [RML rules](https://rml.io/specs/rml/) using the [RMLMapper tool](https://github.com/RMLio/rmlmapper-java) to convert the csv data files into RDF triples. These triples are then subsequently uploaded to the specified namespace to the Blazegraph database within the stack.
 
 ### TBox CSV Data
 
@@ -736,13 +736,24 @@ This can be used to configure the osm2pgrouting tool as specified [here][osm2pgr
 For OSM data you can add the nodes `waysGeoServerSettings`, `verticesGeoServerSettings`, and `poiGeoServerSettings` nodes within the relevant data subset in the configuration json.
 The nodes that can be added within each are the same as the GeoServer options for [vector data](#vector-data).
 
-## OBDA Mapping File
+## Ontop (OBDA)
 
-The general layout of the file is as follows:
+The stack uses Ontop to enable running SPARQL queries on data stored in relational databases.
 
-### Comments
+The stack-data-uploader will spin up a new Ontop container for each Dataset that specifies an Ontop (OBDA) mapping.
+The name of the new Ontop container will include the name of the Dataset.
 
-Comments are not natively supported in the Ontop OBDA format but the data uploader will strip them out before passing the mappings to Ontop.
+> :memo: **Note**: The stack-data-uploader won't attempt to pull the Ontop image so it must be present on the system before the stack-data-uploader is run.
+
+### OBDA Mapping File
+
+The general layout of the file is as follows, see the [official guide](https://ontop-vkg.org/guide/advanced/mapping-language.html) for more details:
+
+#### Comments
+
+Full-line comments are officially supported in the Ontop OBDA format, specified by placing a `;` character at the beginning of the line.
+
+As comments were not previously officially avaliable the data uploader also supports using the `#` character, however these comments will be stripped out before the mapping is passed to Ontop.
 Comments are started by a `#` character and can appear at the start of a line, that contains no "code", or at the end of one that does.
 When a comment follows "code" the `#` character must be preceded by at least one white-space character.
 For example:
@@ -752,7 +763,7 @@ For example:
 SELECT var1 var2 # Comment following some "code"
 ```
 
-### Prefix Declarations
+#### Prefix Declarations
 
 This is where the RDF prefixes should be defined, these can then be used when specifying triple patterns in the mappings.
 It starts with a `[PrefixDeclaration]` tag, followed by the prefix-IRI base pairs, without angled-brackets `<>`.
@@ -763,7 +774,7 @@ rdf:    http://www.w3.org/1999/02/22-rdf-syntax-ns#
 ex:     http://example.org/
 ```
 
-### Mapping Declarations
+#### Mapping Declarations
 
 The mapping declarations section starts with this line:
 ```[MappingDeclaration] @collection [[```
@@ -771,6 +782,7 @@ and is closed by the following line:
 ```]]```
 
 Each mapping has three parts:
+
 | Label     | Description                                                                                                                                                                                         |
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | mappingId | The unique name of the mapping                                                                                                                                                                      |
@@ -813,7 +825,7 @@ For example if the `buildings` table was as follows then the subsequent virtual 
 
 `ex:building/1235 ex:hasId 1235^^xsd:integer`
 
-#### SPARQL Queries on Ontop
+#### SPARQL Queries via Ontop
 
 Ontop supports a wide range of [SPARQL 1.1](https://ontop-vkg.org/guide/compliance.html#sparql-1-1) and [GeoSPARQL 1.0](https://ontop-vkg.org/guide/compliance.html#geosparql-1-0) features.
 The [cropmap](../examples/datasets/inputs/data/cropmap/ontop_with_comments.obda) example OBDA file shows how to use the PostGIS function [`ST_ASTEXT`](https://postgis.net/docs/ST_AsText.html) and the [`http://www.opengis.net/ont/geosparql#wktLiteral`](http://www.opengis.net/ont/geosparql#wktLiteral) to make it possible to run GeoSPARQL queries.
@@ -822,16 +834,17 @@ The [cropmap](../examples/datasets/inputs/data/cropmap/ontop_with_comments.obda)
 
 If you do not want the use every config file you can either use `"skip"=true` or name your stack so that the relevant config file is named `<STACK NAME>.json`.
 If you want to use a few config files you can create one master config file named `<STACK NAME>.json` with the following.
-    ```json
-    {
-        "name": "<STACK NAME>",
-        "externalDatasets": [
-            "name of one config file (no .json)",
-            "name of another config file",
-            <...>
-        ]
-    }
-    ```
+
+```json5
+{
+    "name": "<STACK NAME>",
+    "externalDatasets": [
+        "name of one config file (no .json)",
+        "name of another config file",
+        // Other external datasets
+    ]
+}
+```
 
 ## Value by File Name
 
@@ -839,13 +852,13 @@ The stack uploader supports file referencing in the config file on certain value
 This an be done by giving a value of '@' followed by the name of the file containing the text to be used for that value.
 For example one can avoid long SQL queries in their configs by putting them in a file in the [inputs/config](./inputs/config) directory and referencing that file in the following way.
 
-  ```json
-    {
-      <...>
-      "sql": "@/inputs/config/my-sql-query.sql"
-      <...>
-    }
-  ```
+```json5
+{
+    ...
+    "sql": "@/inputs/config/my-sql-query.sql"
+    ...
+}
+```
 
 Note that this file path is the path inside the container.
 
@@ -997,3 +1010,5 @@ This way you can look at look at the user interfaces of the various services (se
 [crome-2020]: https://www.data.gov.uk/dataset/be5d88c9-acfb-4052-bf6b-ee9a416cfe60/crop-map-of-england-crome-2020
 
 [zone-id]: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
+
+[ontop-lenses]: https://ontop-vkg.org/guide/advanced/lenses.html#lenses

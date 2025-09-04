@@ -71,6 +71,8 @@ public class Dataset extends AbstractDataObject {
 
     @JsonProperty
     private final Optional<List<String>> rules;
+    @JsonProperty
+    private final Optional<List<String>> ontopLenses;
 
     @JsonCreator
     Dataset() {
@@ -85,6 +87,7 @@ public class Dataset extends AbstractDataObject {
         this.staticGeoServerData = Optional.empty();
         this.ontopMappings = Optional.empty();
         this.rules = Optional.empty();
+        this.ontopLenses = Optional.empty();
         this.ontologyDatasetNames = Optional.empty();
         this.rdfType = Optional.empty();
         this.baseIRI = Optional.empty();
@@ -105,6 +108,7 @@ public class Dataset extends AbstractDataObject {
             Optional<StaticGeoServerData> staticGeoServerData,
             Optional<List<String>> ontopMappings,
             Optional<List<String>> rules,
+            Optional<List<String>> ontopLenses,
             Optional<List<String>> ontologyDatasetNames,
             boolean skip,
             Optional<String> rdfType,
@@ -122,6 +126,7 @@ public class Dataset extends AbstractDataObject {
         this.staticGeoServerData = staticGeoServerData;
         this.ontopMappings = ontopMappings;
         this.rules = rules;
+        this.ontopLenses = ontopLenses;
         this.ontologyDatasetNames = ontologyDatasetNames;
         this.rdfType = rdfType;
         this.baseIRI = baseIRI;
@@ -189,6 +194,10 @@ public class Dataset extends AbstractDataObject {
 
     public List<String> getRules() {
         return rules.orElse(Collections.emptyList());
+    }
+    
+    public List<String> getOntopLenses() {
+        return ontopLenses.orElse(Collections.emptyList());
     }
 
     public List<String> getOntologyDatasetNames() {

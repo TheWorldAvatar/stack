@@ -542,6 +542,56 @@ public class DockerService extends AbstractService
             throw new RuntimeException("Docker image '" + imageName + "' must include a version.");
         }
 
+        boolean imageAvailableLocally = isImageAvailableLocally(imageName);
+
+        if (imageName.startsWith("localhost/")) {
+            if (imageAvailableLocally) {
+                logger.info("Local image '" + imageName + "' is available.");
+                return;
+            } else {
+                throw new RuntimeException(
+                        "Image '" + imageName + "' not present and cannot be pulled as it is local.");
+            }
+        }
+
+        if (StackClient.isIsolated()) {
+            if (imageAvailableLocally) {
+                logger.info("Image '" + imageName
+                        + "' is available locally, attempt to pull newer version skipped due to being in isolated mode.");
+            } else {
+                throw new RuntimeException(
+                        "Image '" + imageName + "' not present locally and cannot be pulled in isolated mode.");
+            }
+        } else {
+            try {
+                pullImage(imageName);
+                logger.info("Image '" + imageName + "' successfully pulled.");
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Docker image pull command interrupted", ex);
+            } catch (RuntimeException ex) {
+                if (imageAvailableLocally) {
+                    // Local image found so ignore failed pull attempt
+                    logger.warn("Image '" + imageName + "' present locally but attempt to pull failed.", ex);
+                } else {
+                    // No local image with the requested image ID, so throw exception
+                    throw new RuntimeException(
+                            "Image '" + imageName + "' not present locally and attempt to pull it failed.", ex);
+                }
+            }
+        }
+
+    }
+
+    private boolean isImageAvailableLocally(String imageName) {
+        // Check using the full and Docker shortened image references.
+        List<String> imageReferences = Stream.of(imageName, imageName.replace("docker.io/", ""))
+                .distinct().collect(Collectors.toList());
+        return !dockerClient.getInternalClient().listImagesCmd()
+                .withFilter("reference", imageReferences).exec().isEmpty();
+    }
+
+    private void pullImage(String imageName) throws InterruptedException {
         try (PullImageCmd pullImageCmd = dockerClient.getInternalClient().pullImageCmd(imageName)) {
             // Add an AuthConfig that causes Docker to check the stored credentials.
             AuthConfig authConfig = new AuthConfig().withRegistryAddress(imageName.replaceFirst("/.*", ""));
@@ -549,23 +599,6 @@ public class DockerService extends AbstractService
                 pullImageCmd.withAuthConfig(authConfig);
             }
             pullImageCmd.exec(new PullImageResultCallback()).awaitCompletion();
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Docker image pull command interrupted", ex);
-        } catch (RuntimeException ex) {
-            // Check using the full and Docker shortened image references.
-            List<String> imageReferences = Stream.of(imageName, imageName.replace("docker.io/", ""))
-                    .distinct().collect(Collectors.toList());
-            if (dockerClient.getInternalClient().listImagesCmd()
-                    .withFilter("reference", imageReferences).exec().isEmpty()) {
-                // No local image with the requested image ID, so throw exception
-                throw new RuntimeException(
-                        "Image '" + imageName + "' not present locally and attempt to pull it failed.", ex);
-            } else {
-                // Local image found so ignore failed pull attempt
-                logger.warn("Image '" + imageName + "' present locally but attempt to pull failed.", ex);
-            }
         }
-
     }
 }

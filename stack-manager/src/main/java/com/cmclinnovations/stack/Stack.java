@@ -81,7 +81,8 @@ public class Stack {
         this.config = config;
 
         if (null != config) {
-            StackClient.setHostPath(config.getHostPath());
+            StackClient.setStackHost(config.getHost());
+            StackClient.setIsolated(config.isIsolated());
         }
     }
 

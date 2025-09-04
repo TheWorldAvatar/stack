@@ -1,0 +1,31 @@
+{
+    "proto": {
+        "id": "?band",
+        "name": "$foaf:name$required$langTag:hide$lang:en$var:?name",
+        "genre": {
+            "id": "$dbo:genre$required$var:?genre",
+            "name": "foaf:name$lang:en$langTag:hide$var:?genre_name"
+        }
+    },
+    "$where": [
+        "?band rdf:type dbo:Band"
+    ],
+    "$prefixes": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "dbo": "http://dbpedia.org/ontology/",
+        "schema": "http://schema.org/",
+        "foaf": "http://xmlns.com/foaf/0.1/"
+    },
+    "$limit": 100,
+    "grlc": {
+        "summary": "Grlc query expressed as json",
+        "endpoint": "https://dbpedia.org/sparql",
+        "tags": [
+            "json-queries"
+        ],
+        "method": "GET",
+        "defaults": {
+            "type": "http://dbpedia.org/ontology/Band"
+        }
+    }
+}

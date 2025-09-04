@@ -1,0 +1,15 @@
+#+ transform: {
+#+     "band": "?band",
+#+     "names": "?name"
+#+   }
+
+prefix dbo: <http://dbpedia.org/ontology/>
+prefix dbp: <http://dbpedia.org/property/>
+prefix foaf: <http://xmlns.com/foaf/0.1/>
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix schema: <http://schema.org/>
+
+SELECT ?band ?name WHERE {
+  ?band rdf:type dbo:Band ;
+        foaf:name ?name
+} LIMIT 100

@@ -1,10 +1,10 @@
 services:
   stack-data-uploader:
-    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.48.0-datasubset-metadata-SNAPSHOT
+    image: ghcr.io/theworldavatar/stack-data-uploader${IMAGE_SUFFIX}:1.52.0-datasubset-metadata-SNAPSHOT
     secrets:
       - blazegraph_password
       - postgis_password
       - geoserver_password
     volumes:
-      - ./inputs/data:/inputs/data:z
+      - ./inputs/data:/inputs/data
       - ./inputs/config:/inputs/config

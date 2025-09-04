@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.cmclinnovations.stack.clients.core.StackHost;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class StackConfig {
@@ -18,7 +19,7 @@ public class StackConfig {
     }
 
     @JsonProperty
-    private final String hostPath = null;
+    private StackHost host = new StackHost();
 
     @JsonProperty("services")
     private final EnumMap<Selector, List<String>> serviceSelectors = new EnumMap<>(Selector.class);
@@ -26,8 +27,16 @@ public class StackConfig {
     @JsonProperty
     private final Map<String, String> volumes = new HashMap<>();
 
-    public String getHostPath() {
-        return hostPath;
+    @JsonProperty
+    private final Boolean isolated = false;
+
+    @JsonProperty("hostName")
+    private void setHostName(String hostName) {
+        host = new StackHost(hostName);
+    }
+
+    public StackHost getHost() {
+        return host;
     }
 
     List<String> getIncludedServices() {
@@ -40,5 +49,9 @@ public class StackConfig {
 
     Map<String, String> getVolumes() {
         return volumes;
+    }
+
+    public boolean isIsolated() {
+        return isolated;
     }
 }
