@@ -150,6 +150,8 @@ final class DCATUpdateQuery {
                     // Add new "modified" triple on each upload
                     .andHas(DCTERMS.MODIFIED, currentTime));
 
+            addMetadata(dataSubset, dataSubsetVar.getVarName());
+
             // Try to find the DataSubset but bind a new IRI if not found
             Variable existingDataSubsetVar = createVar(dataSubsetVar, EXISTING);
             Variable existingIssuedVar = createVar(issuedVar, EXISTING);
@@ -327,8 +329,12 @@ final class DCATUpdateQuery {
     }
 
     private void addMetadata(Dataset dataset) {
-        Metadata metadataRDF = dataset.getAdditionalMetadata();
-        metadataRDF.getTriplePatterns().ifPresent(tps -> {
+        addMetadata(dataset, null);
+    }
+
+    private void addMetadata(AbstractDataObject dataObject, String varName) {
+        Metadata metadataRDF = dataObject.getAdditionalMetadata();
+        metadataRDF.getTriplePatterns(varName).ifPresent(tps -> {
             metadataRDF.getPrefixes().forEach(query::prefix);
             query.insert(tps);
         });

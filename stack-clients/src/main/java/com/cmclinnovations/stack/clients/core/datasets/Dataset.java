@@ -70,9 +70,6 @@ public class Dataset extends AbstractDataObject {
     private final Optional<String> baseIRI;
 
     @JsonProperty
-    private final Optional<Metadata> additionalMetadata;
-
-    @JsonProperty
     private final Optional<List<String>> rules;
     @JsonProperty
     private final Optional<List<String>> ontopLenses;
@@ -94,7 +91,6 @@ public class Dataset extends AbstractDataObject {
         this.ontologyDatasetNames = Optional.empty();
         this.rdfType = Optional.empty();
         this.baseIRI = Optional.empty();
-        this.additionalMetadata = Optional.empty();
     }
 
     /**
@@ -118,7 +114,7 @@ public class Dataset extends AbstractDataObject {
             Optional<String> rdfType,
             Optional<String> baseIRI,
             Optional<Metadata> metadataRDF) {
-        super(description, skip);
+        super(description, skip, metadataRDF);
         this.name = name;
         this.datasetDirectory = datasetDirectory;
         this.database = database;
@@ -134,7 +130,6 @@ public class Dataset extends AbstractDataObject {
         this.ontologyDatasetNames = ontologyDatasetNames;
         this.rdfType = rdfType;
         this.baseIRI = baseIRI;
-        this.additionalMetadata = metadataRDF;
     }
 
     public String getName() {
@@ -232,10 +227,6 @@ public class Dataset extends AbstractDataObject {
 
     public List<Dataset> getReferencedDatasets() {
         return referencedDatasets;
-    }
-
-    public Metadata getAdditionalMetadata() {
-        return additionalMetadata.orElse(Metadata.EMPTY_METADATA);
     }
 
     boolean usesBlazegraph() {
