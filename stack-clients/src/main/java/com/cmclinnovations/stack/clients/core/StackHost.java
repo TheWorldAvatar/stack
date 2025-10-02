@@ -23,19 +23,19 @@ public final class StackHost {
     }
 
     public Optional<String> getProto() {
-        return proto;
+        return proto.filter(p -> !p.isBlank());
     }
 
     public Optional<String> getName() {
-        return name;
+        return name.filter(n -> !n.isBlank());
     }
 
     public Optional<String> getPort() {
-        return port;
+        return port.filter(p -> !p.isBlank());
     }
 
     public Optional<String> getPath() {
-        return path;
+        return path.filter(p -> !p.isBlank());
     }
 
     public Builder getStringBuilder() {
@@ -52,42 +52,42 @@ public final class StackHost {
         private boolean finalSlash = false;
 
         public Builder withProto() {
-            proto.ifPresent(p -> protoOut = p);
+            getProto().ifPresent(p -> protoOut = p);
             return this;
         }
 
         public Builder withProto(String defaultProto) {
-            protoOut = proto.orElse(defaultProto);
+            protoOut = getProto().orElse(defaultProto);
             return this;
         }
 
         public Builder withName() {
-            name.ifPresent(n -> nameOut = n);
+            getName().ifPresent(n -> nameOut = n);
             return this;
         }
 
         public Builder withName(String defaultName) {
-            nameOut = name.orElse(defaultName);
+            nameOut = getName().orElse(defaultName);
             return this;
         }
 
         public Builder withPort() {
-            port.ifPresent(p -> portOut = p);
+            getPort().ifPresent(p -> portOut = p);
             return this;
         }
 
         public Builder withPort(String defaultPort) {
-            portOut = port.orElse(defaultPort);
+            portOut = getPort().orElse(defaultPort);
             return this;
         }
 
         public Builder withPath() {
-            path.ifPresent(p -> pathOut = p);
+            getPath().ifPresent(p -> pathOut = p);
             return this;
         }
 
         public Builder withPath(String defaultPath) {
-            pathOut = path.orElse(defaultPath);
+            pathOut = getPath().orElse(defaultPath);
             return this;
         }
 
