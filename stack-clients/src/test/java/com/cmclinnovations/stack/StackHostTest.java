@@ -9,7 +9,7 @@ import com.cmclinnovations.stack.clients.core.StackHost;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class StackHostTest {
+class StackHostTest {
     ObjectMapper objectMapper = JsonHelper.getMapper();
 
     @Test
@@ -43,6 +43,19 @@ public class StackHostTest {
                 () -> Assertions.assertEquals(Optional.empty(), stackHost.getPort()),
                 () -> Assertions.assertEquals(Optional.empty(), stackHost.getPath()),
                 () -> Assertions.assertEquals("host", stackHost.getStringBuilder().withName().build()));
+    }
+
+        @Test
+    void testEmptyStrings() {        
+        StackHost stackHostDefault = new StackHost();
+        StackHost stackHostJson = Assertions
+                .assertDoesNotThrow(() -> objectMapper.readValue("{\"proto\":\"\", \"name\":\"\",\"port\":\" \",\"path\":\" \"}", StackHost.class));
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(stackHostDefault.getProto(), stackHostJson.getProto()),
+                () -> Assertions.assertEquals(stackHostDefault.getName(), stackHostJson.getName()),
+                () -> Assertions.assertEquals(stackHostDefault.getPort(), stackHostJson.getPort()),
+                () -> Assertions.assertEquals(stackHostDefault.getPath(), stackHostJson.getPath()),
+                () -> Assertions.assertEquals("", stackHostJson.getStringBuilder().withName().build()));
     }
 
     @Test
