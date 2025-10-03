@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-data-uploader</artifactId>
-    <version>1.53.0-stackhost-blank-as-empty-SNAPSHOT</version>
+    <version>1.53.0</version>
 
     <name>Stack Data Uploader</name>
     <url>https://theworldavatar.io</url>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.53.0-stackhost-blank-as-empty-SNAPSHOT</version>
+            <version>1.53.0</version>
         </dependency>
 
         <dependency>
