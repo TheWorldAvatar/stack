@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -98,7 +99,8 @@ public final class FileUtils {
     private static Set<URI> listFilesFromJar(URL dirURL) throws IOException {
         Set<URI> uris = new HashSet<>();
         // strip out only the JAR file
-        String[] urlComponents = dirURL.getPath().split("!");
+        String decodedUrl = URLDecoder.decode(dirURL.getPath(), "UTF-8");
+        String[] urlComponents = decodedUrl.split("!");
         String jarPath = urlComponents[0].replaceFirst("file:", "");
         String path = urlComponents[1].replaceFirst("^/?(.*?)/?$", "$1/");
         if (jarPath.startsWith("nested:")) {
