@@ -1,6 +1,6 @@
 services:
   stack-manager:
-    image: ghcr.io/theworldavatar/stack-manager${IMAGE_SUFFIX}:1.53.0
+    image: ghcr.io/theworldavatar/stack-manager${IMAGE_SUFFIX}:1.54.0-ontop-5.4-SNAPSHOT
     environment:
       EXTERNAL_PORT: "${EXTERNAL_PORT-3838}"
       STACK_BASE_DIR: "${STACK_BASE_DIR}"
