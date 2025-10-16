@@ -4,7 +4,7 @@
         "Name": "ontop",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "docker.io/ontop/ontop:5.3.0",
+                "Image": "docker.io/ontop/ontop:5.4.0",
                 "Env": [
                     "ONTOP_MAPPING_FILE=/ontop/ontop.obda",
                     "ONTOP_ONTOLOGY_FILE=/ontop/ontology.ttl",
