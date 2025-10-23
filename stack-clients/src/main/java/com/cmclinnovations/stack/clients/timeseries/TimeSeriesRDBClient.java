@@ -17,6 +17,7 @@ import org.json.JSONArray;
 
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
+import com.cmclinnovations.stack.clients.utils.LocalTempDir;
 import com.cmclinnovations.stack.services.OntopService;
 import com.cmclinnovations.stack.services.ServiceManager;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
@@ -114,30 +115,22 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
         }
 
         if (queryResult.isEmpty()) {
+
             // create temporary file for ontop mapping
-            Path tempDir;
-            try {
-                tempDir = Files.createTempDirectory("timeseries_ontop_");
-            } catch (IOException e) {
-                throw new JPSRuntimeException("Failed to create temporary directory to save ontop file", e);
-            }
+            try (LocalTempDir tempDir = new LocalTempDir()) {
 
             String obda = prepareMapping();
 
-            Path filePath = tempDir.resolve("ontop.obda");
-            try {
-                Files.write(filePath, obda.getBytes());
+            Path filePath = tempDir.getPath().resolve("ontop.obda");
+                            Files.write(filePath, obda.getBytes());
+
+                // sends obda to container
+                ontopClient.updateOBDA(filePath);
             } catch (IOException e) {
                 throw new JPSRuntimeException("Failed to write ontop mapping into temporary folder", e);
             }
 
-            // sends obda to container
-            ontopClient.updateOBDA(filePath);
-
-            // clean up
-            filePath.toFile().delete();
-            tempDir.toFile().delete();
-        }
+                    }
     }
 
     /**
