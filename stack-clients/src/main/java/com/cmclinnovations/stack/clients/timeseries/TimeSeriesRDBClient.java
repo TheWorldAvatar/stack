@@ -28,6 +28,9 @@ import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesRDBClientOntop;
 
 public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
 
+    private static final String UNIX_TRS = "http://dbpedia.org/resource/Unix_time";
+    private static final String GENERIC_TRS = "http://example.org/TRS_placeholder";
+
     /**
      * Logger for error output.
      */
@@ -42,9 +45,17 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
 
     public TimeSeriesRDBClient(Class<T> timeClass) {
         super(timeClass);
+        if (Instant.class == timeClass) {
+            LOGGER.info("Time class is Instant, TRS is set to {}", UNIX_TRS);
+            trsIri = UNIX_TRS;
+        } else {
+            LOGGER.info("Time class is not Instant, TRS is set to {}", GENERIC_TRS);
+            trsIri = GENERIC_TRS;
+        }
     }
 
     public void setTrs(String trsIri) {
+        LOGGER.info("TRS is set to {}", trsIri);
         this.trsIri = trsIri;
     }
 
@@ -63,7 +74,7 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
         return result;
     }
 
- public void configureOntop() {
+    private void configureOntop() {
         String stackName = System.getenv("STACK_NAME");
         if (stackName == null) {
             LOGGER.warn("STACK_NAME not detected, skipping Ontop intialisation");
@@ -119,10 +130,10 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
             // create temporary file for ontop mapping
             try (LocalTempDir tempDir = new LocalTempDir()) {
 
-            String obda = prepareMapping();
+                String obda = prepareMapping();
 
-            Path filePath = tempDir.getPath().resolve("ontop.obda");
-                            Files.write(filePath, obda.getBytes());
+                Path filePath = tempDir.getPath().resolve("ontop.obda");
+                Files.write(filePath, obda.getBytes());
 
                 // sends obda to container
                 ontopClient.updateOBDA(filePath);
@@ -130,7 +141,7 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
                 throw new JPSRuntimeException("Failed to write ontop mapping into temporary folder", e);
             }
 
-                    }
+        }
     }
 
     /**
@@ -139,27 +150,13 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
      * @return
      */
     private String prepareMapping() {
-        String unixTRS = "http://dbpedia.org/resource/Unix_time";
-        String generic = "http://example.org/TRS_placeholder";
-
-        String obdaTemplate;
         // read template from resources folder
         try (InputStream is = TimeSeriesRDBClientOntop.class.getResourceAsStream("timeseries_ontop_template.obda")) {
-            obdaTemplate = IOUtils.toString(is, StandardCharsets.UTF_8);
+            return IOUtils.toString(is, StandardCharsets.UTF_8)
+                    .replace("[TRS_REPLACE]", trsIri);
         } catch (IOException e) {
             throw new JPSRuntimeException("Error while reading timeseries_ontop_template.obda", e);
         }
-
-        if (getTimeClass() == Instant.class) {
-            LOGGER.info("Time class is Instant, TRS is set to {}", unixTRS);
-            obdaTemplate = obdaTemplate.replace("[TRS_REPLACE]", unixTRS);
-        } else if (trsIri == null) {
-            obdaTemplate = obdaTemplate.replace("[TRS_REPLACE]", generic);
-        } else {
-            obdaTemplate = obdaTemplate.replace("[TRS_REPLACE]", trsIri);
-        }
-
-        return obdaTemplate;
     }
 
 }
