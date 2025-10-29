@@ -13,7 +13,6 @@ import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
 
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
@@ -23,7 +22,6 @@ import com.cmclinnovations.stack.services.ServiceManager;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
-import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesRDBClientOntop;
 
 public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
@@ -95,52 +93,19 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
         serviceManager.initialiseService(stackName, ontopName);
 
         OntopClient ontopClient = OntopClient.getInstance(ontopName);
-        String ontopUrl = ontopClient.readEndpointConfig().getUrl();
 
-        // check if mapping exists and only upload mapping if it does not exist
-        RemoteStoreClient remoteStoreClient = new RemoteStoreClient(ontopUrl);
-        String query = "SELECT * WHERE { ?x ?y ?z } LIMIT 1";
+        // create temporary file for ontop mapping
+        try (LocalTempDir tempDir = new LocalTempDir()) {
 
-        JSONArray queryResult = null;
+            String obda = prepareMapping();
 
-        // try to send a query to ontop, catch exceptions in case it is still
-        // initialising
-        int attempts = 0;
-        int maxAttempts = 5;
-        while (attempts < maxAttempts) {
-            try {
-                queryResult = remoteStoreClient.executeQuery(query);
-                break;
-            } catch (Exception e) {
-                attempts++;
-                try {
-                    Thread.sleep(10_000); // wait 10 seconds before retrying
-                } catch (Exception ie) {
-                    throw new JPSRuntimeException("Interrupted while retrying query to ontop", e);
-                }
-            }
-        }
+            Path filePath = tempDir.getPath().resolve("ontop.obda");
+            Files.write(filePath, obda.getBytes());
 
-        if (queryResult == null) {
-            throw new JPSRuntimeException("Failed to execute query after " + maxAttempts + " attempts.");
-        }
-
-        if (queryResult.isEmpty()) {
-
-            // create temporary file for ontop mapping
-            try (LocalTempDir tempDir = new LocalTempDir()) {
-
-                String obda = prepareMapping();
-
-                Path filePath = tempDir.getPath().resolve("ontop.obda");
-                Files.write(filePath, obda.getBytes());
-
-                // sends obda to container
-                ontopClient.updateOBDA(filePath);
-            } catch (IOException e) {
-                throw new JPSRuntimeException("Failed to write ontop mapping into temporary folder", e);
-            }
-
+            // sends obda to container
+            ontopClient.updateOBDA(filePath);
+        } catch (IOException e) {
+            throw new JPSRuntimeException("Failed to write ontop mapping into temporary folder", e);
         }
     }
 
@@ -151,9 +116,9 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
      */
     private String prepareMapping() {
         // read template from resources folder
-        try (InputStream is = TimeSeriesRDBClientOntop.class.getResourceAsStream("timeseries_ontop_template.obda")) {
+        try (InputStream is = TimeSeriesRDBClient.class.getResourceAsStream("timeseries_ontop_template.obda")) {
             return IOUtils.toString(is, StandardCharsets.UTF_8)
-                    .replace("[TRS_REPLACE]", trsIri);
+                    .replace("[TRS_REPLACE]", trsIri).replace("[SCHEMA]", getSchema());
         } catch (IOException e) {
             throw new JPSRuntimeException("Error while reading timeseries_ontop_template.obda", e);
         }
