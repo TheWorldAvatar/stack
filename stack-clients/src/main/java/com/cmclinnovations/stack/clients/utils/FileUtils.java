@@ -95,10 +95,10 @@ public final class FileUtils {
         }
     }
 
-    private static Set<URI> listFilesFromJar(URL dirURL) throws IOException {
+    private static Set<URI> listFilesFromJar(URL dirURL) throws IOException, URISyntaxException {
         Set<URI> uris = new HashSet<>();
         // strip out only the JAR file
-        String[] urlComponents = dirURL.getPath().split("!");
+        String[] urlComponents = dirURL.toURI().getSchemeSpecificPart().split("!");
         String jarPath = urlComponents[0].replaceFirst("file:", "");
         String path = urlComponents[1].replaceFirst("^/?(.*?)/?$", "$1/");
         if (jarPath.startsWith("nested:")) {
