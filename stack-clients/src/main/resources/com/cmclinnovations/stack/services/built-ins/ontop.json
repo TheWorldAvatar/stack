@@ -13,7 +13,8 @@
                     "ONTOP_LENSES_FILE=/ontop/lenses.json",
                     "ONTOP_DB_NAME=postgres",
                     "ONTOP_DEV_MODE=true",
-                    "ONTOP_LAZY_INIT=true"
+                    "ONTOP_LAZY_INIT=true",
+                    "ONTOP_JAVA_ARGS=-Xmx2g"
                 ],
                 "Configs": [
                     {
