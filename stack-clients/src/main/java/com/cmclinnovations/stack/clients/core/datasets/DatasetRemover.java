@@ -6,6 +6,7 @@ import java.util.stream.Stream;
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.services.ServiceManager;
 
@@ -39,6 +40,8 @@ public class DatasetRemover {
 
             serviceManager.removeService(StackClient.getStackName(), ontopServiceName);
 
+            Database database = dataset.getDatabase();
+            database.ensureDefault();
             GeoServerClient geoServerClient = GeoServerClient.getInstance();
             String workspaceName = dataset.getWorkspaceName();
             // Ensure GeoServer workspace is removed
@@ -48,7 +51,7 @@ public class DatasetRemover {
             BlazegraphClient.getInstance().removeNamespace(dataset.getNamespace());
 
             // Ensure PostGIS database is removed, if specified
-            PostGISClient.getInstance().removeDatabase(dataset.getDatabase());
+            PostGISClient.getInstance().removeDatabase(database.getDatabaseName());
 
             // Upload styles to GeoServer
             // dataset.getGeoserverStyles().forEach(style ->

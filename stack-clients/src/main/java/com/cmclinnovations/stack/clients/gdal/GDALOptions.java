@@ -18,7 +18,7 @@ public abstract class GDALOptions<T extends GDALOptions<T>> extends CommonOption
 
     public final T addCreationOption(String name, String value) {
         creationOptions.put(name, value);
-        return (T) this;
+        return self();
     }
 
     public final String[] generateCommand(String sourceFormat, String source, String destination,

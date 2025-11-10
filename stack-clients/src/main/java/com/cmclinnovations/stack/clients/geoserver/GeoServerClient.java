@@ -19,6 +19,7 @@ import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.core.RESTEndpointConfig;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.docker.DockerClient;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
@@ -37,8 +38,6 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(GeoServerClient.class);
     private final GeoServerRESTManager manager;
-
-    private final PostGISEndpointConfig postgreSQLEndpoint;
 
     private static GeoServerClient instance = null;
 
@@ -76,8 +75,6 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         }
 
         manager = new GeoServerRESTManager(restURL, username, password);
-
-        postgreSQLEndpoint = readEndpointConfig(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
     }
 
     public void createWorkspace(String workspaceName) {
@@ -167,17 +164,17 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         }
     }
 
-    public void createPostGISDataStore(String workspaceName, String name, String database, String schema) {
+    public void createPostGISDataStore(String workspaceName, String name, Database database, String schema) {
         if (manager.getReader().existsDatastore(workspaceName, name)) {
             logger.info("GeoServer datastore '{}' already exists.", name);
         } else {
-
+            PostGISEndpointConfig postgreSQLEndpoint = database.getEndpointConfig();
             GSPostGISDatastoreEncoder encoder = new GSPostGISDatastoreEncoder(name);
             encoder.setHost(postgreSQLEndpoint.getHostName());
             encoder.setPort(Integer.parseInt(postgreSQLEndpoint.getPort()));
             encoder.setUser(postgreSQLEndpoint.getUsername());
             encoder.setPassword(postgreSQLEndpoint.getPassword());
-            encoder.setDatabase(database);
+            encoder.setDatabase(database.getDatabaseName());
             encoder.setSchema(schema);
             encoder.setValidateConnections(true);
 
@@ -190,9 +187,9 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         }
     }
 
-    public void createPostGISLayer(String workspaceName, String database, String schema, String layerName,
+    public void createPostGISLayer(String workspaceName, Database database, String schema, String layerName,
             GeoServerVectorSettings geoServerSettings) {
-        String storeName = database;
+        String storeName = database.getDatabaseName();
 
         // Need to include the "Util.DEFAULT_QUIET_ON_NOT_FOUND" argument because the
         // 2-arg version of "existsLayer" incorrectly calls the 3-arg version of the
@@ -239,14 +236,15 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         }
     }
 
-    public void createGeoTiffLayer(String workspaceName, String name, String database, String schema,
+    public void createGeoTiffLayer(String workspaceName, String name, Database database, String schema,
             GeoServerRasterSettings geoServerSettings, MultidimSettings mdimSettings) {
 
         if (manager.getReader().existsCoveragestore(workspaceName, name)) {
             logger.info("GeoServer coverage store '{}' already exists.", name);
         } else {
+            PostGISEndpointConfig postgreSQLEndpoint = database.getEndpointConfig();
             String geoserverRasterIndexDatabaseName = database + GEOSERVER_RASTER_INDEX_DATABASE_SUFFIX;
-            PostGISClient postgisClient = PostGISClient.getInstance();
+            PostGISClient postgisClient = PostGISClient.getInstance(postgreSQLEndpoint.getName());
             postgisClient.createDatabase(geoserverRasterIndexDatabaseName);
             postgisClient.createSchema(geoserverRasterIndexDatabaseName, schema);
 
@@ -267,7 +265,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             datastoreProperties.putIfAbsent("preparedStatements", "true");
             StringWriter stringWriter = new StringWriter();
 
-            Path geotiffDir = Path.of(StackClient.GEOTIFFS_DIR, database, schema, name);
+            Path geotiffDir = Path.of(StackClient.GEOTIFFS_DIR, database.getDatabaseName(), schema, name);
             try {
 
                 Map<String, byte[]> files = new HashMap<>();
@@ -350,14 +348,12 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
     public void addProjectionsToGeoserver(String wktString, String srid) {
 
         String geoserverContainerId = getContainerId("geoserver");
-        DockerClient dockerClient = DockerClient.getInstance();
-
-        dockerClient.makeDir(geoserverContainerId, USER_PROJECTIONS_DIR);
+        DockerClient.getInstance().makeDir(geoserverContainerId, USER_PROJECTIONS_DIR);
 
         sendFileContent(geoserverContainerId,
                 Path.of(USER_PROJECTIONS_DIR, "epsg.properties"),
                 (srid + "=" + wktString + "\n").getBytes());
 
-        GeoServerClient.getInstance().reload();
+        reload();
     }
 }

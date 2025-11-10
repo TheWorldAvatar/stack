@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.cmclinnovations.stack.clients.blazegraph.Namespace;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerStyle;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
+import com.cmclinnovations.stack.clients.postgis.Database;
 
 class DatasetBuilder {
 
@@ -16,7 +17,7 @@ class DatasetBuilder {
 
     private Path datasetDirectory;
 
-    private String database;
+    private Database database;
 
     private Namespace namespace;
 
@@ -65,7 +66,7 @@ class DatasetBuilder {
         return this;
     }
 
-    public DatasetBuilder withDatabase(String database) {
+    public DatasetBuilder withDatabase(Database database) {
         this.database = database;
         return this;
     }
@@ -160,7 +161,7 @@ class DatasetBuilder {
         private TestDataset(String name,
                 Optional<String> description,
                 Optional<Path> datasetDirectory,
-                Optional<String> database,
+                Optional<Database> database,
                 Optional<Namespace> namespace,
                 Optional<String> workspaceName,
                 Optional<List<String>> externalDatasetNames,

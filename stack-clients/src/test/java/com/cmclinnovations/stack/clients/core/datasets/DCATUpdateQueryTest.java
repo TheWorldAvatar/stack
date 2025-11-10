@@ -36,6 +36,7 @@ import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.core.datasets.DatasetBuilder.Service;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.ontop.OntopEndpointConfig;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
@@ -163,7 +164,8 @@ class DCATUpdateQueryTest {
             buildAndRunQuery(dataset);
         }, () -> {
             Dataset dataset = new DatasetBuilder("testDataset").withDescription("Dataset for testing2")
-                    .withDatasetDirectory("test2").withServices(Service.POSTGIS).withDatabase("database1").build();
+                    .withDatasetDirectory("test2").withServices(Service.POSTGIS).withDatabase(new Database("database1"))
+                    .build();
             buildAndRunQuery(dataset);
         }, () -> {
             Dataset dataset = new DatasetBuilder("testDataset3").withDescription("Dataset for testing3")

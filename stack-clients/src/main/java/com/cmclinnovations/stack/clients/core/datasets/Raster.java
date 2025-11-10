@@ -9,6 +9,7 @@ import com.cmclinnovations.stack.clients.gdal.GDALWarpOptions;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerRasterSettings;
 import com.cmclinnovations.stack.clients.geoserver.MultidimSettings;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Raster extends GeoServerDataSubset {
@@ -30,7 +31,7 @@ public class Raster extends GeoServerDataSubset {
     }
 
     @Override
-    public void createLayers(String workspaceName, String database) {
+    public void createLayers(String workspaceName, Database database) {
         GeoServerClient.getInstance()
                 .createGeoTiffLayer(workspaceName, getTable(), database, getSchema(),
                         geoServerSettings, mdimSettings);

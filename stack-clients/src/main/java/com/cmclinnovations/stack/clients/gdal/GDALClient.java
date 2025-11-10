@@ -250,9 +250,8 @@ public class GDALClient extends ContainerClient {
                 sridAuthNameArray = newSrid.split(":");
                 String authName = sridAuthNameArray[0];
                 String srid = sridAuthNameArray[1];
-                PostGISClient.getInstance().addProjectionsToPostgis(databaseName, proj4String,
-                        wktString,
-                        authName, srid);
+                PostGISClient.getInstance()
+                        .addProjectionsToPostgis(databaseName, proj4String, wktString, authName, srid);
                 GeoServerClient.getInstance().addProjectionsToGeoserver(wktString, srid);
             } catch (NullPointerException ex) {
                 throw new RuntimeException(
