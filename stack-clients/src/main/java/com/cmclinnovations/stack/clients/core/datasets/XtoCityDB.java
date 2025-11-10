@@ -34,12 +34,12 @@ public class XtoCityDB extends CityDB {
         GDALClient.getInstance()
                 .uploadVectorFilesToPostGIS(database, getSchema(), getTable(), dataSubsetDir.toString(),
                         ogr2ogrOptions, false);
-        CityDBClient.getInstance()
-                .updateDatabase(database, getSridIn());
-        CityDBClient.getInstance().preparePGforCityDB(database, getTable(), JsonHelper.handleFileValues(preprocessSql),
-                minArea, columnMap);
-        CityDBClient.getInstance().populateCityDBbySQL(database, lineage, columnMap);
-        CityDBClient.getInstance().addIRIs(database, baseIRI);
+        CityDBClient instance = CityDBClient.getInstance();
+        instance.updateDatabase(database, getSridIn());
+        instance.preparePGforCityDB(database, getTable(), JsonHelper.handleFileValues(preprocessSql), minArea,
+                columnMap);
+        instance.populateCityDBbySQL(database, lineage, columnMap);
+        instance.addIRIs(database, baseIRI);
     }
 
     @Override

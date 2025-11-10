@@ -28,7 +28,7 @@ public class AliasMap<V> extends HashMap<String, V> {
                 }
             }
         }
-        return null;
+        return (V) null;
     }
 
     @SafeVarargs

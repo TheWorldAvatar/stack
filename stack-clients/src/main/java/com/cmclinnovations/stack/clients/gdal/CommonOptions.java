@@ -39,13 +39,18 @@ class CommonOptions<T extends CommonOptions<T>> {
         this.command = command;
     }
 
+    @SuppressWarnings("unchecked")
+    protected final T self() {
+        return (T) this;
+    }
+
     public final String getSridIn() {
         return sridIn;
     }
 
     public final T setSridIn(String sridIn) {
         this.sridIn = sridIn;
-        return (T) this;
+        return self();
     }
 
     public final String getSridOut() {
@@ -54,27 +59,27 @@ class CommonOptions<T extends CommonOptions<T>> {
 
     public final T setSridOut(String sridOut) {
         this.sridOut = sridOut;
-        return (T) this;
+        return self();
     }
 
     public final T addInputDatasetOpenOption(String name, String value) {
         inputDatasetOpenOptions.put(name, value);
-        return (T) this;
+        return self();
     }
 
     public final T addOtherOption(String option, String... values) {
         otherOptions.put(option, new Option(values));
-        return (T) this;
+        return self();
     }
 
     public final T addConfigOption(String option, String value) {
         configOptions.put(option, value);
-        return (T) this;
+        return self();
     }
 
     public final T withEnv(String key, String value) {
         envVars.put(key, value);
-        return (T) this;
+        return self();
     }
 
     public final Map<String, String> getEnv() {
