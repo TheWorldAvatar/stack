@@ -6,6 +6,8 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,17 +25,22 @@ public class PostGISClient extends ClientWithEndpoint<PostGISEndpointConfig> {
 
     private static final Logger logger = LoggerFactory.getLogger(PostGISClient.class);
 
-    private static PostGISClient instance = null;
+    private static Map<String, PostGISClient> instances = new HashMap<>();
 
     public static PostGISClient getInstance() {
-        if (null == instance) {
-            instance = new PostGISClient();
-        }
-        return instance;
+        return getInstance(EndpointNames.POSTGIS);
+    }
+
+    public static PostGISClient getInstance(String name) {
+        return instances.computeIfAbsent(name, PostGISClient::new);
     }
 
     protected PostGISClient() {
-        super(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
+        this(EndpointNames.POSTGIS);
+    }
+
+    protected PostGISClient(String name) {
+        super(name, PostGISEndpointConfig.class);
     }
 
     private Connection getDefaultConnection() throws SQLException {
@@ -169,7 +176,7 @@ public class PostGISClient extends ClientWithEndpoint<PostGISEndpointConfig> {
     public void resetSchema(String database) {
         try (InputStream is = PostGISClient.class.getResourceAsStream("postgis_reset_schema.sql")) {
             String sqlQuery = new String(is.readAllBytes()).replace("{database}", database);
-            PostGISClient.getInstance().getRemoteStoreClient(database).executeUpdate(sqlQuery);
+            getRemoteStoreClient(database).executeUpdate(sqlQuery);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to read resource file 'postgis_reset_schema.sql'.", ex);
         }

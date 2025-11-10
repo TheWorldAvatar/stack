@@ -19,6 +19,7 @@ import com.cmclinnovations.stack.clients.blazegraph.Namespace;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerStyle;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -40,7 +41,7 @@ public class Dataset extends AbstractDataObject {
     private final Optional<Path> datasetDirectory;
 
     @JsonProperty
-    private final Optional<String> database;
+    private final Optional<Database> database;
     @JsonProperty
     private final Optional<Namespace> namespace;
     @JsonProperty("workspace")
@@ -99,7 +100,7 @@ public class Dataset extends AbstractDataObject {
     Dataset(String name,
             Optional<String> description,
             Optional<Path> datasetDirectory,
-            Optional<String> database,
+            Optional<Database> database,
             Optional<Namespace> namespace,
             Optional<String> workspaceName,
             Optional<List<String>> externalDatasetNames,
@@ -140,12 +141,12 @@ public class Dataset extends AbstractDataObject {
         return Path.of("/inputs", "data").resolve(datasetDirectory.orElse(Path.of(name)));
     }
 
-    public String getDatabase() {
+    public Database getDatabase() {
         if (database.isPresent()) {
             LOGGER.warn(NAME_DEPRECATION_NOTICE, "database", getName(), database.get());
             return database.get();
         }
-        return getName();
+        return new Database(getName());
     }
 
     public String getNamespace() {
@@ -195,7 +196,7 @@ public class Dataset extends AbstractDataObject {
     public List<String> getRules() {
         return rules.orElse(Collections.emptyList());
     }
-    
+
     public List<String> getOntopLenses() {
         return ontopLenses.orElse(Collections.emptyList());
     }

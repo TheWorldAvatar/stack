@@ -12,6 +12,7 @@ import com.cmclinnovations.stack.clients.citydb.CityTilerOptions;
 import com.cmclinnovations.stack.clients.citydb.ImpExpOptions;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerVectorSettings;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -62,18 +63,19 @@ public class CityDB extends GeoServerDataSubset {
 
     @Override
     void loadInternal(Dataset parent) {
-        String database = parent.getDatabase();
+        Database database = parent.getDatabase();
+        String databaseName = database.getDatabaseName();
 
         super.loadInternal(parent);
 
         if (null != previousFile) {
             logger.info("Exporting data...");
-            writeOutPrevious(database);
+            writeOutPrevious(databaseName);
         }
 
         if (createTile) {
             logger.info("Creating 3D tiles...");
-            createLayer(database);
+            createLayer(databaseName);
         }
 
     }
@@ -140,7 +142,7 @@ public class CityDB extends GeoServerDataSubset {
     }
 
     @Override
-    public void createLayers(String workspaceName, String database) {
+    public void createLayers(String workspaceName, Database database) {
         logger.info("Publishing to geoserver...");
         GeoServerClient.getInstance()
                 .createPostGISLayer(workspaceName, database, getSchema(), getTable(), geoServerSettings);

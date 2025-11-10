@@ -22,7 +22,7 @@ import org.eclipse.rdf4j.sparqlbuilder.rdf.RdfLiteral.StringLiteral;
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
-import com.cmclinnovations.stack.clients.postgis.PostGISClient;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 
 final class DCATUpdateQuery {
@@ -213,10 +213,10 @@ final class DCATUpdateQuery {
 
     private void addPostGISServer(Dataset dataset) {
         boolean used = dataset.usesPostGIS();
-        String database = dataset.getDatabase();
-        String url = used ? PostGISClient.getInstance().readEndpointConfig().getJdbcURL(database) : null;
+        Database database = dataset.getDatabase();
+        String url = used ? database.getEndpointConfig().getJdbcURL(database.getDatabaseName()) : null;
 
-        addService(postgisServiceVar, database, SparqlConstants.POSTGIS_SERVICE, url, null, null, used);
+        addService(postgisServiceVar, database.getDatabaseName(), SparqlConstants.POSTGIS_SERVICE, url, null, null, used);
     }
 
     private void addGeoServerServer(Dataset dataset) {

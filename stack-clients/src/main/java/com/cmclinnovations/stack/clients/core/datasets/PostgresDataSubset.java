@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,17 +50,18 @@ public abstract class PostgresDataSubset extends DataSubset {
 
     @Override
     void loadInternal(Dataset parent) {
-        String database = parent.getDatabase();
+        Database database = parent.getDatabase();
+        String databaseName = database.getDatabaseName();
         Optional<Path> subdirectory = this.getSubdirectory();
         if (subdirectory.isPresent()) {
             Path dataSubsetDirectory = parent.getDirectory().resolve(subdirectory.get());
-            PostGISClient.getInstance().resetSchema(database);
-            loadData(dataSubsetDirectory, database, parent.baseIRI());
+            PostGISClient.getInstance().resetSchema(databaseName);
+            loadData(dataSubsetDirectory, databaseName, parent.baseIRI());
         } else {
             logger.warn("No Subdirectory specified, Continuing with SQL process and creation without data upload");
         }
-        runSQLPostProcess(database);
-        PostGISClient.getInstance().resetSchema(database);
+        runSQLPostProcess(databaseName);
+        PostGISClient.getInstance().resetSchema(databaseName);
     }
 
     public abstract void loadData(Path dataSubsetDir, String database, String baseIRI);

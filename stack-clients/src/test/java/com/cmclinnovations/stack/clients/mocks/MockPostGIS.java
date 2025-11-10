@@ -30,6 +30,7 @@ public class MockPostGIS {
 
         postGISClientFactoryMock = mockStatic(PostGISClient.class);
         postGISClientFactoryMock.when(PostGISClient::getInstance).thenReturn(postGISClientMock);
+        postGISClientFactoryMock.when(()->PostGISClient.getInstance("postgis")).thenReturn(postGISClientMock);
     }
 
     public void addOverride(Consumer<PostGISClient> rule) {

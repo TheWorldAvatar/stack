@@ -40,7 +40,7 @@ class DatasetTest {
         Assertions.assertEquals(name, dataset.getDescription());
         Assertions.assertEquals(Path.of("/inputs", "data", name), dataset.getDirectory());
         Assertions.assertEquals(name, dataset.getNamespace());
-        Assertions.assertEquals(name, dataset.getDatabase());
+        Assertions.assertEquals(name, dataset.getDatabase().getDatabaseName());
         Assertions.assertEquals(name, dataset.getWorkspaceName());
         Assertions.assertFalse(dataset.isSkip());
         Assertions.assertEquals(SparqlConstants.DEFAULT_BASE_IRI, dataset.baseIRI());
@@ -65,7 +65,7 @@ class DatasetTest {
         Assertions.assertEquals("Test description", dataset.getDescription());
         Assertions.assertEquals(Path.of("/inputs", "data", "datasetDirectory"), dataset.getDirectory());
         Assertions.assertEquals("namespace", dataset.getNamespace());
-        Assertions.assertEquals("database", dataset.getDatabase());
+        Assertions.assertEquals("database", dataset.getDatabase().getDatabaseName());
         Assertions.assertEquals("workspace", dataset.getWorkspaceName());
         Assertions.assertTrue(dataset.isSkip());
     }

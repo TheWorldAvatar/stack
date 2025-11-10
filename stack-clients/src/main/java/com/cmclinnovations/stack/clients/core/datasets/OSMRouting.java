@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import com.cmclinnovations.stack.clients.core.Options;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerVectorSettings;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PGRoutingClient;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -26,13 +27,13 @@ public class OSMRouting extends GeoServerDataSubset {
     }
 
     @Override
-    public void createLayers(String workspaceName, String database) {
+    public void createLayers(String workspaceName, Database database) {
         createLayer(workspaceName, database, prefixTableName("ways"), waysGeoServerSettings);
         createLayer(workspaceName, database, prefixTableName("ways_vertices_pgr"), verticesGeoServerSettings);
         createLayer(workspaceName, database, prefixTableName("pointsofinterest"), poiGeoServerSettings);
     }
 
-    private void createLayer(String workspaceName, String database, String layerName,
+    private void createLayer(String workspaceName, Database database, String layerName,
             GeoServerVectorSettings geoServerVectorSettings) {
         GeoServerClient.getInstance()
                 .createPostGISLayer(workspaceName, database, getSchema(), layerName, geoServerVectorSettings);

@@ -23,6 +23,7 @@ import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
+import com.cmclinnovations.stack.clients.postgis.Database;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.rdf4j.Rdf4jClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
@@ -207,11 +208,13 @@ public class DatasetLoader {
 
     private void configurePostgres(Dataset dataset, List<DataSubset> dataSubsets) {
         if (dataset.usesPostGIS()) {
+            Database database = dataset.getDatabase();
+            String databaseName = database.getDatabaseName();
             PostGISClient postGISClient = PostGISClient.getInstance();
-            postGISClient.createDatabase(dataset.getDatabase());
+            postGISClient.createDatabase(databaseName);
             dataSubsets.stream().filter(DataSubset::usesPostGIS)
                     .filter(PostgresDataSubset.class::isInstance)
-                    .forEach(subset -> postGISClient.createSchema(dataset.getDatabase(),
+                    .forEach(subset -> postGISClient.createSchema(databaseName,
                             ((PostgresDataSubset) subset).getSchema()));
         }
     }
@@ -263,7 +266,10 @@ public class DatasetLoader {
             ServiceConfig newOntopServiceConfig = serviceManager.duplicateServiceConfig(EndpointNames.ONTOP,
                     newOntopServiceName);
 
-            newOntopServiceConfig.setEnvironmentVariable(OntopService.ONTOP_DB_NAME, dataset.getDatabase());
+            Database database = dataset.getDatabase();
+            newOntopServiceConfig.setEnvironmentVariable(OntopService.ONTOP_DB_NAME, database.getDatabaseName());
+            newOntopServiceConfig.getContainerSpec().getConfigs().stream().findFirst()
+                    .ifPresent(config -> config.withConfigName(database.getEndpointName()));
             newOntopServiceConfig.getEndpoints()
                     .replaceAll((endpointName, connection) -> new Connection(
                             connection.getUrl(),
@@ -278,7 +284,7 @@ public class DatasetLoader {
             OntopClient ontopClient = OntopClient.getInstance(newOntopServiceName);
             ontopMappings.forEach(mapping -> ontopClient.updateOBDA(directory.resolve(mapping)));
 
-            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
+            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(database.getDatabaseName())) {
                 OntopClient defaultOntopClient = OntopClient.getInstance(EndpointNames.ONTOP);
                 ontopMappings.forEach(mapping -> defaultOntopClient.updateOBDA(directory.resolve(mapping)));
             }
@@ -286,8 +292,9 @@ public class DatasetLoader {
             ontopClient.uploadOntology(catalogNamespace, ontologyDatasetNames);
 
             ontopClient.uploadRules(dataset.getRules().stream().map(directory::resolve).collect(Collectors.toList()));
-            
-            ontopClient.uploadLenses(dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
+
+            ontopClient.uploadLenses(
+                    dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
         }
     }
 }
