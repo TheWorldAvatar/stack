@@ -41,6 +41,7 @@ public class DatasetRemover {
             serviceManager.removeService(StackClient.getStackName(), ontopServiceName);
 
             Database database = dataset.getDatabase();
+            database.ensureDefault();
             GeoServerClient geoServerClient = GeoServerClient.getInstance();
             String workspaceName = dataset.getWorkspaceName();
             // Ensure GeoServer workspace is removed

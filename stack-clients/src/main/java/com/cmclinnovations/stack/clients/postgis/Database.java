@@ -51,4 +51,10 @@ public class Database {
         return databaseName;
     }
 
+    public void ensureDefault() {
+        if (EndpointNames.POSTGIS != getEndpointName()) {
+            throw new IllegalStateException("This class/method does not support non-default Postgres databases.");
+        }
+    }
+
 }

@@ -209,6 +209,7 @@ public class DatasetLoader {
     private void configurePostgres(Dataset dataset, List<DataSubset> dataSubsets) {
         if (dataset.usesPostGIS()) {
             Database database = dataset.getDatabase();
+            database.ensureDefault();
             String databaseName = database.getDatabaseName();
             PostGISClient postGISClient = PostGISClient.getInstance();
             postGISClient.createDatabase(databaseName);

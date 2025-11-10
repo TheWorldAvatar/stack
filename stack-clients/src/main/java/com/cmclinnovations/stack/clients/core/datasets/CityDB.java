@@ -64,6 +64,7 @@ public class CityDB extends GeoServerDataSubset {
     @Override
     void loadInternal(Dataset parent) {
         Database database = parent.getDatabase();
+        database.ensureDefault();
         String databaseName = database.getDatabaseName();
 
         super.loadInternal(parent);
