@@ -6,7 +6,8 @@ timeseries:	https://www.theworldavatar.com/kg/ontotimeseries/
 
 [MappingDeclaration] @collection [[
 mappingId	time_series_data_[SCHEMA]
-target		timeseries:observation/[SCHEMA]/{id} a timeseries:Observation ; 
+target		timeseries:data/[SCHEMA]/{data_iri_index} timeseries:hasObservation timeseries:observation/[SCHEMA]/{id} .
+            timeseries:observation/[SCHEMA]/{id} a timeseries:Observation ; 
                 timeseries:observationOf timeseries:data/[SCHEMA]/{data_iri_index} ; 
                 timeseries:hasResult timeseries:result/[SCHEMA]/{id} ; 
                 timeprefix:hasTime timeseries:time/[SCHEMA]/{id} . 

@@ -36,25 +36,29 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
 
     // IRI of temporal reference system, used in ontop mapping to indicate reference
     // of time, e.g. Unix
-    private String trsIri;
+    private final String trsIri;
 
     // name of ontop container
     private String ontopName = "ontop-timeseries";
 
     public TimeSeriesRDBClient(Class<T> timeClass) {
-        super(timeClass);
-        if (Instant.class == timeClass) {
-            LOGGER.info("Time class is Instant, TRS is set to {}", UNIX_TRS);
-            trsIri = UNIX_TRS;
-        } else {
-            LOGGER.info("Time class is not Instant, TRS is set to {}", GENERIC_TRS);
-            trsIri = GENERIC_TRS;
-        }
+        this(timeClass, null);
     }
 
-    public void setTrs(String trsIri) {
-        LOGGER.info("TRS is set to {}", trsIri);
-        this.trsIri = trsIri;
+    public TimeSeriesRDBClient(Class<T> timeClass, String trsIri) {
+        super(timeClass);
+        if (null != trsIri) {
+            this.trsIri = trsIri;
+            LOGGER.info("TRS is set to {}", trsIri);
+        } else {
+            if (Instant.class == timeClass) {
+                this.trsIri = UNIX_TRS;
+                LOGGER.info("Time class is Instant, TRS is set to {}", UNIX_TRS);
+            } else {
+                this.trsIri = GENERIC_TRS;
+                LOGGER.info("Time class is not Instant, TRS is set to {}", GENERIC_TRS);
+            }
+        }
     }
 
     public void setOntopName(String ontopName) {
@@ -72,7 +76,7 @@ public class TimeSeriesRDBClient<T> extends TimeSeriesRDBClientOntop<T> {
         return result;
     }
 
-    private void configureOntop() {
+    public void configureOntop() {
         String stackName = System.getenv("STACK_NAME");
         if (stackName == null) {
             LOGGER.warn("STACK_NAME not detected, skipping Ontop intialisation");
