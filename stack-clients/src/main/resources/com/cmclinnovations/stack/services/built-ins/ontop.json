@@ -4,7 +4,7 @@
         "Name": "ontop",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "docker.io/ontop/ontop:5.4.0",
+                "Image": "ghcr.io/theworldavatar/ontop/ontop:5.5.0-binary-rdf-result-SNAPSHOT",
                 "Env": [
                     "ONTOP_MAPPING_FILE=/ontop/ontop.obda",
                     "ONTOP_ONTOLOGY_FILE=/ontop/ontology.ttl",
@@ -13,7 +13,8 @@
                     "ONTOP_LENSES_FILE=/ontop/lenses.json",
                     "ONTOP_DB_NAME=postgres",
                     "ONTOP_DEV_MODE=true",
-                    "ONTOP_LAZY_INIT=true"
+                    "ONTOP_LAZY_INIT=true",
+                    "ONTOP_JAVA_ARGS=-Xmx2g"
                 ],
                 "Configs": [
                     {

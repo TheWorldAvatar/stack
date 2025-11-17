@@ -4,7 +4,7 @@
         "Name": "rdf4j",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "eclipse/rdf4j-workbench:5.1.3-tomcat",
+                "Image": "ghcr.io/theworldavatar/eclipse/rdf4j-workbench:5.3.0-timeouts-tomcat-SNAPSHOT",
                 "Mounts": [
                     {
                         "Type": "volume",
