@@ -86,6 +86,12 @@
         <dependency>
             <groupId>it.unibz.inf.ontop</groupId>
             <artifactId>ontop-system-sql-owlapi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- used in the DerivationClient to detect circular dependencies -->
