@@ -1,8 +1,9 @@
 package com.cmclinnovations.stack.clients.blazegraph;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -13,16 +14,22 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
-import org.eclipse.jetty.client.util.BasicAuthentication;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.ModifyQuery;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.bigdata.rdf.sail.webapp.client.AutoCloseHttpClient;
-import com.bigdata.rdf.sail.webapp.client.HttpClientConfigurator;
-import com.bigdata.rdf.sail.webapp.client.HttpException;
-import com.bigdata.rdf.sail.webapp.client.RemoteRepositoryManager;
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.core.datasets.CopyDatasetQuery;
@@ -67,43 +74,45 @@ public class BlazegraphClient extends ClientWithEndpoint<BlazegraphEndpointConfi
         BlazegraphEndpointConfig endpointConfig = readEndpointConfig();
         String serviceUrl = endpointConfig.getServiceUrl();
 
-        try (AutoCloseHttpClient httpClient = (AutoCloseHttpClient) HttpClientConfigurator.getInstance()
-                .newInstance()) {
-            configureAuthentication(endpointConfig, serviceUrl, httpClient);
+        try (CloseableHttpClient httpClient = HttpClientBuilder.create()
+                .setDefaultCredentialsProvider(configureAuthentication(endpointConfig))
+                .build()) {
             callRemoteRepositoryManager(namespace, command, serviceUrl, httpClient);
-        } catch (URISyntaxException ex) {
-            throw new RuntimeException("The Blazegraph service URL '" + serviceUrl + "' is not a valid URI.", ex);
         } catch (Exception ex) {
             throw new RuntimeException(generateMessage(namespace, command, serviceUrl), ex);
         }
     }
 
-    private void configureAuthentication(BlazegraphEndpointConfig endpointConfig, String serviceUrl,
-            AutoCloseHttpClient httpClient) throws URISyntaxException {
-        if (!endpointConfig.getPassword().isEmpty()) {
-            // If authentication is enabled then create an HttpClient explicitly and add the
-            // authentication details to its AuthenticationStore.
-
-            httpClient.getAuthenticationStore()
-                    .addAuthentication(new BasicAuthentication(new URI(serviceUrl), "Blazegraph",
-                            endpointConfig.getUsername(), endpointConfig.getPassword()));
+    private BasicCredentialsProvider configureAuthentication(BlazegraphEndpointConfig endpointConfig) {
+        if (endpointConfig.getPassword().isEmpty()) {
+            return null;
+        } else {
+            final HttpHost targetHost = new HttpHost("http", endpointConfig.getHostName(),
+                    Integer.valueOf(endpointConfig.getPort()));
+            final BasicCredentialsProvider provider = new BasicCredentialsProvider();
+            AuthScope authScope = new AuthScope(targetHost);
+            provider.setCredentials(authScope, new UsernamePasswordCredentials(endpointConfig.getUsername(),
+                    endpointConfig.getPassword().toCharArray()));
+            return provider;
         }
     }
 
     private void callRemoteRepositoryManager(String namespace, BaseCmd command, String serviceUrl,
-            AutoCloseHttpClient httpClient) throws Exception {
-        try (RemoteRepositoryManager manager = new RemoteRepositoryManager(serviceUrl, httpClient, null)) {
-            command.execute(manager);
-        } catch (HttpException ex) {
-            switch (ex.getStatusCode()) {
-                case 409: // Namespace already exists error
+            CloseableHttpClient httpClient) throws Exception {
+        try (CloseableHttpResponse response = httpClient.execute(command.getRequest(serviceUrl))) {
+            switch (response.getCode()) {
+                case HttpStatus.SC_CREATED: // Namespace created successfully
+                case HttpStatus.SC_OK: // Namespace removed successfully
+                    return;
+                case HttpStatus.SC_CONFLICT: // Namespace already exists error
                     logger.warn("Namespace '{}' already exists.", namespace);
                     break;
-                case 404: // Namespace does not exist error
+                case HttpStatus.SC_NOT_FOUND: // Namespace does not exist error
                     logger.warn("Namespace '{}' does not exist.", namespace);
                     break;
                 default:
-                    throw ex;
+                    throw new RuntimeException(generateMessage(namespace, command, serviceUrl)
+                            + " Response code: " + response.getCode() + ". Reason: " + response.getReasonPhrase());
             }
         }
     }
@@ -136,8 +145,7 @@ public class BlazegraphClient extends ClientWithEndpoint<BlazegraphEndpointConfi
             return text;
         }
 
-        abstract void execute(RemoteRepositoryManager manager) throws Exception;
-
+        abstract ClassicHttpRequest getRequest(String serviceUrl) throws IOException;
     }
 
     private static class CreateRepositoryCmd extends BaseCmd {
@@ -149,9 +157,13 @@ public class BlazegraphClient extends ClientWithEndpoint<BlazegraphEndpointConfi
             this.properties = properties;
         }
 
-        void execute(RemoteRepositoryManager manager) throws Exception {
-            manager.createRepository(getNamespace(), properties);
-
+        ClassicHttpRequest getRequest(String serviceUrl) throws IOException {
+            OutputStream os = new ByteArrayOutputStream();
+            properties.put("com.bigdata.rdf.sail.namespace", getNamespace());
+            properties.storeToXML(os, null, StandardCharsets.UTF_8);
+            return ClassicRequestBuilder.post(serviceUrl + "/namespace")
+                    .setEntity(os.toString(), ContentType.APPLICATION_XML)
+                    .build();
         }
     }
 
@@ -161,9 +173,9 @@ public class BlazegraphClient extends ClientWithEndpoint<BlazegraphEndpointConfi
             super(namespace, "remove");
         }
 
-        void execute(RemoteRepositoryManager manager) throws Exception {
-            manager.deleteRepository(getNamespace());
-
+        ClassicHttpRequest getRequest(String serviceUrl) {
+            return ClassicRequestBuilder.delete(serviceUrl + "/namespace/" + getNamespace())
+                    .build();
         }
     }
 
