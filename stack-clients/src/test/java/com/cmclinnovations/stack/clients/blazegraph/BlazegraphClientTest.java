@@ -67,7 +67,7 @@ class BlazegraphClientTest {
     
     @Test
     void testCreateNamespaceRepeat() {
-        String namespace = "basicNamespace";
+        String namespace = "idempotentNamespace";
         blazegraphClient.createNamespace(namespace);
         blazegraphClient.createNamespace(namespace);
         RemoteStoreClient remoteStoreClient = blazegraphClient.getRemoteStoreClient(namespace);
