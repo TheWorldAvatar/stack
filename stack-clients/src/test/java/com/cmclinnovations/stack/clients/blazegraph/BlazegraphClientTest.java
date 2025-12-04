@@ -64,6 +64,18 @@ class BlazegraphClientTest {
         remoteStoreClient.executeUpdate(INSERT_QUERY);
         assertTripleCount(remoteStoreClient, 2);
     }
+    
+    @Test
+    void testCreateNamespaceRepeat() {
+        String namespace = "basicNamespace";
+        blazegraphClient.createNamespace(namespace);
+        blazegraphClient.createNamespace(namespace);
+        RemoteStoreClient remoteStoreClient = blazegraphClient.getRemoteStoreClient(namespace);
+        int expectedBaseCount = 187;
+        assertTripleCount(remoteStoreClient, expectedBaseCount);
+        remoteStoreClient.executeUpdate(INSERT_QUERY);
+        assertTripleCount(remoteStoreClient, expectedBaseCount + 9);
+    }
 
     @Test
     void testFilterQuery() {
