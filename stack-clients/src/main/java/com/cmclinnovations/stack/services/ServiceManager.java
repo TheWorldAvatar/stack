@@ -167,15 +167,17 @@ public final class ServiceManager {
             DockerService dockerService = getOrInitialiseService(stackName, StackClient.getContainerEngineName());
             dockerService.doPreStartUpConfiguration(newContainerService);
 
+            if (!StackClient.getReverseProxyName().equals(serviceName)) {
+                ReverseProxyService reverseProxyService = getOrInitialiseService(stackName,
+                        StackClient.getReverseProxyName());
+                reverseProxyService.addService(newContainerService);
+            }
+
             dockerService.writeEndpointConfigs(newContainerService);
             if (dockerService.startContainer(newContainerService)) {
                 dockerService.doFirstTimePostStartUpConfiguration(newContainerService);
             }
             dockerService.doEveryTimePostStartUpConfiguration(newContainerService);
-            if (!NginxService.TYPE.equals(serviceName)) {
-                ReverseProxyService reverseProxyService = getOrInitialiseService(stackName, NginxService.TYPE);
-                reverseProxyService.addService(newContainerService);
-            }
         }
 
         services.put(serviceName, newService);

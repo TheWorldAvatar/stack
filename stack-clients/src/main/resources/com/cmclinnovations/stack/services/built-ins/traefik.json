@@ -1,0 +1,46 @@
+{
+    "type": "traefik",
+    "ServiceSpec": {
+        "Name": "traefik",
+        "TaskTemplate": {
+            "ContainerSpec": {
+                "Image": "traefik:v3.6",
+                "Mounts": [
+                    {
+                        "Type": "bind",
+                        "Source": "/var/run/docker.sock",
+                        "Target": "/var/run/docker.sock",
+                        "ReadOnly": true
+                    },
+                    {
+                        "Type": "volume",
+                        "Source": "traefik_config",
+                        "Target": "/etc/traefik"
+                    }
+                ]
+            }
+        },
+        "EndpointSpec": {
+            "Ports": [
+                {
+                    "Name": "web",
+                    "Protocol": "tcp",
+                    "TargetPort": "80",
+                    "PublishedPort": "3838"
+                },
+                {
+                    "Name": "websecure",
+                    "Protocol": "tcp",
+                    "TargetPort": "443",
+                    "PublishedPort": "443"
+                },
+                {
+                    "Name": "dashboard",
+                    "Protocol": "tcp",
+                    "TargetPort": "8080",
+                    "PublishedPort": "8080"
+                }
+            ]
+        }
+    }
+}
