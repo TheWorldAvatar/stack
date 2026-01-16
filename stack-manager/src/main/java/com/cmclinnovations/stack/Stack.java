@@ -135,11 +135,23 @@ public class Stack {
                     + ", explicitly included by user. Please remove them from the \"includes\" list in the stack config file.");
         }
 
+        // Add the reverse proxy service specified in the config
+        addReverseProxyIfAbsent(selectedServices);
+
         // Add user specified services
         selectedServices.addAll(config.getIncludedServices());
         // Remove any excluded services (default and user specified)
         selectedServices.removeAll(config.getExcludedServices());
         return selectedServices;
+    }
+
+    private void addReverseProxyIfAbsent(List<String> selectedServices) {
+        String reverseProxyService = config.getReverseProxyName();
+        if (reverseProxyService != null && !reverseProxyService.isEmpty()) {
+            if (!selectedServices.contains(reverseProxyService)) {
+                selectedServices.add(reverseProxyService);
+            }
+        }
     }
 
     private void handleUserSuppliedData(List<String> selectedServices) {
