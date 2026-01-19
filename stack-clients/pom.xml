@@ -22,6 +22,9 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.release>11</maven.compiler.release>
+        <!-- Override parent pom versions for better Docker Desktop/WSL2 support -->
+        <testcontainers.version>1.20.4</testcontainers.version>
+        <docker-java.version>3.4.1</docker-java.version>
     </properties>
 
     <!-- Repository locations to fetch from -->
