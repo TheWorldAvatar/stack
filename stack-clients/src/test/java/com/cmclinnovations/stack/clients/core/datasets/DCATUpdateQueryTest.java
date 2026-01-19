@@ -25,6 +25,7 @@ import org.eclipse.rdf4j.model.vocabulary.DCAT;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.testcontainers.junit.jupiter.Container;
@@ -49,6 +50,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
+@Tag("testcontainers")
 class DCATUpdateQueryTest {
 
     @Container

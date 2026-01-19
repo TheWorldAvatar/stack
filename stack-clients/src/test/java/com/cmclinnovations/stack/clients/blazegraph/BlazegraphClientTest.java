@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import org.json.JSONArray;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -15,6 +16,7 @@ import com.cmclinnovations.stack.services.BlazegraphService;
 import uk.ac.cam.cares.jps.base.exception.JPSRuntimeException;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
+@Tag("testcontainers")
 @Testcontainers
 class BlazegraphClientTest {
 
@@ -64,7 +66,7 @@ class BlazegraphClientTest {
         remoteStoreClient.executeUpdate(INSERT_QUERY);
         assertTripleCount(remoteStoreClient, 2);
     }
-    
+
     @Test
     void testCreateNamespaceRepeat() {
         String namespace = "idempotentNamespace";

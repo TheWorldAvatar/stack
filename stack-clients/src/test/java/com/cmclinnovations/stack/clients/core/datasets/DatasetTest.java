@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Container;
 
@@ -12,6 +13,7 @@ import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.fasterxml.jackson.databind.InjectableValues;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Tag("testcontainers")
 class DatasetTest {
 
     @Container
