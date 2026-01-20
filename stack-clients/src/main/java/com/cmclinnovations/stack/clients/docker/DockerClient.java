@@ -53,7 +53,9 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig.Builder;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.command.ExecStartResultCallback;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.StreamType;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 
@@ -115,7 +117,6 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 .withOutputStream(outputStream)
                 .withErrorStream(outputStream)
                 .exec();
-        String output = outputStream.toString();
         return execId;
     }
 
@@ -231,11 +232,21 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     execStartCmd.withStdIn(inputStream);
                 }
 
-                // ExecStartResultCallback is marked deprecated but seems to do exactly what we
-                // want and without knowing why it is deprecated any issues with it can't be
-                // overcome anyway.
-                try (ExecStartResultCallback result = execStartCmd
-                        .exec(new ExecStartResultCallback(outputStream, errorStream))) {
+                try (ResultCallback.Adapter<Frame> result = execStartCmd
+                        .exec(new ResultCallback.Adapter<Frame>() {
+                            @Override
+                            public void onNext(Frame frame) {
+                                try {
+                                    if (frame.getStreamType() == StreamType.STDOUT && outputStream != null) {
+                                        outputStream.write(frame.getPayload());
+                                    } else if (frame.getStreamType() == StreamType.STDERR && errorStream != null) {
+                                        errorStream.write(frame.getPayload());
+                                    }
+                                } catch (IOException ex) {
+                                    throw new RuntimeException("Failed to write frame payload", ex);
+                                }
+                            }
+                        })) {
                     if (wait) {
                         if (!result.awaitCompletion(evaluationTimeout, TimeUnit.SECONDS)) {
                             LOGGER.warn("Docker exec command '{}' still running after the {} second execution timeout.",
@@ -553,7 +564,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
 
     public String getContainerId(String containerName) {
         return getContainer(containerName).map(Container::getId)
-                .orElseThrow(() -> new NoSuchElementException("Cannot get container "+containerName+"."));
+                .orElseThrow(() -> new NoSuchElementException("Cannot get container " + containerName + "."));
     }
 
     private Map<String, List<String>> convertToConfigFilterMap(String configName, Map<String, String> labelMap) {
