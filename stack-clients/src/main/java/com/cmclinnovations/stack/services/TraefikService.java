@@ -3,12 +3,11 @@ package com.cmclinnovations.stack.services;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.cmclinnovations.stack.clients.core.StackClient;
-import com.cmclinnovations.stack.clients.utils.FileUtils;
-import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 
 public class TraefikService extends ContainerService implements ReverseProxyService {
+
+    public static final String TYPE = "traefik";
 
     public TraefikService(String stackName, ServiceConfig config) {
         super(stackName, config);
@@ -23,13 +22,15 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         }
         labels.put("traefik.enable", "true");
 
-        service.getConfig().getEndpoints().forEach((name,connection) -> {
+        service.getConfig().getEndpoints().forEach((name, connection) -> {
             // TODO: Set the labels correctly
             // labels.put("traefik.http.routers." + service.getContainerName() + ".rule",
-            //         "PathPrefix(`" + FileUtils.fixSlashes(connection.getExternalPath().getPath(), true, false) + "`)");
+            // "PathPrefix(`" + FileUtils.fixSlashes(connection.getExternalPath().getPath(),
+            // true, false) + "`)");
             // labels.put(
-            //         "traefik.http.services." + service.getServiceName() + ".loadbalancer.server.port",
-            //         String.valueOf(connection.getInternalPort()));
+            // "traefik.http.services." + service.getServiceName() +
+            // ".loadbalancer.server.port",
+            // String.valueOf(connection.getInternalPort()));
         });
     }
 
