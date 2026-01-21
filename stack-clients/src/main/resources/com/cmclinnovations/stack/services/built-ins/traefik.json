@@ -7,12 +7,6 @@
                 "Image": "traefik:v3.6",
                 "Mounts": [
                     {
-                        "Type": "bind",
-                        "Source": "/var/run/docker.sock",
-                        "Target": "/var/run/docker.sock",
-                        "ReadOnly": true
-                    },
-                    {
                         "Type": "volume",
                         "Source": "traefik_config",
                         "Target": "/etc/traefik"
