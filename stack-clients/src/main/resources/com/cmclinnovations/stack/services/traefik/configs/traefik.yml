@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
 api:
   dashboard: true
   insecure: true
@@ -11,10 +12,9 @@ entryPoints:
     address: ":8080"
 
 providers:
-  docker:
+  swarm:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    swarmMode: true
     network: "${STACK_NAME}"
 
 log:
