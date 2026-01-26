@@ -5,7 +5,7 @@ api:
 
 entryPoints:
   web:
-    address: ":${STACK_PORT}"
+    address: ":80"
   websecure:
     address: ":443"
   traefik:

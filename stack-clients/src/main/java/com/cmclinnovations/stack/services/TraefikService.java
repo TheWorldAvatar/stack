@@ -42,10 +42,8 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
             String configContent = new String(inStream.readAllBytes(), StandardCharsets.UTF_8);
             // Replace the ${STACK_NAME} placeholder with actual stack name
             String stackName = getEnvironmentVariable(StackClient.STACK_NAME_KEY);
-            String stackPortString = System.getenv(EXTERNAL_PORT);
 
             configContent = configContent.replace("${STACK_NAME}", stackName);
-            configContent = configContent.replace("${STACK_PORT}", stackPortString);
 
             // Create Docker Config for Traefik
             DockerClient dockerClient = DockerClient.getInstance();
