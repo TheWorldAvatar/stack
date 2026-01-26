@@ -170,7 +170,7 @@ public final class ServiceManager {
             if (!StackClient.getReverseProxyName().equals(serviceName)) {
                 ReverseProxyService reverseProxyService = getOrInitialiseService(stackName,
                         StackClient.getReverseProxyName());
-                reverseProxyService.addService(newContainerService);
+                reverseProxyService.addStackServiceToReverseProxy(newContainerService);
             }
 
             dockerService.writeEndpointConfigs(newContainerService);

@@ -78,7 +78,7 @@ public final class NginxService extends ContainerService implements ReverseProxy
         }
     }
 
-    public void addService(ContainerService service) {
+    public void addStackServiceToReverseProxy(ContainerService service) {
 
         NgxConfig locationConfigOut = new NgxConfig();
 
