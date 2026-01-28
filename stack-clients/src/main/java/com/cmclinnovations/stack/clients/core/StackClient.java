@@ -36,6 +36,7 @@ public final class StackClient {
     private static StackHost stackHost = new StackHost();
 
     private static boolean isolated = false;
+    private static String reverseProxyName;
 
     static {
         String envVarStackName = System.getenv(StackClient.STACK_NAME_KEY);
@@ -105,6 +106,14 @@ public final class StackClient {
 
     public static Path getAbsDataPath() {
         return getStackBaseDir().resolve("inputs").resolve("data");
+    }
+
+    public static void setReverseProxyName(String reverseProxyName) {
+        StackClient.reverseProxyName = reverseProxyName;
+    }
+
+    public static String getReverseProxyName() {
+        return reverseProxyName;
     }
 
     /**

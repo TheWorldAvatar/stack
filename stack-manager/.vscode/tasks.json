@@ -33,7 +33,10 @@
             ],
             "options": {
                 "shell": {
-                    "executable": "bash"
+                    "executable": "bash",
+                    "args": [
+                        "-c"
+                    ]
                 }
             }
         },
