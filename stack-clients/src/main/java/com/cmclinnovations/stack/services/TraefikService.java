@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,8 +21,6 @@ import com.github.dockerjava.api.model.ServiceSpec;
 
 public class TraefikService extends ContainerService implements ReverseProxyService {
 
-    private static final String EXTERNAL_PORT = "EXTERNAL_PORT";
-
     public static final String TYPE = "traefik";
 
     private static final String TRAEFIK_CONFIG_NAME = "traefik_config";
@@ -32,6 +29,7 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
 
     public TraefikService(String stackName, ServiceConfig config) {
         super(stackName, config);
+        updateExternalPort(config);
     }
 
     @Override
@@ -94,11 +92,7 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
                 labels.put("traefik.http.routers." + routerName + ".entrypoints", "web");
 
                 // Configure service with the internal port
-                URL url = connection.getUrl();
-                int port = url.getPort();
-                if (port == -1) {
-                    port = 80; // Default port
-                }
+                int port = getPortOrDefault(connection.getUrl());
                 labels.put("traefik.http.routers." + routerName + ".service", routerName);
                 labels.put("traefik.http.services." + routerName + ".loadbalancer.server.port",
                         String.valueOf(port));
