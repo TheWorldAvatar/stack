@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -338,8 +339,14 @@ public class DockerService extends AbstractService
     protected ServiceSpec configureServiceSpec(ContainerService service) {
 
         ServiceSpec serviceSpec = service.getServiceSpec()
-                .withName(service.getContainerName())
-                .withLabels(StackClient.getStackNameLabelMap());
+                .withName(service.getContainerName());
+        // Merge existing labels with stack name labels
+        Map<String, String> serviceLabels = new HashMap<>();
+        if (serviceSpec.getLabels() != null) {
+            serviceLabels.putAll(serviceSpec.getLabels());
+        }
+        serviceLabels.putAll(StackClient.getStackNameLabelMap());
+        serviceSpec.withLabels(serviceLabels);
         TaskSpec taskTemplate = service.getTaskTemplate();
         if (null == taskTemplate.getRestartPolicy()) {
             taskTemplate.withRestartPolicy(new ServiceRestartPolicy()
@@ -350,8 +357,14 @@ public class DockerService extends AbstractService
                 .withTarget(network.getId())
                 .withAliases(List.of(service.getName()))));
         ContainerSpec containerSpec = service.getContainerSpec()
-                .withLabels(StackClient.getStackNameLabelMap())
                 .withHostname(service.getName());
+        // Merge existing container labels with stack name labels
+        Map<String, String> containerLabels = new HashMap<>();
+        if (containerSpec.getLabels() != null) {
+            containerLabels.putAll(containerSpec.getLabels());
+        }
+        containerLabels.putAll(StackClient.getStackNameLabelMap());
+        containerSpec.withLabels(containerLabels);
 
         interpolateEnvironmentVariables(containerSpec);
 

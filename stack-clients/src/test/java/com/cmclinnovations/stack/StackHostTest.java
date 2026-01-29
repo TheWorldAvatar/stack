@@ -45,11 +45,12 @@ class StackHostTest {
                 () -> Assertions.assertEquals("host", stackHost.getStringBuilder().withName().build()));
     }
 
-        @Test
-    void testEmptyStrings() {        
+    @Test
+    void testEmptyStrings() {
         StackHost stackHostDefault = new StackHost();
         StackHost stackHostJson = Assertions
-                .assertDoesNotThrow(() -> objectMapper.readValue("{\"proto\":\"\", \"name\":\"\",\"port\":\" \",\"path\":\" \"}", StackHost.class));
+                .assertDoesNotThrow(() -> objectMapper
+                        .readValue("{\"proto\":\"\", \"name\":\"\",\"port\":\" \",\"path\":\" \"}", StackHost.class));
         Assertions.assertAll(
                 () -> Assertions.assertEquals(stackHostDefault.getProto(), stackHostJson.getProto()),
                 () -> Assertions.assertEquals(stackHostDefault.getName(), stackHostJson.getName()),
