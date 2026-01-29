@@ -165,7 +165,7 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.address", userinfoEndpoint);
 
         // Forward the Authorization header to Keycloak
-        labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.authResponseHeaders",
+        labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.authRequestHeaders",
                 "Authorization");
 
         // Trust forwarded headers
