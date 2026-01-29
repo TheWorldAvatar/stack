@@ -83,15 +83,19 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         ServiceSpec serviceSpec = service.getServiceSpec();
         Map<String, String> existingLabels = serviceSpec.getLabels();
         final Map<String, String> labels = (existingLabels != null) ? existingLabels : new HashMap<>();
-        labels.put("traefik.enable", "true");
 
         // Check if Keycloak authentication is enabled globally
         boolean authEnabled = isKeycloakAuthEnabled();
         String authMiddleware = authEnabled ? AUTH_MIDDLEWARE_NAME : null;
 
+        // Track if any endpoints with external paths were found
+        final boolean[] hasExternalEndpoints = { false };
+
         service.getConfig().getEndpoints().forEach((endpointName, connection) -> {
             URI externalPath = connection.getExternalPath();
             if (null != externalPath) {
+                hasExternalEndpoints[0] = true;
+
                 String serviceName = service.getContainerName();
                 String routerName = serviceName + "_" + endpointName;
                 String pathPrefix = FileUtils.fixSlashes(externalPath.getPath(), true, false);
@@ -114,10 +118,15 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
             }
         });
 
-        // If auth is enabled, configure the ForwardAuth middleware globally for this
-        // Traefik instance
-        if (authEnabled) {
-            configureKeycloakAuthMiddleware(labels);
+        // Only enable Traefik for services that have external endpoints
+        if (hasExternalEndpoints[0]) {
+            labels.put("traefik.enable", "true");
+
+            // If auth is enabled, configure the ForwardAuth middleware globally for this
+            // Traefik instance
+            if (authEnabled) {
+                configureKeycloakAuthMiddleware(labels);
+            }
         }
 
         // Set labels on the service spec after they've been populated
