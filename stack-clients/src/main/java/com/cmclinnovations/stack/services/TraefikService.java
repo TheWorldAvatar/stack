@@ -27,11 +27,9 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
     private static final String TRAEFIK_CONFIG_PATH = "/etc/traefik/traefik.yml";
     private static final String TRAEFIK_CONFIG_TEMPLATE = "traefik/configs/traefik.yml";
 
-    // Keycloak authentication configuration
-    private static final String KEYCLOAK_AUTH_ENABLED = "KEYCLOAK_AUTH_ENABLED";
-    private static final String KEYCLOAK_AUTH_URL = "KEYCLOAK_AUTH_URL";
-    private static final String KEYCLOAK_REALM = "KEYCLOAK_REALM";
-    private static final String AUTH_MIDDLEWARE_NAME = "keycloak-auth";
+    // Forward authentication middleware name (defined by the forwardauth service)
+    private static final String AUTH_ENABLED = "AUTH_ENABLED";
+    private static final String AUTH_MIDDLEWARE_NAME = "traefik-forward-auth";
 
     public TraefikService(String stackName, ServiceConfig config) {
         super(stackName, config);
@@ -84,8 +82,10 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         Map<String, String> existingLabels = serviceSpec.getLabels();
         final Map<String, String> labels = (existingLabels != null) ? existingLabels : new HashMap<>();
 
-        // Check if Keycloak authentication is enabled globally
-        boolean authEnabled = isKeycloakAuthEnabled();
+        // Check if authentication is enabled globally
+        // The forwardauth service defines the middleware that handles OAuth with
+        // Keycloak
+        boolean authEnabled = isAuthEnabled();
         String authMiddleware = authEnabled ? AUTH_MIDDLEWARE_NAME : null;
 
         // Track if any endpoints with external paths were found
@@ -122,11 +122,10 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         if (hasExternalEndpoints[0]) {
             labels.put("traefik.enable", "true");
 
-            // If auth is enabled, configure the ForwardAuth middleware globally for this
-            // Traefik instance
-            if (authEnabled) {
-                configureKeycloakAuthMiddleware(labels);
-            }
+            // Note: The traefik-forward-auth middleware is defined by the forwardauth
+            // service
+            // Services that need authentication simply reference this middleware in their
+            // router config
         }
 
         // Set labels on the service spec after they've been populated
@@ -134,42 +133,13 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
     }
 
     /**
-     * Checks if Keycloak authentication is enabled via environment variable.
+     * Checks if authentication is enabled via environment variable.
+     * When enabled, services will use the traefik-forward-auth middleware
+     * that is defined and configured by the forwardauth service.
      */
-    private boolean isKeycloakAuthEnabled() {
-        String enabled = System.getenv(KEYCLOAK_AUTH_ENABLED);
+    private boolean isAuthEnabled() {
+        String enabled = System.getenv(AUTH_ENABLED);
         return "true".equalsIgnoreCase(enabled);
-    }
-
-    /**
-     * Configures the Keycloak ForwardAuth middleware on the Traefik service.
-     * This middleware will be applied to all routers that reference it.
-     */
-    private void configureKeycloakAuthMiddleware(Map<String, String> labels) {
-        String authUrl = System.getenv(KEYCLOAK_AUTH_URL);
-        String realm = System.getenv(KEYCLOAK_REALM);
-
-        if (authUrl == null || realm == null) {
-            throw new RuntimeException(
-                    "KEYCLOAK_AUTH_ENABLED is true but KEYCLOAK_AUTH_URL or KEYCLOAK_REALM is not set. " +
-                            "Please configure these environment variables.");
-        }
-
-        // Construct the Keycloak userinfo endpoint URL
-        // This endpoint validates bearer tokens and returns 200 for valid tokens, 401
-        // for invalid
-        String userinfoEndpoint = authUrl.replaceAll("/+$", "") + "/realms/" + realm
-                + "/protocol/openid-connect/userinfo";
-
-        // Configure ForwardAuth middleware
-        labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.address", userinfoEndpoint);
-
-        // Forward the Authorization header to Keycloak
-        labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.authRequestHeaders",
-                "Authorization");
-
-        // Trust forwarded headers
-        labels.put("traefik.http.middlewares." + AUTH_MIDDLEWARE_NAME + ".forwardauth.trustForwardHeader", "true");
     }
 
 }
