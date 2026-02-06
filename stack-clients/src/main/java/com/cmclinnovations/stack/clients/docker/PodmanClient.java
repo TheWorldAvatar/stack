@@ -7,15 +7,16 @@ import java.util.stream.Collectors;
 
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.dockerjava.api.model.Config;
+import com.github.dockerjava.jaxrs.ApiClientExtension;
+
 import io.theworldavatar.swagger.podman.ApiClient;
 import io.theworldavatar.swagger.podman.ApiException;
 import io.theworldavatar.swagger.podman.api.NetworksApi;
 import io.theworldavatar.swagger.podman.api.SecretsApi;
 import io.theworldavatar.swagger.podman.model.Network;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.dockerjava.api.model.Config;
-import com.github.dockerjava.jaxrs.ApiClientExtension;
 
 public class PodmanClient extends DockerClient {
 

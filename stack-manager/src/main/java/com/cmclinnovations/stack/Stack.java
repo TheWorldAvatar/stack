@@ -83,6 +83,7 @@ public class Stack {
         if (null != config) {
             StackClient.setStackHost(config.getHost());
             StackClient.setIsolated(config.isIsolated());
+            StackClient.setReverseProxyName(config.getReverseProxyName());
         }
     }
 

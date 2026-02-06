@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.cmclinnovations.stack.clients.core.StackHost;
+import com.cmclinnovations.stack.services.NginxService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class StackConfig {
@@ -29,6 +30,9 @@ public class StackConfig {
 
     @JsonProperty
     private final Boolean isolated = false;
+
+    @JsonProperty("reverseProxy")
+    private String reverseProxy;
 
     @JsonProperty("hostName")
     private void setHostName(String hostName) {
@@ -53,5 +57,9 @@ public class StackConfig {
 
     public boolean isIsolated() {
         return isolated;
+    }
+
+    public String getReverseProxyName() {
+        return reverseProxy != null ? reverseProxy : NginxService.TYPE;
     }
 }
