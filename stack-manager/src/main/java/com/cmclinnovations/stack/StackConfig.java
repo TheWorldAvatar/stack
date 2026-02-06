@@ -5,7 +5,6 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.cmclinnovations.stack.clients.core.StackHost;
 import com.cmclinnovations.stack.services.NginxService;
@@ -33,7 +32,7 @@ public class StackConfig {
     private final Boolean isolated = false;
 
     @JsonProperty("reverseProxy")
-    private final Optional<String> reverseProxy = Optional.empty();
+    private String reverseProxy;
 
     @JsonProperty("hostName")
     private void setHostName(String hostName) {
@@ -61,6 +60,6 @@ public class StackConfig {
     }
 
     public String getReverseProxyName() {
-        return reverseProxy.orElse(NginxService.TYPE);
+        return reverseProxy != null ? reverseProxy : NginxService.TYPE;
     }
 }
