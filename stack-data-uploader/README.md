@@ -229,8 +229,8 @@ Additional metadata discribing the dataset (or data subset). For example additio
 
 | Key                | Required? | Default value | Description                                                                                                                                                                          |
 | ------------------ | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `"prefixes"`       | No        | {}            | Key-value map of prefixes to IRIs                                                                                                                                                    |
-| `"triplePatterns"` | No        | ""            | Turtle formatted triples as a single-line string with double-quote characters escaped. The dataset IRI can be accessed as `?dataset`. For data subsets the variable is `?dataSubset` |
+| `"prefixes"`       | No        | `{}`          | Key-value map of prefixes to IRIs                                                                                                                                                    |
+| `"triplePatterns"` | No        | `""`          | Turtle formatted triples as a single-line string with double-quote characters escaped. The dataset IRI can be accessed as `?dataset`. For data subsets the variable is `?dataSubset` |
 
 Example:
 ```json
