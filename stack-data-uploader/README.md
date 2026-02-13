@@ -128,6 +128,7 @@ The following table shows the top level nodes allowed in a configuration file.
 | [`"workspace"`](#workspace)                     | No        | The dataset's name                       | The GeoServer workspace into which any 2D geospatial data layers, vector and raster, will be added                                                 |
 | [`"namespace"`](#namespace)                     | No        | The dataset's name                       | The Blazegraph namespace into which RDF data will be added. The long syntax can be used to specify properties if the namespace needs to be created |
 | [`"externalDatasets"`](#externaldatasets)       | No*       | `[]`                                     | A list of other datasets' names. Each listed dataset will also be loaded if this dataset is loaded by name                                         |
+| [`"additionalMetadata"`](#additionalmetadata)   | No        | `{}`                                     | Additional metadata discribing the dataset                                                                                                         |
 | [`"dataSubsets"`](#datasubsets)                 | No*       | `[]`                                     | A list of *data subset* objects                                                                                                                    |
 | [`"styles"`](#styles)                           | No*       | `[]`                                     | A list of GeoServer style file definition objects                                                                                                  |
 | [`"mappings"`](#mappings)                       | No*       | `[]`                                     | A list of Ontop mapping (OBDA) file names                                                                                                          |
@@ -222,6 +223,28 @@ Be aware though that some of the property keys contain the namespace's name so c
 
 Any datasets that are named under this node will be included if this dataset is loaded by name, either because the stack has the same name or because it appears in the `"externalDatasets"` list of another dataset that is loaded by name.
 
+### `"additionalMetadata"`
+
+Additional metadata discribing the dataset (or data subset). For example additional information that corresponds to concepts in the dcat or prov-o ontologies.
+
+| Key                | Required? | Default value | Description                                                                                                                                                                          |
+| ------------------ | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `"prefixes"`       | No        | {}            | Key-value map of prefixes to IRIs                                                                                                                                                    |
+| `"triplePatterns"` | No        | ""            | Turtle formatted triples as a single-line string with double-quote characters escaped. The dataset IRI can be accessed as `?dataset`. For data subsets the variable is `?dataSubset` |
+
+Example:
+```json
+"additionalMetadata": {
+        "prefixes": {
+            "ex": "<https://dcat.example.org/>",
+            "dct": "http://purl.org/dc/terms/",
+            "dcat": "http://www.w3.org/ns/dcat#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
+        },
+        "triplePatterns": "?dataset dct:publisher ex:finance-ministry ; dct:spatial <http://sws.geonames.org/6695072/> ; dct:temporal [ a dct:PeriodOfTime ; dcat:startDate \"2011-07-01\"^^xsd:date ;  dcat:endDate \"2011-09-30\"^^xsd:date ; ] ."
+    },
+```
+
 ### `"dataSubsets"`
 
 This node should contain a list of data subset objects.
@@ -231,13 +254,14 @@ Each data subset should then have its own subdirectory.
 These specify how to load the data from a particular set of files.
 Each data subset must have the following values specified:
 
-| Key                               | Required? | Default value                      | Description                                                                                                                                                              |
-| --------------------------------- | --------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`"name"`](#name-1)               | No        | Last component of the subdirectory | The name of the data subset                                                                                                                                              |
-| [`"type"`](#type)                 | Yes       | N/A                                | The type of the data                                                                                                                                                     |
-| [`"subdirectory"`](#subdirectory) | Yes       | N/A                                | The subdirectory within the dataset directory that contains the data in this data subset                                                                                 |
-| `"skip"`                          | No        | `false`                            | If set to `true` this data subset will be ignored by the data uploader                                                                                                   |
-| `"sql"`                           | No        | N/A                                | If the data is being loaded into the PostgreSQL database then the query provided here is run straight after the data is loaded [:open_file_folder:](#value-by-file-name) |
+| Key                                           | Required? | Default value                      | Description                                                                                                                                                              |
+| --------------------------------------------- | --------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`"name"`](#name-1)                           | No        | Last component of the subdirectory | The name of the data subset                                                                                                                                              |
+| [`"type"`](#type)                             | Yes       | N/A                                | The type of the data                                                                                                                                                     |
+| [`"subdirectory"`](#subdirectory)             | Yes       | N/A                                | The subdirectory within the dataset directory that contains the data in this data subset                                                                                 |
+| `"skip"`                                      | No        | `false`                            | If set to `true` this data subset will be ignored by the data uploader                                                                                                   |
+| `"sql"`                                       | No        | N/A                                | If the data is being loaded into the PostgreSQL database then the query provided here is run straight after the data is loaded [:open_file_folder:](#value-by-file-name) |
+| [`"additionalMetadata"`](#additionalmetadata) | No        | `{}`                               | Additional metadata discribing the data subset                                                                                                                           |
 
 #### `"name"`
 
