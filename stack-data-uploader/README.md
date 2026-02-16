@@ -128,7 +128,7 @@ The following table shows the top level nodes allowed in a configuration file.
 | [`"workspace"`](#workspace)                     | No        | The dataset's name                       | The GeoServer workspace into which any 2D geospatial data layers, vector and raster, will be added                                                 |
 | [`"namespace"`](#namespace)                     | No        | The dataset's name                       | The Blazegraph namespace into which RDF data will be added. The long syntax can be used to specify properties if the namespace needs to be created |
 | [`"externalDatasets"`](#externaldatasets)       | No*       | `[]`                                     | A list of other datasets' names. Each listed dataset will also be loaded if this dataset is loaded by name                                         |
-| [`"additionalMetadata"`](#additionalmetadata)   | No        | `{}`                                     | Additional metadata discribing the dataset                                                                                                         |
+| [`"additionalMetadata"`](#additionalmetadata)   | No        | `{}`                                     | Additional metadata describing the dataset                                                                                                         |
 | [`"dataSubsets"`](#datasubsets)                 | No*       | `[]`                                     | A list of *data subset* objects                                                                                                                    |
 | [`"styles"`](#styles)                           | No*       | `[]`                                     | A list of GeoServer style file definition objects                                                                                                  |
 | [`"mappings"`](#mappings)                       | No*       | `[]`                                     | A list of Ontop mapping (OBDA) file names                                                                                                          |
@@ -225,7 +225,7 @@ Any datasets that are named under this node will be included if this dataset is 
 
 ### `"additionalMetadata"`
 
-Additional metadata discribing the dataset (or data subset). For example additional information that corresponds to concepts in the dcat or prov-o ontologies.
+Additional metadata describing the dataset (or data subset). For example additional information that corresponds to concepts in the dcat or prov-o ontologies.
 
 | Key                | Required? | Default value | Description                                                                                                                                                                          |
 | ------------------ | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -261,7 +261,7 @@ Each data subset must have the following values specified:
 | [`"subdirectory"`](#subdirectory)             | Yes       | N/A                                | The subdirectory within the dataset directory that contains the data in this data subset                                                                                 |
 | `"skip"`                                      | No        | `false`                            | If set to `true` this data subset will be ignored by the data uploader                                                                                                   |
 | `"sql"`                                       | No        | N/A                                | If the data is being loaded into the PostgreSQL database then the query provided here is run straight after the data is loaded [:open_file_folder:](#value-by-file-name) |
-| [`"additionalMetadata"`](#additionalmetadata) | No        | `{}`                               | Additional metadata discribing the data subset                                                                                                                           |
+| [`"additionalMetadata"`](#additionalmetadata) | No        | `{}`                               | Additional metadata describing the data subset                                                                                                                           |
 
 #### `"name"`
 
