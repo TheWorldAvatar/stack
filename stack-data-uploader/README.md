@@ -225,7 +225,10 @@ Any datasets that are named under this node will be included if this dataset is 
 
 ### `"additionalMetadata"`
 
-Additional metadata describing the dataset (or data subset). For example additional information that corresponds to concepts in the dcat or prov-o ontologies.
+Additional metadata describing the dataset (or data subset).
+For example additional information that corresponds to concepts in the dcat or prov-o ontologies.
+Any triples added here are in addition to the basic metadata that is added by default.
+All metadata triples are added to the `kb` namespace in Blazegraph.
 
 | Key                | Required? | Default value | Description                                                                                                                                                                          |
 | ------------------ | --------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
