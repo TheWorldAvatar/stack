@@ -15,8 +15,9 @@ import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 
-import io.theworldavatar.swagger.podman.ApiClient;
 import com.github.dockerjava.jaxrs.filter.ResponseStatusExceptionFilter;
+
+import io.theworldavatar.swagger.podman.ApiClient;
 
 final public class ApiClientExtension extends ApiClient {
 
