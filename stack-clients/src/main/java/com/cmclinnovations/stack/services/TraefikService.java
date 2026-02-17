@@ -27,9 +27,13 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
     private static final String TRAEFIK_CONFIG_PATH = "/etc/traefik/traefik.yml";
     private static final String TRAEFIK_CONFIG_TEMPLATE = "traefik/configs/traefik.yml";
 
+    private static final String TRAEFIK_DYNAMIC_CONFIG_NAME = "traefik_dynamic_config";
+    private static final String TRAEFIK_DYNAMIC_CONFIG_PATH = "/etc/traefik/dynamic.yml";
+    private static final String TRAEFIK_DYNAMIC_CONFIG_TEMPLATE = "traefik/configs/dynamic.yml";
+
     // Forward authentication middleware name (defined by the forwardauth service)
     private static final String AUTH_ENABLED = "AUTH_ENABLED";
-    private static final String AUTH_MIDDLEWARE_NAME = "traefik-forward-auth";
+    private static final String AUTH_MIDDLEWARE_NAME = "oauth-auth-redirect";
 
     public TraefikService(String stackName, ServiceConfig config) {
         super(stackName, config);
@@ -38,27 +42,61 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
 
     @Override
     protected void doPreStartUpConfiguration() {
+        DockerClient dockerClient = DockerClient.getInstance();
+        ContainerSpec containerSpec = getContainerSpec();
+        List<ContainerSpecConfig> configs = containerSpec.getConfigs();
+        if (null == configs) {
+            configs = new ArrayList<>();
+            containerSpec.withConfigs(configs);
+        }
+
+        String stackName = getEnvironmentVariable(StackClient.STACK_NAME_KEY);
+
+        // Create and mount static Traefik configuration
+        configureTraefikStaticConfig(dockerClient, configs, stackName);
+
+        // Create and mount dynamic Traefik configuration (for middlewares / custom
+        // rules and routers etc)
+        configureTraefikDynamicConfig(dockerClient, configs);
+    }
+
+    private void configureTraefikDynamicConfig(DockerClient dockerClient, List<ContainerSpecConfig> configs) {
+        if (isAuthEnabled()) {
+            try (InputStream inStream = new BufferedInputStream(
+                    TraefikService.class.getResourceAsStream(TRAEFIK_DYNAMIC_CONFIG_TEMPLATE))) {
+
+                String dynamicConfigContent = new String(inStream.readAllBytes(), StandardCharsets.UTF_8);
+
+                if (!dockerClient.configExists(TRAEFIK_DYNAMIC_CONFIG_NAME)) {
+                    dockerClient.addConfig(TRAEFIK_DYNAMIC_CONFIG_NAME,
+                            dynamicConfigContent.getBytes(StandardCharsets.UTF_8));
+                }
+
+                ContainerSpecConfig dynamicConfig = new ContainerSpecConfig()
+                        .withConfigName(TRAEFIK_DYNAMIC_CONFIG_NAME)
+                        .withFile(new ContainerSpecFile()
+                                .withName(TRAEFIK_DYNAMIC_CONFIG_PATH)
+                                .withUid("0")
+                                .withGid("0")
+                                .withMode(0444L));
+                configs.add(dynamicConfig);
+
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to configure Traefik dynamic config", ex);
+            }
+        }
+    }
+
+    private void configureTraefikStaticConfig(DockerClient dockerClient, List<ContainerSpecConfig> configs,
+            String stackName) {
         try (InputStream inStream = new BufferedInputStream(
                 TraefikService.class.getResourceAsStream(TRAEFIK_CONFIG_TEMPLATE))) {
 
             String configContent = new String(inStream.readAllBytes(), StandardCharsets.UTF_8);
-            // Replace the ${STACK_NAME} placeholder with actual stack name
-            String stackName = getEnvironmentVariable(StackClient.STACK_NAME_KEY);
-
             configContent = configContent.replace("${STACK_NAME}", stackName);
 
-            // Create Docker Config for Traefik
-            DockerClient dockerClient = DockerClient.getInstance();
             if (!dockerClient.configExists(TRAEFIK_CONFIG_NAME)) {
                 dockerClient.addConfig(TRAEFIK_CONFIG_NAME, configContent.getBytes(StandardCharsets.UTF_8));
-            }
-
-            // Mount the config into the container
-            ContainerSpec containerSpec = getContainerSpec();
-            List<ContainerSpecConfig> configs = containerSpec.getConfigs();
-            if (null == configs) {
-                configs = new ArrayList<>();
-                containerSpec.withConfigs(configs);
             }
 
             ContainerSpecConfig traefikConfig = new ContainerSpecConfig()
@@ -71,7 +109,7 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
             configs.add(traefikConfig);
 
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to configure Traefik", ex);
+            throw new RuntimeException("Failed to configure Traefik static config", ex);
         }
     }
 
@@ -83,10 +121,9 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
         final Map<String, String> labels = (existingLabels != null) ? existingLabels : new HashMap<>();
 
         // Check if authentication is enabled globally
-        // The forwardauth service defines the middleware that handles OAuth with
-        // Keycloak
+        // The middleware is defined in Traefik's dynamic config (file provider)
         boolean authEnabled = isAuthEnabled();
-        String authMiddleware = authEnabled ? AUTH_MIDDLEWARE_NAME : null;
+        String authMiddleware = authEnabled ? AUTH_MIDDLEWARE_NAME + "@file" : null;
 
         // Track if any endpoints with external paths were found
         final boolean[] hasExternalEndpoints = { false };
@@ -134,8 +171,8 @@ public class TraefikService extends ContainerService implements ReverseProxyServ
 
     /**
      * Checks if authentication is enabled via environment variable.
-     * When enabled, services will use the traefik-forward-auth middleware
-     * that is defined and configured by the forwardauth service.
+     * When enabled, services will use the forwardauth middleware
+     * that is defined in Traefik's dynamic configuration (file provider).
      */
     private boolean isAuthEnabled() {
         String enabled = System.getenv(AUTH_ENABLED);

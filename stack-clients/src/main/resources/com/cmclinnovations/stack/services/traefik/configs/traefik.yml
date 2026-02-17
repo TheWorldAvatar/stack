@@ -12,10 +12,14 @@ entryPoints:
     address: ":8080"
 
 providers:
-  swarm:
+  # this one will read labels from containers (podman probably), or services in the case of swarm mode
+  docker: # swarm
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: "${STACK_NAME}"
-
+    network: ${STACK_NAME}
+  # this one reads the file specified, hot refreshes the config when it changes. More responsive than the containers which needs updating of services / containers to trigger a refresh.
+  file:
+    filename: "/etc/traefik/dynamic.yml"
+    watch: true
 log:
   level: INFO
