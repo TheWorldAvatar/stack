@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://json.schemastore.org/traefik-v3.json
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  traefik:
+    address: ":8080"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: "bingus"
+  file:
+    filename: "/etc/traefik/dynamic.yml"
+    watch: true
+
+log:
+  level: DEBUG
