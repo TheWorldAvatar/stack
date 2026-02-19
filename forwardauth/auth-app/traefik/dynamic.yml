@@ -1,4 +1,6 @@
 # Dynamic Traefik configuration for middlewares
+# $schema: https://www.schemastore.org/traefik-v3-file-provider.json
+
 http:
   routers:
     services-oauth2-route:
