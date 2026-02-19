@@ -8,12 +8,21 @@ http:
       middlewares:
         - auth-headers
       service: oauth-backend
-
+    nginx-route:
+      rule: "PathPrefix(`/`)"
+      middlewares:
+        - oauth-auth-redirect
+      service: nginx-backend
+      priority: 1
   services:
     oauth-backend:
       loadBalancer:
         servers:
           - url: http://oauth2-proxy:4180
+    nginx-backend:
+      loadBalancer:
+        servers:
+          - url: http://host.containers.internal:9050 # nginx port goes here
 
   middlewares:
     auth-headers:
