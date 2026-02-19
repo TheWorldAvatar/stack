@@ -37,9 +37,13 @@ declare -A HOSTNAME_TO_SHORT
 
 # Mapping from full hostname to short name
 HOSTNAME_TO_SHORT["credo-integration-01"]="ci01.credo"
+HOSTNAME_TO_SHORT["credo-integration-01.dafni.rl.ac.uk"]="ci01.credo"
 HOSTNAME_TO_SHORT["credo-datahost-01"]="cd01.credo"
+HOSTNAME_TO_SHORT["credo-datahost-01.dafni.rl.ac.uk"]="cd01.credo"
 HOSTNAME_TO_SHORT["credo-datahost-02"]="cd02.credo"
+HOSTNAME_TO_SHORT["credo-datahost-02.dafni.rl.ac.uk"]="cd02.credo"
 HOSTNAME_TO_SHORT["credo-datahost-03"]="cd03.credo"
+HOSTNAME_TO_SHORT["credo-datahost-03.dafni.rl.ac.uk"]="cd03.credo"
 
 # ci01.credo configuration
 HOST_USER["ci01.credo"]="shared"
