@@ -9,6 +9,7 @@ services:
       - "STACK_NAME=${STACK_NAME}"
       - "EXECUTABLE=${EXECUTABLE}"
       - "API_SOCK=${API_SOCK}"
+      - "AUTH_ENABLED=${AUTH_ENABLED}"
     security_opt:
       - label=disable
     volumes:

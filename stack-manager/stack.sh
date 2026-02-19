@@ -3,6 +3,9 @@
 # This fixes issues with WSL not mounting the Windows directories in a stable way.
 cd .
 
+# Export Keycloak authentication configuration before running commands
+export AUTH_ENABLED=true
+
 COMMAND=$1
 shift
 

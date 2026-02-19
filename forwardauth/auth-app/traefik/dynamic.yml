@@ -1,0 +1,55 @@
+# Dynamic Traefik configuration for middlewares
+# $schema: https://www.schemastore.org/traefik-v3-file-provider.json
+
+http:
+  routers:
+    services-oauth2-route:
+      rule: "PathPrefix(`/oauth2/`)"
+      middlewares:
+        - auth-headers
+      service: oauth-backend
+    nginx-route:
+      rule: "PathPrefix(`/`)"
+      middlewares:
+        - oauth-auth-redirect
+      service: nginx-backend
+      priority: 1
+  services:
+    oauth-backend:
+      loadBalancer:
+        servers:
+          - url: http://oauth2-proxy:4180
+    nginx-backend:
+      loadBalancer:
+        servers:
+          - url: http://host.containers.internal:9050 # nginx port goes here
+
+  middlewares:
+    auth-headers:
+      headers:
+        sslRedirect: false
+        stsSeconds: 315360000
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        frameDeny: true
+    oauth-auth-redirect:
+      forwardAuth:
+        address: http://oauth2-proxy:4180/
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Auth-Request-User
+          - X-Auth-Request-Email
+          - X-Auth-Request-Access-Token
+          - Authorization
+        authRequestHeaders:
+          - Authorization
+    oauth-auth-wo-redirect:
+      forwardAuth:
+        address: http://oauth2-proxy:4180/oauth2/auth
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Auth-Request-Access-Token
+          - Authorization

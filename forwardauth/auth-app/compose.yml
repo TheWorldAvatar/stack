@@ -1,0 +1,70 @@
+name: proxy
+services:
+  traefik:
+    image: traefik:v3.6
+    container_name: standalone-traefik-op
+    ports:
+      - "2025:80" # web entrypoint
+      # - "443:443" # websecure entrypoint
+      - "8080:8080" # dashboard
+    volumes:
+      # docker
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+      # - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      # - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+
+      # podman and SELinux
+      - ${XDG_RUNTIME_DIR}/podman/podman.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro,Z
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro,Z
+    networks:
+      - bongus
+    environment:
+      - STACK_NAME=bongus
+    # podman
+    security_opt:
+      - label=disable
+    restart: unless-stopped
+  oauth2-proxy:
+    container_name: oauth2-proxy
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.14.2
+    command: --config /oauth2-proxy.cfg
+    hostname: oauth2-proxy
+    env_file:
+      - .env
+    volumes:
+      - "./oauth2-proxy/oauth2-proxy.cfg:/oauth2-proxy.cfg:ro,Z"
+    restart: unless-stopped
+    networks:
+      - bongus
+
+  # Test service with authentication
+  whoami:
+    image: traefik/whoami
+    container_name: test-whoami
+    networks:
+      - bongus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=bongus"
+      - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.whoami.middlewares=oauth-auth-redirect@file"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+  # Test service WITHOUT authentication for comparison
+  whoami-public:
+    image: traefik/whoami
+    container_name: test-whoami-public
+    networks:
+      - bongus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=bongus"
+      - "traefik.http.routers.whoami-public.rule=PathPrefix(`/whoami-public`)"
+      - "traefik.http.routers.whoami-public.entrypoints=web"
+      - "traefik.http.services.whoami-public.loadbalancer.server.port=80"
+
+networks:
+  bongus:
+    name: bongus
