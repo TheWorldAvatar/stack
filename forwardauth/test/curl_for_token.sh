@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# shellcheck disable=SC1091
-
 # shellcheck source=.env
 source .env
 
@@ -12,4 +10,4 @@ curl -s -X POST "${OIDC_TOKEN_URL}" \
   -d "client_secret=${OIDC_CLIENT_SECRET}" \
   -d "username=${USERNAME}" \
   -d "password=${PASSWORD}" \
-  -d 'scope=openid' 
+  -d 'scope=openid'
