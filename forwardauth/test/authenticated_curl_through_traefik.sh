@@ -2,4 +2,4 @@
 
 TOKEN=$(./curl_for_token.sh | jq -r '.access_token')
 
-curl -v -H "Authorization: Bearer $TOKEN" http://localhost:2025/whoami/
+curl -v -w '\n' -H "Authorization: Bearer $TOKEN" http://localhost:9050/CentralStackAgent/getScenarios
