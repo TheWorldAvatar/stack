@@ -4,16 +4,19 @@ import java.util.List;
 
 import org.eclipse.rdf4j.federated.repository.FedXRepositoryConfigBuilder;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
-import org.eclipse.rdf4j.repository.config.RepositoryImplConfig;
 import org.eclipse.rdf4j.repository.manager.RemoteRepositoryManager;
 import org.eclipse.rdf4j.repository.sail.config.SailRepositoryConfig;
 import org.eclipse.rdf4j.repository.sparql.config.SPARQLRepositoryConfig;
 import org.eclipse.rdf4j.sail.memory.config.MemoryStoreConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 
 public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Rdf4jClient.class);
 
     private static Rdf4jClient instance = null;
 
@@ -82,5 +85,21 @@ public class Rdf4jClient extends ClientWithEndpoint<Rdf4jEndpointConfig> {
         if (hasRepositoryConfig(config.getID()))
             manager.removeRepository(config.getID());
         manager.addRepositoryConfig(config);
+    }
+
+    public void refreshRepositoryCache(String repositoryId) {
+        if (!manager.hasRepositoryConfig(repositoryId)) {
+            throw new RuntimeException("Repository with ID '" + repositoryId + "' does not exist.");
+        }
+        try {
+            RepositoryConfig existingConfig = manager.getRepositoryConfig(repositoryId);
+            manager.removeRepository(repositoryId);
+            manager.addRepositoryConfig(existingConfig);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to refresh repository cache for repository " + repositoryId, e);
+        }
+
+        LOGGER.info("Successfully refreshed repository cache for repository {}", repositoryId);
     }
 }
