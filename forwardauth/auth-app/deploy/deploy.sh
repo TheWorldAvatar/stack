@@ -113,8 +113,7 @@ log_info "  Stack Name: $STACK_NAME"
 
 # Function to generate random string for secrets
 generate_secret() {
-    local length=${1:-32}
-    openssl rand -hex "$length" | head -c "$length"
+    dd if=/dev/urandom bs=32 count=1 2>/dev/null | base64 | tr -d -- '\n' | tr -- '+/' '-_' ; echo
 }
 
 # Check if running as correct user
@@ -136,12 +135,13 @@ fi
 # If CLIENT_SECRET is not set, prompt for it
 if [ -z "$CLIENT_SECRET" ]; then
     log_warn "CLIENT_SECRET not found in existing .env"
-    read -rsp "Enter Keycloak client secret for '$KEYCLOAK_CLIENT_ID' (or press Enter to generate random): " CLIENT_SECRET
-    echo
-    if [ -z "$CLIENT_SECRET" ]; then
-        log_warn "Generating random CLIENT_SECRET (you'll need to configure this in Keycloak)"
-        CLIENT_SECRET=$(generate_secret 32)
-    fi
+    while [ -z "$CLIENT_SECRET" ]; do
+        read -rsp "Enter Keycloak client secret for '$KEYCLOAK_CLIENT_ID': " CLIENT_SECRET
+        echo
+        if [ -z "$CLIENT_SECRET" ]; then
+            log_error "CLIENT_SECRET is required. Please enter a valid secret."
+        fi
+    done
 fi
 
 # Generate other secrets if not present
@@ -235,9 +235,14 @@ log_info "Updating dynamic.yml with Nginx port..."
 sed -i.bak "s|http://host.containers.internal:[0-9]*|http://host.containers.internal:$NGINX_PORT|" "$BASE_DIR/traefik/dynamic.yml"
 log_info "dynamic.yml updated (Nginx port: $NGINX_PORT)"
 
-# Set XDG_RUNTIME_DIR for podman if not set
+# Set XDG_RUNTIME_DIR for podman if not set and fix podman socket
 if [ -z "$XDG_RUNTIME_DIR" ]; then
     export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+    # hack to fix bad podman state
+    podman system migrate
+    # use a socket without systemd
+    podman system service --time 5
+
 fi
 
 log_info "XDG_RUNTIME_DIR: $XDG_RUNTIME_DIR"
@@ -254,7 +259,7 @@ cd "$BASE_DIR"
 podman-compose down 2>/dev/null || log_warn "No existing containers to stop"
 
 # Start the stack
-log_info "Starting stack..."
+log_info "Starting auth stack..."
 podman-compose up -d
 
 # Check if containers started successfully
