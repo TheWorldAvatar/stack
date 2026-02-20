@@ -1,5 +1,5 @@
 #!/usr/bin/bash
 
-TOKEN=$(./curl_for_token.sh | jq -r '.access_token')
+TOKEN=$(./curl_for_token.sh)
 
-curl -v -w '\n' -H "Authorization: Bearer $TOKEN" http://localhost:9050/CentralStackAgent/getScenarios
+curl -v -w '\n' -H "Authorization: Bearer $TOKEN" http://localhost:2025/protected
