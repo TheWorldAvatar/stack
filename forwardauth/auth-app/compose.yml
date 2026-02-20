@@ -2,7 +2,7 @@ name: proxy
 services:
   traefik:
     image: traefik:v3.6
-    container_name: standalone-traefik-op
+    container_name: traefik
     ports:
       - "2025:80" # web entrypoint
       # - "443:443" # websecure entrypoint
@@ -18,9 +18,9 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro,Z
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro,Z
     networks:
-      - bongus
+      - auth
     environment:
-      - STACK_NAME=bongus
+      - STACK_NAME=auth
     # podman
     security_opt:
       - label=disable
@@ -36,35 +36,15 @@ services:
       - "./oauth2-proxy/oauth2-proxy.cfg:/oauth2-proxy.cfg:ro,Z"
     restart: unless-stopped
     networks:
-      - bongus
+      - auth
 
   # Test service with authentication
   whoami:
     image: traefik/whoami
-    container_name: test-whoami
+    container_name: whoami
     networks:
-      - bongus
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=bongus"
-      - "traefik.http.routers.whoami.rule=PathPrefix(`/whoami`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
-      - "traefik.http.routers.whoami.middlewares=oauth-auth-redirect@file"
-      - "traefik.http.services.whoami.loadbalancer.server.port=80"
-
-  # Test service WITHOUT authentication for comparison
-  whoami-public:
-    image: traefik/whoami
-    container_name: test-whoami-public
-    networks:
-      - bongus
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=bongus"
-      - "traefik.http.routers.whoami-public.rule=PathPrefix(`/whoami-public`)"
-      - "traefik.http.routers.whoami-public.entrypoints=web"
-      - "traefik.http.services.whoami-public.loadbalancer.server.port=80"
+      - auth
 
 networks:
-  bongus:
-    name: bongus
+  auth:
+    name: auth
