@@ -12,10 +12,11 @@ entryPoints:
     address: ":8080"
 
 providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
-    network: "bingus"
+  # podman or non swarm docker, switch to 'swarm' if needed
+  # docker:
+  #   endpoint: "unix:///var/run/docker.sock"
+  #   exposedByDefault: false
+  #   network: "<network-name>"
   file:
     filename: "/etc/traefik/dynamic.yml"
     watch: true
