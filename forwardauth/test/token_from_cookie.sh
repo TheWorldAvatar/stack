@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 curl 'https://app.credo.stfc.ac.uk/scenario' \
   -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7' \
   -H 'Accept-Language: en-IE,en-GB;q=0.9,en;q=0.8' \
