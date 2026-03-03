@@ -1,0 +1,21 @@
+{
+  "type": "kopia",
+  "ServiceSpec": {
+    "Name": "kopia",
+    "TaskTemplate": {
+      "ContainerSpec": {
+        "Image": "kopia/kopia:latest",
+        "Command": [
+          "tail",
+          "-f",
+          "/dev/null"
+        ],
+        "Secrets": [
+          {
+            "SecretName": "kopia_password"
+          }
+        ]
+      }
+    }
+  }
+}
