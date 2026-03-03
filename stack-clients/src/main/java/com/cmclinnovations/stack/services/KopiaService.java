@@ -6,14 +6,20 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
+import com.github.dockerjava.api.model.ContainerSpec;
+import com.github.dockerjava.api.model.Mount;
+import com.github.dockerjava.api.model.MountType;
 
 public class KopiaService extends ContainerService {
     public static final String TYPE = "kopia";
 
     private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
+    private static final String VOLUME_DIR = "/data/";
     private static final String STORAGE_KEY = "storage";
 
     private static final String PASSWORD_SECRETS_FLAG = "--password=$(cat /run/secrets/kopia_password)";
@@ -22,6 +28,29 @@ public class KopiaService extends ContainerService {
 
     public KopiaService(String stackName, ServiceConfig config) {
         super(stackName, config);
+    }
+
+    @Override
+    public void doPreStartUpConfiguration() {
+        // Mount all volumes on the stack (except kopia) for backups
+        List<InspectVolumeResponse> volumes = super.getVolumes();
+        List<Mount> mounts = new ArrayList<>();
+
+        for (InspectVolumeResponse vol : volumes) {
+            if (!vol.getName().endsWith(TYPE)) {
+                // Remove stack name prefix (STACK_) from volume name
+                String volName = vol.getName().substring(StackClient.getStackName().length() + 1);
+                String destinationPath = VOLUME_DIR + volName;
+                mounts.add(new Mount()
+                        .withType(MountType.VOLUME) // Use Docker volume for named volumes
+                        .withSource(volName)
+                        .withTarget(destinationPath)
+                        .withReadOnly(false));
+            }
+        }
+
+        ContainerSpec containerSpec = super.getContainerSpec();
+        containerSpec.withMounts(mounts);
     }
 
     @Override

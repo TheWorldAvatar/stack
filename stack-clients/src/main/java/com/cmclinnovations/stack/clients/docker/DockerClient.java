@@ -15,12 +15,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.NoSuchElementException;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -40,9 +40,11 @@ import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.command.ListConfigsCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.ListSecretsCmd;
+import com.github.dockerjava.api.command.ListVolumesCmd;
 import com.github.dockerjava.api.command.RemoveConfigCmd;
 import com.github.dockerjava.api.command.RemoveSecretCmd;
 import com.github.dockerjava.api.model.Config;
@@ -553,7 +555,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
 
     public String getContainerId(String containerName) {
         return getContainer(containerName).map(Container::getId)
-                .orElseThrow(() -> new NoSuchElementException("Cannot get container "+containerName+"."));
+                .orElseThrow(() -> new NoSuchElementException("Cannot get container " + containerName + "."));
     }
 
     private Map<String, List<String>> convertToConfigFilterMap(String configName, Map<String, String> labelMap) {
@@ -591,6 +593,17 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                         .equals(fullConfigName))
                 .findFirst();
 
+    }
+
+    public List<InspectVolumeResponse> getVolumes() {
+        try (ListVolumesCmd listVolumesCmd = internalClient.listVolumesCmd()) {
+            return listVolumesCmd
+                    .exec()
+                    .getVolumes()
+                    .stream()
+                    .filter(v -> v.getName() != null && v.getName().startsWith(StackClient.getStackName()))
+                    .collect(Collectors.toList());
+        }
     }
 
     public List<Config> getConfigs() {
