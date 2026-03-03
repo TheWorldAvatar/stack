@@ -1,5 +1,6 @@
 package com.cmclinnovations.stack.services;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +17,15 @@ import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 
 public class KopiaService extends ContainerService {
+    private final JsonNode storageConfig;
+
     public static final String TYPE = "kopia";
 
     private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
     private static final String VOLUME_DIR = "/data/";
     private static final String STORAGE_KEY = "storage";
+    private static final String CREATE_REPO_ACTION = "create";
+    private static final String CONNECT_REPO_ACTION = "connect";
 
     private static final String PASSWORD_SECRETS_FLAG = "--password=$(cat /run/secrets/kopia_password)";
 
@@ -28,6 +33,7 @@ public class KopiaService extends ContainerService {
 
     public KopiaService(String stackName, ServiceConfig config) {
         super(stackName, config);
+        this.storageConfig = JsonHelper.readFile(REPOSITORY_CONFIG).get(STORAGE_KEY);
     }
 
     @Override
@@ -55,10 +61,27 @@ public class KopiaService extends ContainerService {
 
     @Override
     public void doFirstTimePostStartUpConfiguration() {
-        JsonNode storageConfig = JsonHelper.readFile(REPOSITORY_CONFIG).get(STORAGE_KEY);
-        String storageType = storageConfig.get("type").asText();
-        JsonNode storageConfigOptions = storageConfig.get("config");
-        List<String> createRepoCommandArgs = new ArrayList<>(List.of(TYPE, "repository", "create", storageType));
+        if (!connectRepository()) {
+            LOGGER.info("No existing Kopia repository found, creating new repository.");
+            createRepository();
+        }
+    }
+
+    private void createRepository() {
+        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        createOrConnectRepository(CREATE_REPO_ACTION, errorStream);
+    }
+
+    private boolean connectRepository() {
+        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        createOrConnectRepository(CONNECT_REPO_ACTION, errorStream);
+        return errorStream.toString().startsWith("Connected to repository");
+    }
+
+    private void createOrConnectRepository(String action, ByteArrayOutputStream errorStream) {
+        String storageType = this.storageConfig.get("type").asText();
+        JsonNode storageConfigOptions = this.storageConfig.get("config");
+        List<String> createRepoCommandArgs = new ArrayList<>(List.of(TYPE, "repository", action, storageType));
         switch (storageType) {
             case "filesystem":
                 String storagePath = storageConfigOptions.get("path").asText();
@@ -72,6 +95,8 @@ public class KopiaService extends ContainerService {
         }
 
         createRepoCommandArgs.add(PASSWORD_SECRETS_FLAG);
-        super.executeCommand(createRepoCommandArgs.toArray(new String[0]));
+        super.createComplexCommand(createRepoCommandArgs.toArray(new String[0]))
+                .withErrorStream(errorStream)
+                .exec();
     }
 }
