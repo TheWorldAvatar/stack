@@ -16,24 +16,29 @@ import com.github.dockerjava.api.model.ContainerSpec;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 
+import uk.ac.cam.cares.jps.base.util.FileUtil;
+
 public class KopiaService extends ContainerService {
     private final JsonNode storageConfig;
 
     public static final String TYPE = "kopia";
 
-    private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
     private static final String VOLUME_DIR = "/data/";
+    private static final String KOPIA_PASSWORD_PATH = "/run/secrets/kopia_password";
+    private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
+
     private static final String STORAGE_KEY = "storage";
     private static final String CREATE_REPO_ACTION = "create";
     private static final String CONNECT_REPO_ACTION = "connect";
 
-    private static final String PASSWORD_SECRETS_FLAG = "--password=$(cat /run/secrets/kopia_password)";
+    private String passwordFlag;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KopiaService.class);
 
     public KopiaService(String stackName, ServiceConfig config) {
         super(stackName, config);
         this.storageConfig = JsonHelper.readFile(REPOSITORY_CONFIG).get(STORAGE_KEY);
+        this.passwordFlag = "--password=" + FileUtil.readFileLocally(KOPIA_PASSWORD_PATH);
     }
 
     @Override
@@ -79,6 +84,13 @@ public class KopiaService extends ContainerService {
     }
 
     private void createOrConnectRepository(String action, ByteArrayOutputStream errorStream) {
+        List<String> createRepoCommandArgs = this.genCreateOrConnectRepositoryCommand(action);
+        super.createComplexCommand(createRepoCommandArgs.toArray(new String[0]))
+                .withErrorStream(errorStream)
+                .exec();
+    }
+
+    private List<String> genCreateOrConnectRepositoryCommand(String action) {
         String storageType = this.storageConfig.get("type").asText();
         JsonNode storageConfigOptions = this.storageConfig.get("config");
         List<String> createRepoCommandArgs = new ArrayList<>(List.of(TYPE, "repository", action, storageType));
@@ -94,9 +106,7 @@ public class KopiaService extends ContainerService {
                 break;
         }
 
-        createRepoCommandArgs.add(PASSWORD_SECRETS_FLAG);
-        super.createComplexCommand(createRepoCommandArgs.toArray(new String[0]))
-                .withErrorStream(errorStream)
-                .exec();
+        createRepoCommandArgs.add(this.passwordFlag);
+        return createRepoCommandArgs;
     }
 }
