@@ -4,12 +4,7 @@
     "Name": "kopia",
     "TaskTemplate": {
       "ContainerSpec": {
-        "Image": "kopia/kopia:latest",
-        "Command": [
-          "tail",
-          "-f",
-          "/dev/null"
-        ],
+        "Image": "ghcr.io/theworldavatar/kopia:0.1.0-backup-service-SNAPSHOT",
         "Secrets": [
           {
             "SecretName": "kopia_password"
