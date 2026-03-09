@@ -414,6 +414,66 @@ graph TB
 
 ```
 
+## Volume backup
+
+The stack includes an automated backup solution using [Kopia](https://kopia.io/). It is configured to perform daily snapshots of all volumes attached to the stack to a target destination.
+
+> [!IMPORTANT]  
+> Kopia can only access and back up volumes within the same stack
+
+### Prerequisites
+
+1) `stack.json`: Include the `kopia` service
+2) `kopia_password`: A [Docker secret](#secrets) containing the master password for the Kopia repository
+3) `./inputs/data/kopia/repository.config`: Contains the connection details for the backup destination (known as a Kopia repository); Note that this directory need not be mounted to the kopia service
+
+### Repository configuration
+
+Kopia requires the creation of a [repository](https://kopia.io/docs/repositories/) that specifies the destination of backups. Note that this automated implementation only supports a filesystem or sftp repository connections using the custom JSON-based `repository.config`. The skeleton template is as follows:
+
+```json
+{
+  "storage": {
+    "type": "sftp OR filesystem",
+    "config": {
+      ... // config options
+    }
+  }
+}
+```
+
+#### 1. Filesystem
+
+```json
+{
+  "storage": {
+    "type": "filesystem",
+    "config": {
+        "path": "/backup", // local or network mounted path to storage location
+    }
+  }
+}
+```
+
+#### 2. SFTP
+
+For the `SFTP` option, users must include a `ssh_key` file in the `./inputs/data/kopia/` directory containing the `SSH` key to access the repository.
+
+```json
+{
+  "storage": {
+    "type": "sftp",
+    "config": {
+        "path": "/backup", // path to destination
+        "host": "XXX.XXX.X.XX", // domain or ip address
+        "port": 22,
+        "username": "user",
+        "keyfile": "/inputs/data/kopia/ssh_key", // do NOT change
+    }
+  }
+}
+```
+
 ## Example - including a visualisation
 
 This example explains how to spin up a TWA-VF based visualisation container within a stack. The visualisation container requires a volume called `vis-files` to be populated and secrets `mapbox_username`, and `mapbox_api_key` to be created.
