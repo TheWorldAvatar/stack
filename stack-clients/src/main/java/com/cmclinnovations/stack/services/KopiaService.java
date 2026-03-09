@@ -1,10 +1,14 @@
 package com.cmclinnovations.stack.services;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.UncheckedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +31,7 @@ public class KopiaService extends ContainerService {
     private static final String VOLUME_DIR = "/data/";
     private static final String KOPIA_PASSWORD_PATH = "/run/secrets/kopia_password";
     private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
+    private static final String SFTP_SSH_KEY_PATH = "/tmp/ssh_key";
     private static final String SCHEDULED_SCRIPT_PATH = "/usr/local/bin/kopia-backup.sh";
 
     private static final String STORAGE_KEY = "storage";
@@ -99,8 +104,27 @@ public class KopiaService extends ContainerService {
         JsonNode storageConfigOptions = this.storageConfig.get("config");
         List<String> createRepoCommandArgs = new ArrayList<>(List.of(TYPE, "repository", action, storageType));
         switch (storageType) {
-            case "filesystem":
+            case "sftp":
                 String storagePath = storageConfigOptions.get("path").asText();
+                String host = storageConfigOptions.get("host").asText();
+                String user = storageConfigOptions.get("username").asText();
+                if (action.equals(CREATE_REPO_ACTION)) {
+                    super.executeCommand("sh", "-c", "ssh-keyscan -H " + host + " >> ~/.ssh/known_hosts");
+                }
+                createRepoCommandArgs.add("--path=" + storagePath);
+                createRepoCommandArgs.add("--host=" + host);
+                createRepoCommandArgs.add("--username=" + user);
+                try {
+                    String keyFilePath = storageConfigOptions.get("keyfile").asText();
+                    super.sendFileContent(SFTP_SSH_KEY_PATH, Files.readAllBytes(Paths.get(keyFilePath)));
+                    createRepoCommandArgs.add("--keyfile=" + SFTP_SSH_KEY_PATH);
+                } catch (IOException e) {
+                    throw new UncheckedException(e);
+                }
+                createRepoCommandArgs.add("--known-hosts=/root/.ssh/known_hosts");
+                break;
+            case "filesystem":
+                storagePath = storageConfigOptions.get("path").asText();
                 createRepoCommandArgs.add("--path=" + storagePath);
                 break;
             default:
