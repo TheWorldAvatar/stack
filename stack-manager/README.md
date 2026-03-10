@@ -469,10 +469,13 @@ For the `SFTP` option, users must include a `ssh_key` file in the `./inputs/data
         "port": 22,
         "username": "user",
         "keyfile": "/inputs/data/kopia/ssh_key", // do NOT change
+        "externalSSH": false // optional and will default to false
     }
   }
 }
 ```
+
+If the `SSH` key is encrypted by a passphrase, please set the `externalSSH` flag to true and manually add the private passphrase in a terminal via the `keychain /tmp/ssh_key` command.
 
 ## Example - including a visualisation
 
