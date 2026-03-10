@@ -31,6 +31,8 @@ public class KopiaService extends ContainerService {
     private static final String KOPIA_PASSWORD_PATH = "/run/secrets/kopia_password";
     private static final String REPOSITORY_CONFIG = "/inputs/data/kopia/repository.config";
     private static final String SFTP_SSH_KEY_PATH = "/tmp/ssh_key";
+    private static final String KNOWN_HOSTS_PATH = "/.ssh/known_hosts";
+    private static final String ROOT_KNOWN_HOSTS_PATH = "/root" + KNOWN_HOSTS_PATH;
     private static final String SCHEDULED_SCRIPT_PATH = "/usr/local/bin/kopia-backup.sh";
 
     private static final String STORAGE_KEY = "storage";
@@ -109,8 +111,8 @@ public class KopiaService extends ContainerService {
                 String storagePath = storageConfigOptions.get("path").asText();
                 String host = storageConfigOptions.get("host").asText();
                 String user = storageConfigOptions.get("username").asText();
-                if (action.equals(CREATE_REPO_ACTION)) {
-                    super.executeCommand("sh", "-c", "ssh-keyscan -H " + host + " >> ~/.ssh/known_hosts");
+                if (action.equals(CREATE_REPO_ACTION) && !super.fileExists(ROOT_KNOWN_HOSTS_PATH)) {
+                    super.executeCommand("sh", "-c", "ssh-keyscan -H " + host + " >> ~" + KNOWN_HOSTS_PATH);
                 }
                 createRepoCommandArgs.add("--path=" + storagePath);
                 createRepoCommandArgs.add("--host=" + host);
