@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.58.0-reduce-docker-api-socket-mounting-SNAPSHOT</version>
+    <version>1.58.0</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
