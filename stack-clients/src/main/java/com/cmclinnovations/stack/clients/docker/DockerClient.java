@@ -112,20 +112,16 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         return internalClient;
     }
 
-    private RuntimeException handleMissingAPISocketError(RuntimeException originalEx) {
-        return handleMissingAPISocketError(originalEx, originalEx);
-    }
-
-    private RuntimeException handleMissingAPISocketError(RuntimeException originalEx, RuntimeException relacementEx) {
+    private RuntimeException handleMissingAPISocketError(RuntimeException ex) {
         // Check if the exception is due to Docker socket issues
-        Throwable cause = originalEx.getCause();
+        Throwable cause = ex.getCause();
         if (cause instanceof IOException && cause.getCause() instanceof com.sun.jna.LastErrorException) {
             return new RuntimeException(
                     "Unable to connect to Docker/Podman daemon, possibly due to missing socket mount.\nEnsure that this service's \"type\" is set to \""
                             + BasicAgentService.TYPE + "\".",
-                    relacementEx);
+                    ex);
         }
-        return relacementEx;
+        return ex;
     }
 
     public String executeSimpleCommand(String containerId, String... cmd) {
@@ -134,7 +130,6 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 .withOutputStream(outputStream)
                 .withErrorStream(outputStream)
                 .exec();
-        String output = outputStream.toString();
         return execId;
     }
 
