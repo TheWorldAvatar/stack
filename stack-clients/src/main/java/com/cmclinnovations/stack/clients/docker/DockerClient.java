@@ -15,12 +15,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.NoSuchElementException;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.utils.AbstractTempPath;
 import com.cmclinnovations.stack.clients.utils.TempDir;
+import com.cmclinnovations.stack.services.BasicAgentService;
+import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.CreateConfigCmd;
 import com.github.dockerjava.api.command.CreateSecretCmd;
@@ -45,6 +47,7 @@ import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.ListSecretsCmd;
 import com.github.dockerjava.api.command.RemoveConfigCmd;
 import com.github.dockerjava.api.command.RemoveSecretCmd;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Config;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Secret;
@@ -109,6 +112,22 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         return internalClient;
     }
 
+    private RuntimeException handleMissingDockerAPIError(RuntimeException originalEx) {
+        return handleMissingDockerAPIError(originalEx, originalEx);
+    }
+
+    private RuntimeException handleMissingDockerAPIError(RuntimeException originalEx, RuntimeException relacementEx) {
+        // Check if the exception is due to Docker socket issues
+        Throwable cause = originalEx.getCause();
+        if (cause instanceof IOException && cause.getCause() instanceof com.sun.jna.LastErrorException) {
+            return new RuntimeException(
+                    "Unable to connect to Docker daemon, possibly due to missing socket mount.\nEnsure that this service's \"type\" is set to \""
+                            + BasicAgentService.TYPE + "\".",
+                    relacementEx);
+        }
+        return relacementEx;
+    }
+
     public String executeSimpleCommand(String containerId, String... cmd) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         String execId = createComplexCommand(containerId, cmd)
@@ -125,9 +144,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
 
     public final class ComplexCommand {
 
-        private final ExecCreateCmd execCreateCmd;
-
-        private String[] cmd;
+        private final String containerId;
+        private final String[] cmd;
 
         private boolean wait = true;
 
@@ -145,7 +163,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         private String user;
 
         public ComplexCommand(String containerId, String... cmd) {
-            execCreateCmd = internalClient.execCreateCmd(containerId);
+            this.containerId = containerId;
             this.cmd = cmd;
         }
 
@@ -204,26 +222,34 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             boolean attachStdout = null != outputStream;
             boolean attachStderr = null != errorStream;
 
+            String[] actualCmd;
             if (null != hereDocument) {
                 if (attachStdin) {
                     throw new IllegalArgumentException("Can't specify both 'inputStream' and 'hereDocument'.");
                 }
-                cmd = List.of("sh", "-c",
+                actualCmd = List.of("sh", "-c",
                         Arrays.stream(cmd).collect(Collectors.joining("' '", "'", "'"))
                                 + "<< '\04\04\04'\n" + hereDocument + (hereDocument.endsWith("\n") ? "" : "\n")
                                 + "\04\04\04")
                         .toArray(new String[] {});
+            } else {
+                actualCmd = cmd;
             }
 
-            String execId = execCreateCmd.withCmd(cmd)
-                    .withEnv(envVars.entrySet().stream()
-                            .map(entry -> entry.getKey() + '=' + entry.getValue())
-                            .collect(Collectors.toList()))
-                    .withAttachStdin(attachStdin)
-                    .withAttachStdout(attachStdout)
-                    .withAttachStderr(attachStderr)
-                    .withUser(user)
-                    .exec().getId();
+            String execId;
+            try (ExecCreateCmd execCreateCmd = internalClient.execCreateCmd(this.containerId);) {
+                execId = execCreateCmd.withCmd(actualCmd)
+                        .withEnv(envVars.entrySet().stream()
+                                .map(entry -> entry.getKey() + '=' + entry.getValue())
+                                .collect(Collectors.toList()))
+                        .withAttachStdin(attachStdin)
+                        .withAttachStdout(attachStdout)
+                        .withAttachStderr(attachStderr)
+                        .withUser(user)
+                        .exec().getId();
+            } catch (RuntimeException ex) {
+                throw handleMissingDockerAPIError(ex);
+            }
 
             try (ExecStartCmd execStartCmd = internalClient.execStartCmd(execId)) {
 
@@ -254,9 +280,13 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 } catch (IOException ex) {
                     throw new RuntimeException("Docker exec command '" + Arrays.toString(cmd) + "' failed", ex);
                 }
+            } catch (RuntimeException ex) {
+                throw handleMissingDockerAPIError(ex);
             }
+
             return execId;
         }
+
     }
 
     public long getCommandErrorCode(String execId) {
@@ -276,7 +306,10 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         } catch (InterruptedException ex) {
             LOGGER.warn("Sleep method was interrupted whilst waiting for Docker inspect exec command.", ex);
             Thread.currentThread().interrupt();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
+
         if (null == exitCode) {
             throw new RuntimeException(
                     "Docker exec command returned 'null' exit code even after it had finshed running.");
@@ -291,6 +324,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .filter(entry -> key.equals(entry[0]))
                     .map(entry -> entry[1])
                     .findFirst();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -389,6 +424,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 }
             }
             byteArray = bos.toByteArray();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
 
         sendTarFileContent(containerId, remoteDirPath, byteArray);
@@ -414,6 +451,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withCopyUIDGID(true)
                     .withRemotePath(remoteDirPath).exec();
 
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -487,7 +526,9 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
 
         remoteDirPath = remoteDirPath.replaceFirst("([^/])/*$", "$1/");
 
-        try (InputStream is = internalClient.copyArchiveFromContainerCmd(containerId, remoteDirPath).exec();
+        try (CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = internalClient
+                .copyArchiveFromContainerCmd(containerId, remoteDirPath);
+                InputStream is = copyArchiveFromContainerCmd.exec();
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(is)) {
 
             TarArchiveEntry tarArchiveEntry;
@@ -497,12 +538,16 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                             tarArchiveInputStream.readAllBytes());
                 }
             }
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
         return files;
     }
 
     public byte[] retrieveFile(String containerId, String remoteFilePath) throws IOException {
-        try (InputStream is = internalClient.copyArchiveFromContainerCmd(containerId, remoteFilePath).exec();
+        try (CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = internalClient
+                .copyArchiveFromContainerCmd(containerId, remoteFilePath);
+                InputStream is = copyArchiveFromContainerCmd.exec();
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(is)) {
 
             TarArchiveEntry tarArchiveEntry;
@@ -529,6 +574,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                                 return fullContainerNamePattern.matcher(name).matches();
                             }))
                     .findAny();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -543,6 +590,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             return listContainersCmd.withIdFilter(List.of(containerId))
                     .withShowAll(true).exec()
                     .stream().findAny();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -553,7 +602,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
 
     public String getContainerId(String containerName) {
         return getContainer(containerName).map(Container::getId)
-                .orElseThrow(() -> new NoSuchElementException("Cannot get container "+containerName+"."));
+                .orElseThrow(() -> new NoSuchElementException("Cannot get container " + containerName + "."));
     }
 
     private Map<String, List<String>> convertToConfigFilterMap(String configName, Map<String, String> labelMap) {
@@ -581,6 +630,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .exec().stream()
                     .filter(config -> config.getSpec().getName().equals(fullConfigName))
                     .findFirst();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -598,6 +649,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             return listConfigsCmd
                     .withFilters(convertToConfigFilterMap(null, StackClient.getStackNameLabelMap()))
                     .exec().stream().collect(Collectors.toList());
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -612,15 +665,19 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withData(data)
                     .withLabels(StackClient.getStackNameLabelMap())
                     .exec();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
     public void removeConfig(Config config) {
         try (RemoveConfigCmd removeConfigCmd = internalClient.removeConfigCmd(config.getId())) {
             removeConfigCmd.exec();
-        } catch (Exception ex) {
+        } catch (NotFoundException ex) {
             // Either the Config has been removed externally
             // or it is currently in use and can't be removed.
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -636,6 +693,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         try (ListSecretsCmd listSecretsCmd = internalClient.listSecretsCmd()) {
             String fullSecretName = StackClient.prependStackName(secretName);
             return getSecret(listSecretsCmd.withNameFilter(List.of(fullSecretName)).exec(), secretName);
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -653,6 +712,8 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 listSecretsCmd.withLabelFilter(secretLabels);
             }
             return listSecretsCmd.exec().stream().collect(Collectors.toList());
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
@@ -663,15 +724,19 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 .withLabels(getSecretLabels());
         try (CreateSecretCmd createSecretCmd = internalClient.createSecretCmd(secretSpec)) {
             createSecretCmd.exec();
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
     public void removeSecret(Secret secret) {
         try (RemoveSecretCmd removeSecretCmd = internalClient.removeSecretCmd(secret.getId())) {
             removeSecretCmd.exec();
-        } catch (Exception ex) {
+        } catch (NotFoundException ex) {
             // Either the Secret has been removed externally
             // or it is currently in use and can't be removed.
+        } catch (RuntimeException ex) {
+            throw handleMissingDockerAPIError(ex);
         }
     }
 
