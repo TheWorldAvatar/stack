@@ -63,11 +63,6 @@ public class DockerService extends AbstractService
 
     private static final Logger logger = LoggerFactory.getLogger(DockerService.class);
 
-    // External path to socket on host
-    private static final String API_SOCK = "API_SOCK";
-    // Internal path to socket in containers
-    protected static final String DOCKER_SOCKET_PATH = "/var/run/docker.sock";
-
     public static final String TYPE = "docker";
 
     protected final DockerClient dockerClient;
@@ -353,8 +348,6 @@ public class DockerService extends AbstractService
                 .withLabels(StackClient.getStackNameLabelMap())
                 .withHostname(service.getName());
 
-        interpolateEnvironmentVariables(containerSpec);
-
         interpolateVolumes(containerSpec);
 
         interpolateConfigs(containerSpec);
@@ -362,13 +355,6 @@ public class DockerService extends AbstractService
         interpolateSecrets(containerSpec);
 
         return serviceSpec;
-    }
-
-    protected void interpolateEnvironmentVariables(ContainerSpec containerSpec) {
-        List<String> env = new ArrayList<>(containerSpec.getEnv());
-        env.add(API_SOCK + "=" + System.getenv(API_SOCK));
-        env.add(StackClient.EXECUTABLE_KEY + "=" + System.getenv(StackClient.EXECUTABLE_KEY));
-        containerSpec.withEnv(env);
     }
 
     protected void interpolateVolumes(ContainerSpec containerSpec) {
@@ -391,16 +377,6 @@ public class DockerService extends AbstractService
                 .withType(MountType.VOLUME)
                 .withSource("scratch")
                 .withTarget(StackClient.getScratchDir()));
-
-        // Add the Docker API socket as a bind mount
-        // This is required for a container to make Docker API calls
-        Mount dockerSocketMount = new Mount()
-                .withType(MountType.BIND)
-                .withSource(System.getenv(API_SOCK))
-                .withTarget(DOCKER_SOCKET_PATH);
-        if (!mounts.contains(dockerSocketMount)) {
-            mounts.add(dockerSocketMount);
-        }
         return mounts;
     }
 
