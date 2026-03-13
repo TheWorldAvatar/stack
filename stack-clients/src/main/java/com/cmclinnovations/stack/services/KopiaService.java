@@ -20,8 +20,6 @@ import com.github.dockerjava.api.model.ContainerSpec;
 import com.github.dockerjava.api.model.Mount;
 import com.github.dockerjava.api.model.MountType;
 
-import uk.ac.cam.cares.jps.base.util.FileUtil;
-
 public class KopiaService extends ContainerService {
 
     public static final String TYPE = "kopia";
@@ -49,7 +47,7 @@ public class KopiaService extends ContainerService {
         JsonNode repoConfig = JsonHelper.readFile(REPOSITORY_CONFIG).get(STORAGE_KEY);
         this.storageConfig = repoConfig.get("config");
         this.storageType = repoConfig.get("type").asText();
-        this.passwordFlag = "--password=" + FileUtil.readFileLocally(KOPIA_PASSWORD_PATH);
+        this.passwordFlag = "--password=\"$(cat " + KOPIA_PASSWORD_PATH + ")\"";
     }
 
     @Override
