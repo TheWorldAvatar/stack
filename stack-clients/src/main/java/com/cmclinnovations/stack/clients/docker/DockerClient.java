@@ -112,16 +112,16 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         return internalClient;
     }
 
-    private RuntimeException handleMissingDockerAPIError(RuntimeException originalEx) {
-        return handleMissingDockerAPIError(originalEx, originalEx);
+    private RuntimeException handleMissingAPISocketError(RuntimeException originalEx) {
+        return handleMissingAPISocketError(originalEx, originalEx);
     }
 
-    private RuntimeException handleMissingDockerAPIError(RuntimeException originalEx, RuntimeException relacementEx) {
+    private RuntimeException handleMissingAPISocketError(RuntimeException originalEx, RuntimeException relacementEx) {
         // Check if the exception is due to Docker socket issues
         Throwable cause = originalEx.getCause();
         if (cause instanceof IOException && cause.getCause() instanceof com.sun.jna.LastErrorException) {
             return new RuntimeException(
-                    "Unable to connect to Docker daemon, possibly due to missing socket mount.\nEnsure that this service's \"type\" is set to \""
+                    "Unable to connect to Docker/Podman daemon, possibly due to missing socket mount.\nEnsure that this service's \"type\" is set to \""
                             + BasicAgentService.TYPE + "\".",
                     relacementEx);
         }
@@ -248,7 +248,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                         .withUser(user)
                         .exec().getId();
             } catch (RuntimeException ex) {
-                throw handleMissingDockerAPIError(ex);
+                throw handleMissingAPISocketError(ex);
             }
 
             try (ExecStartCmd execStartCmd = internalClient.execStartCmd(execId)) {
@@ -281,7 +281,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     throw new RuntimeException("Docker exec command '" + Arrays.toString(cmd) + "' failed", ex);
                 }
             } catch (RuntimeException ex) {
-                throw handleMissingDockerAPIError(ex);
+                throw handleMissingAPISocketError(ex);
             }
 
             return execId;
@@ -307,7 +307,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             LOGGER.warn("Sleep method was interrupted whilst waiting for Docker inspect exec command.", ex);
             Thread.currentThread().interrupt();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
 
         if (null == exitCode) {
@@ -325,7 +325,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .map(entry -> entry[1])
                     .findFirst();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -425,7 +425,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             }
             byteArray = bos.toByteArray();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
 
         sendTarFileContent(containerId, remoteDirPath, byteArray);
@@ -452,7 +452,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withRemotePath(remoteDirPath).exec();
 
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -539,7 +539,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                 }
             }
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
         return files;
     }
@@ -575,7 +575,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                             }))
                     .findAny();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -591,7 +591,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withShowAll(true).exec()
                     .stream().findAny();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -631,7 +631,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .filter(config -> config.getSpec().getName().equals(fullConfigName))
                     .findFirst();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -650,7 +650,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withFilters(convertToConfigFilterMap(null, StackClient.getStackNameLabelMap()))
                     .exec().stream().collect(Collectors.toList());
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -666,7 +666,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                     .withLabels(StackClient.getStackNameLabelMap())
                     .exec();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -677,7 +677,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             // Either the Config has been removed externally
             // or it is currently in use and can't be removed.
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -694,7 +694,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             String fullSecretName = StackClient.prependStackName(secretName);
             return getSecret(listSecretsCmd.withNameFilter(List.of(fullSecretName)).exec(), secretName);
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -713,7 +713,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             }
             return listSecretsCmd.exec().stream().collect(Collectors.toList());
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -725,7 +725,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
         try (CreateSecretCmd createSecretCmd = internalClient.createSecretCmd(secretSpec)) {
             createSecretCmd.exec();
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
@@ -736,7 +736,7 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
             // Either the Secret has been removed externally
             // or it is currently in use and can't be removed.
         } catch (RuntimeException ex) {
-            throw handleMissingDockerAPIError(ex);
+            throw handleMissingAPISocketError(ex);
         }
     }
 
