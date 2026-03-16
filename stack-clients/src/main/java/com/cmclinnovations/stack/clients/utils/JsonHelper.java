@@ -1,11 +1,11 @@
 package com.cmclinnovations.stack.clients.utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 
 import javax.annotation.Nonnull;
 
@@ -43,13 +43,11 @@ public class JsonHelper {
      */
     public static final JsonNode readFile(String file) {
         try {
-            String fileContents = Files.readString(Path.of(file));
-            return getMapper().readTree(fileContents);
+            return getMapper().readTree(new File(file));
         } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException(MessageFormat.format("Invalid file path: {0}", file));
+            throw new IllegalArgumentException("Invalid file path: " + file, ex);
         } catch (IOException ex) {
-            throw new UncheckedIOException(
-                    MessageFormat.format("Failed to read file: {0}", ex.getMessage()), ex);
+            throw new UncheckedIOException("Failed to read file: " + file, ex);
         }
     }
 }
