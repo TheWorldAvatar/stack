@@ -1,0 +1,16 @@
+{
+  "type": "kopia",
+  "ServiceSpec": {
+    "Name": "kopia",
+    "TaskTemplate": {
+      "ContainerSpec": {
+        "Image": "ghcr.io/theworldavatar/kopia:0.1.0-backup-service-SNAPSHOT",
+        "Secrets": [
+          {
+            "SecretName": "kopia_password"
+          }
+        ]
+      }
+    }
+  }
+}

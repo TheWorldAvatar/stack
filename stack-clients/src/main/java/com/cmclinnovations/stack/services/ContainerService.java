@@ -25,6 +25,7 @@ import com.cmclinnovations.stack.services.config.Connection;
 import com.cmclinnovations.stack.services.config.ServiceConfig;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.model.ContainerSpec;
 import com.github.dockerjava.api.model.ServiceSpec;
 import com.github.dockerjava.api.model.TaskSpec;
@@ -240,4 +241,7 @@ public class ContainerService extends AbstractService {
         return dockerClient.getDNSIPAddress();
     }
 
+    protected List<InspectVolumeResponse> getVolumes() {
+        return dockerClient.getVolumes();
+    }
 }
