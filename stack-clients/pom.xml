@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.58.0</version>
+    <version>1.58.1</version>
 
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
@@ -46,6 +46,19 @@
             <url>https://maven.pkg.github.com/TheWorldAvatar/stack/</url>
         </snapshotRepository>
     </distributionManagement>
+
+    <!-- Ensure consistent versions of Jersey dependencies generated dynamically by Swagger for Podman API -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>2.41</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
 
