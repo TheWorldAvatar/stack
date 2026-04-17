@@ -42,9 +42,11 @@ import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
+import com.github.dockerjava.api.command.InspectVolumeResponse;
 import com.github.dockerjava.api.command.ListConfigsCmd;
 import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.ListSecretsCmd;
+import com.github.dockerjava.api.command.ListVolumesCmd;
 import com.github.dockerjava.api.command.RemoveConfigCmd;
 import com.github.dockerjava.api.command.RemoveSecretCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -637,6 +639,17 @@ public class DockerClient extends BaseClient implements ContainerManager<com.git
                         .equals(fullConfigName))
                 .findFirst();
 
+    }
+
+    public List<InspectVolumeResponse> getVolumes() {
+        try (ListVolumesCmd listVolumesCmd = internalClient.listVolumesCmd()) {
+            return listVolumesCmd
+                    .exec()
+                    .getVolumes()
+                    .stream()
+                    .filter(v -> v.getName() != null && v.getName().startsWith(StackClient.getStackName()))
+                    .collect(Collectors.toList());
+        }
     }
 
     public List<Config> getConfigs() {
