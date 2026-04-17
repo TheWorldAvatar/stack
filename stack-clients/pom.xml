@@ -47,6 +47,19 @@
         </snapshotRepository>
     </distributionManagement>
 
+    <!-- Ensure consistent versions of Jersey dependencies generated dynamically by Swagger for Podman API -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.glassfish.jersey</groupId>
+                <artifactId>jersey-bom</artifactId>
+                <version>2.41</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
 
         <dependency>
