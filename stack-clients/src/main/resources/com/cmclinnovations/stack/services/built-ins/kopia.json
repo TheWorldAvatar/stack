@@ -4,7 +4,7 @@
     "Name": "kopia",
     "TaskTemplate": {
       "ContainerSpec": {
-        "Image": "ghcr.io/theworldavatar/kopia:0.1.0-backup-service-SNAPSHOT",
+        "Image": "ghcr.io/theworldavatar/kopia:20260224.0.42919-1",
         "Secrets": [
           {
             "SecretName": "kopia_password"
