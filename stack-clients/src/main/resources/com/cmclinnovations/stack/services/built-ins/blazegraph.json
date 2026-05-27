@@ -4,7 +4,7 @@
         "Name": "blazegraph",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "ghcr.io/theworldavatar/blazegraph:2.5.0",
+                "Image": "ghcr.io/theworldavatar/blazegraph:2.5.2",
                 "Mounts": [
                     {
                         "Type": "volume",
