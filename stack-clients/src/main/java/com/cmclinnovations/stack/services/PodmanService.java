@@ -30,9 +30,12 @@ import com.github.dockerjava.api.model.MountType;
 import com.github.dockerjava.api.model.NetworkAttachmentConfig;
 import com.github.dockerjava.api.model.PortConfig;
 import com.github.dockerjava.api.model.PortConfigProtocol;
+import com.github.dockerjava.api.model.ResourceRequirements;
+import com.github.dockerjava.api.model.ResourceSpecs;
 import com.github.dockerjava.api.model.ServiceRestartCondition;
 import com.github.dockerjava.api.model.ServiceRestartPolicy;
 import com.github.dockerjava.api.model.ServiceSpec;
+import com.github.dockerjava.api.model.TaskSpec;
 
 import io.theworldavatar.swagger.podman.ApiException;
 import io.theworldavatar.swagger.podman.api.ContainersApi;
@@ -42,6 +45,8 @@ import io.theworldavatar.swagger.podman.api.SecretsApi;
 import io.theworldavatar.swagger.podman.model.ContainerCreateResponse;
 import io.theworldavatar.swagger.podman.model.IDResponse;
 import io.theworldavatar.swagger.podman.model.ImageData;
+import io.theworldavatar.swagger.podman.model.LinuxMemory;
+import io.theworldavatar.swagger.podman.model.LinuxResources;
 import io.theworldavatar.swagger.podman.model.ListContainer;
 import io.theworldavatar.swagger.podman.model.ListPodsReport;
 import io.theworldavatar.swagger.podman.model.MountPoint;
@@ -192,7 +197,8 @@ public class PodmanService extends DockerService {
         ServiceSpec serviceSpec = configureServiceSpec(service);
 
         String containerName = serviceSpec.getName();
-        ContainerSpec containerSpec = serviceSpec.getTaskTemplate().getContainerSpec();
+        TaskSpec taskTemplate = serviceSpec.getTaskTemplate();
+        ContainerSpec containerSpec = taskTemplate.getContainerSpec();
 
         ImageData imageConfig;
         try {
@@ -221,7 +227,7 @@ public class PodmanService extends DockerService {
                 podSpecGenerator.portmappings(portMappings);
             }
         }
-        List<NetworkAttachmentConfig> networks = serviceSpec.getTaskTemplate().getNetworks();
+        List<NetworkAttachmentConfig> networks = taskTemplate.getNetworks();
         if (null != networks) {
             podSpecGenerator.setNetns(new Namespace().nsmode("bridge"));
             podSpecGenerator.setNetworks(
@@ -311,7 +317,7 @@ public class PodmanService extends DockerService {
             containerSpecGenerator.setLabels(containerSpec.getLabels());
 
             // Copy across the restart policy
-            ServiceRestartPolicy restartPolicy = serviceSpec.getTaskTemplate().getRestartPolicy();
+            ServiceRestartPolicy restartPolicy = taskTemplate.getRestartPolicy();
             containerSpecGenerator.setRestartPolicy(restartPolicyMap.get(restartPolicy.getCondition()));
             containerSpecGenerator.setRestartTries((Integer) restartPolicy.getMaxAttempts().intValue());
 
@@ -331,6 +337,14 @@ public class PodmanService extends DockerService {
                                         .orElse(null));
 
                 containerSpecGenerator.setHealthconfig(healthConfig);
+            }
+
+            ResourceRequirements resourceRequirements = taskTemplate.getResources();
+            if( null != resourceRequirements) {
+                ResourceSpecs limits = resourceRequirements.getLimits();
+                if (null != limits) {
+                    containerSpecGenerator.setResourceLimits(new LinuxResources().memory(new LinuxMemory().limit(limits.getMemoryBytes())));
+                }
             }
 
             try {
