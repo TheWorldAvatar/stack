@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.58.0</version>
+            <version>1.59.0-deps-and-mem-limits-SNAPSHOT</version>
         </dependency>
 
         <dependency>
