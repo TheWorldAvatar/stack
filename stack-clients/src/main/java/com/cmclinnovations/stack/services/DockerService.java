@@ -159,7 +159,12 @@ public class DockerService extends AbstractService
                 }
             });
             for (Config oldConfig : existingStackConfigs) {
-                dockerClient.removeConfig(oldConfig);
+                try {
+                    dockerClient.removeConfig(oldConfig);
+                } catch (BadRequestException ex) {
+                    // This probably just means that the config was generated rather then loaded
+                    // from file.
+                }
             }
         } catch (IOException ex) {
             throw new RuntimeException("Failed to load configs.", ex);
