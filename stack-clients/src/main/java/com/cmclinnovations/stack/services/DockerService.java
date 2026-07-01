@@ -33,6 +33,7 @@ import com.github.dockerjava.api.command.ListTasksCmd;
 import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.command.RemoveServiceCmd;
+import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.Config;
 import com.github.dockerjava.api.model.Container;
@@ -158,7 +159,12 @@ public class DockerService extends AbstractService
                 }
             });
             for (Config oldConfig : existingStackConfigs) {
-                dockerClient.removeConfig(oldConfig);
+                try {
+                    dockerClient.removeConfig(oldConfig);
+                } catch (BadRequestException ex) {
+                    // This probably just means that the config was generated rather then loaded
+                    // from file.
+                }
             }
         } catch (IOException ex) {
             throw new RuntimeException("Failed to load configs.", ex);
@@ -187,7 +193,12 @@ public class DockerService extends AbstractService
         }
 
         for (Secret oldSecret : existingStackSecrets) {
-            dockerClient.removeSecret(oldSecret);
+            try {
+                dockerClient.removeSecret(oldSecret);
+            } catch (BadRequestException ex) {
+                // This probably just means that the secret was generated rather then loaded
+                // from file.
+            }
         }
     }
 
