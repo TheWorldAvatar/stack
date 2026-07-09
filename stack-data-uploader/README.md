@@ -132,8 +132,9 @@ The following table shows the top level nodes allowed in a configuration file.
 | [`"dataSubsets"`](#datasubsets)                 | No*       | `[]`                                     | A list of *data subset* objects                                                                                                                    |
 | [`"styles"`](#styles)                           | No*       | `[]`                                     | A list of GeoServer style file definition objects                                                                                                  |
 | [`"mappings"`](#mappings)                       | No*       | `[]`                                     | A list of Ontop mapping (OBDA) file names                                                                                                          |
-| [`"rules"`](#rules)                             | No        | `[]`                                     | A list of inference rules file names                                                                                                               |
-| [`"ontopLenses"`](#ontopLenses)                 | No        | `[]`                                     | A list of Ontop "lenses" file names                                                                                                                |
+| [`"rules"`](#rules)                             | No        | `[]`                                     | A list of inference rules files names                                                                                                              |
+| [`"ontopLenses"`](#ontoplenses)                 | No        | `[]`                                     | A list of Ontop "lenses" files names                                                                                                               |
+| [`"ontopFacts"`](#ontopfacts)                   | No        | `[]`                                     | A list of Ontop "facts" files names                                                                                                                |
 | [`"staticGeoServerData"`](#staticgeoserverdata) | No        | `null`                                   | An object describing static data to be served by GeoServer                                                                                         |
 
 **\* At least one of these needs to be populated.**
@@ -333,6 +334,12 @@ For Ontop they are assigned as Ontop rules.
 Specify list of `.json` files provided as paths relative to the [`"datasetDirectory"`](#datasetdirectory).
 These `.json` files specify a list of Ontop "lenses" in Ontop's custom format.
 Documentation for lenses can be found on the [Ontop website][ontop-lenses].
+
+### `"ontopFacts"`
+
+Specify list of `.json` files provided as paths relative to the [`"datasetDirectory"`](#datasetdirectory).
+These `.json` files specify a list of Ontop "facts" in common RDF file formats.
+Documentation for facts files can be found on the [Ontop website][ontop-facts].
 
 ### `"staticGeoServerData"`
 
@@ -1039,3 +1046,5 @@ This way you can look at look at the user interfaces of the various services (se
 [zone-id]: https://docs.oracle.com/javase/8/docs/api/java/time/ZoneId.html
 
 [ontop-lenses]: https://ontop-vkg.org/guide/advanced/lenses.html#lenses
+
+[ontop-facts]: https://ontop-vkg.org/guide/cli.html#ontop-endpoint

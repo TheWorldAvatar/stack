@@ -7,7 +7,7 @@
 
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.61.0-update-ontop-and-back-to-stock-SNAPSHOT</version>
+    <version>1.62.0-ontop-facts-SNAPSHOT</version>
 
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.61.0-update-ontop-and-back-to-stock-SNAPSHOT</version>
+            <version>1.62.0-ontop-facts-SNAPSHOT</version>
         </dependency>
 
         <dependency>
