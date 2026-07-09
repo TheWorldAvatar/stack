@@ -73,6 +73,8 @@ public class Dataset extends AbstractDataObject {
     private final Optional<List<String>> rules;
     @JsonProperty
     private final Optional<List<String>> ontopLenses;
+    @JsonProperty
+    private final Optional<List<String>> ontopFacts;
 
     @JsonCreator
     Dataset() {
@@ -88,6 +90,7 @@ public class Dataset extends AbstractDataObject {
         this.ontopMappings = Optional.empty();
         this.rules = Optional.empty();
         this.ontopLenses = Optional.empty();
+        this.ontopFacts = Optional.empty();
         this.ontologyDatasetNames = Optional.empty();
         this.rdfType = Optional.empty();
         this.baseIRI = Optional.empty();
@@ -109,6 +112,7 @@ public class Dataset extends AbstractDataObject {
             Optional<List<String>> ontopMappings,
             Optional<List<String>> rules,
             Optional<List<String>> ontopLenses,
+            Optional<List<String>> ontopFacts,
             Optional<List<String>> ontologyDatasetNames,
             boolean skip,
             Optional<String> rdfType,
@@ -127,6 +131,7 @@ public class Dataset extends AbstractDataObject {
         this.ontopMappings = ontopMappings;
         this.rules = rules;
         this.ontopLenses = ontopLenses;
+        this.ontopFacts = ontopFacts;
         this.ontologyDatasetNames = ontologyDatasetNames;
         this.rdfType = rdfType;
         this.baseIRI = baseIRI;
@@ -195,9 +200,13 @@ public class Dataset extends AbstractDataObject {
     public List<String> getRules() {
         return rules.orElse(Collections.emptyList());
     }
-    
+
     public List<String> getOntopLenses() {
         return ontopLenses.orElse(Collections.emptyList());
+    }
+
+    public List<String> getOntopFacts() {
+        return ontopFacts.orElse(Collections.emptyList());
     }
 
     public List<String> getOntologyDatasetNames() {

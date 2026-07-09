@@ -1,8 +1,12 @@
 package com.cmclinnovations.stack.clients.ontop;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -11,6 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.jena.rdf.model.Model;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParser;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.ConstructQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,12 +36,20 @@ import it.unibz.inf.ontop.dbschema.impl.json.JsonLenses;
 
 public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
 
+    // List of RDF formats supported as listed here:
+    // https://ontop-vkg.org/guide/cli.html#ontop-endpoint
+    private static final List<RDFFormat> ALLOWED_RULES_FORMATS = List.of(
+            RDFFormat.RDFXML, RDFFormat.TURTLE,
+            RDFFormat.NTRIPLES, RDFFormat.NQUADS,
+            RDFFormat.TRIG, RDFFormat.JSONLD);
+
     protected static final Logger LOGGER = LoggerFactory.getLogger(OntopClient.class);
 
     public static final String ONTOP_MAPPING_FILE = "ONTOP_MAPPING_FILE";
     public static final String ONTOP_ONTOLOGY_FILE = "ONTOP_ONTOLOGY_FILE";
     public static final String ONTOP_SPARQL_RULES_FILE = "ONTOP_SPARQL_RULES_FILE";
     public static final String ONTOP_LENSES_FILE = "ONTOP_LENSES_FILE";
+    public static final String ONTOP_FACTS_FILE = "ONTOP_FACTS_FILE";
 
     private static Map<String, OntopClient> instances = new HashMap<>();
 
@@ -129,6 +145,43 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
             throw new RuntimeException(
                     "Failed to write lenses file.", ex);
         }
+    }
+
+    public void uploadFacts(List<Path> factsFiles) {
+        String containerId = getContainerId(getContainerName());
+        Path ontopFactsFilePath = getFilePath(containerId, ONTOP_FACTS_FILE);
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            // Add the ontology triples as facts, if present.
+            String ontopOntologyFilePath = getFilePath(containerId, ONTOP_ONTOLOGY_FILE).toString();
+            try {
+                if (fileExists(containerId, ontopOntologyFilePath)) {
+                    outputStream.write(retrieveFile(containerId, ontopOntologyFilePath));
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(
+                        "Failed to read Ontop ontology as a facts file: " + ontopOntologyFilePath, e);
+            }
+
+            RDFWriter turtleWriter = Rio.createWriter(RDFFormat.TURTLE, outputStream);
+            for (Path factsFile : factsFiles) {
+                RDFParser rdfParser = Rio.createParser(RDFFormat
+                        .matchFileName(factsFile.getFileName().toString(), ALLOWED_RULES_FORMATS)
+                        .orElseThrow(() -> new RuntimeException("Unsupported RDF format for file: " + factsFile)));
+                rdfParser.setRDFHandler(turtleWriter);
+                try (InputStream inputStream = new FileInputStream(factsFile.toFile())) {
+                    rdfParser.parse(inputStream);
+                } catch (MalformedURLException e) {
+                    throw new UncheckedIOException("Malformed URL for Ontop facts file: " + factsFile, e);
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Failed to read Ontop facts file: " + factsFile, e);
+                }
+            }
+            sendFileContent(containerId, ontopFactsFilePath, outputStream.toByteArray());
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to write Ontop facts file: " + ontopFactsFilePath, e);
+        }
+
     }
 
     private void writeTurtleToFile(Model model) {

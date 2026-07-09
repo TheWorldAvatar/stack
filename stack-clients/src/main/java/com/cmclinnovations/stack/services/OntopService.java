@@ -50,7 +50,8 @@ public final class OntopService extends ContainerService {
                 OntopClient.ONTOP_MAPPING_FILE, getEnvironmentVariable(OntopClient.ONTOP_MAPPING_FILE),
                 OntopClient.ONTOP_ONTOLOGY_FILE, getEnvironmentVariable(OntopClient.ONTOP_ONTOLOGY_FILE),
                 OntopClient.ONTOP_SPARQL_RULES_FILE, getEnvironmentVariable(OntopClient.ONTOP_SPARQL_RULES_FILE),
-                OntopClient.ONTOP_LENSES_FILE, getEnvironmentVariable(OntopClient.ONTOP_LENSES_FILE));
+                OntopClient.ONTOP_LENSES_FILE, getEnvironmentVariable(OntopClient.ONTOP_LENSES_FILE),
+                OntopClient.ONTOP_FACTS_FILE, getEnvironmentVariable(OntopClient.ONTOP_FACTS_FILE));
 
         configDirs = configFiles.values().stream().map(fileName -> Path.of(fileName).getParent().toString()).distinct()
                 .collect(Collectors.toList());
@@ -91,6 +92,7 @@ public final class OntopService extends ContainerService {
         checkEnvironmentVariableNonNull(OntopClient.ONTOP_ONTOLOGY_FILE);
         checkEnvironmentVariableNonNull(OntopClient.ONTOP_SPARQL_RULES_FILE);
         checkEnvironmentVariableNonNull(OntopClient.ONTOP_LENSES_FILE);
+        checkEnvironmentVariableNonNull(OntopClient.ONTOP_FACTS_FILE);
 
     }
 
@@ -130,6 +132,9 @@ public final class OntopService extends ContainerService {
                         break;
                     case OntopClient.ONTOP_LENSES_FILE:
                         ontopClient.uploadLenses(List.of());
+                        break;
+                    case OntopClient.ONTOP_FACTS_FILE:
+                        ontopClient.uploadFacts(List.of());
                         break;
                     default:
                         sendFileContent(fileName, "".getBytes());

@@ -288,6 +288,8 @@ public class DatasetLoader {
             ontopClient.uploadRules(dataset.getRules().stream().map(directory::resolve).collect(Collectors.toList()));
             
             ontopClient.uploadLenses(dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
+
+            ontopClient.uploadFacts(dataset.getOntopFacts().stream().map(directory::resolve).collect(Collectors.toList()));
         }
     }
 }
