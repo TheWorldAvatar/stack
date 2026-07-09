@@ -22,7 +22,7 @@ public class Rdf4jEndpointConfig extends PasswordEndpointConfig {
         this.hostName = hostName;
         this.port = port;
         this.username = username;
-        this.serviceUrl = "http://" + this.hostName + ":" + this.port;
+        this.serviceUrl = null;
     }
 
     public String getHostName() {
@@ -38,7 +38,10 @@ public class Rdf4jEndpointConfig extends PasswordEndpointConfig {
     }
 
     public String getServiceUrl() {
-        return serviceUrl;
+        if (null != serviceUrl && !serviceUrl.isBlank()) {
+            return serviceUrl;
+        }
+        return "http://" + hostName + ":" + port;
     }
 
     @JsonIgnore
