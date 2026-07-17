@@ -301,8 +301,9 @@ public class DatasetLoader {
             ontopClient.uploadOntology(catalogNamespace, ontologyDatasetNames);
 
             ontopClient.uploadRules(dataset.getRules().stream().map(directory::resolve).collect(Collectors.toList()));
-            
-            ontopClient.uploadLenses(dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
+
+            ontopClient.uploadLenses(
+                    dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
         }
     }
 
