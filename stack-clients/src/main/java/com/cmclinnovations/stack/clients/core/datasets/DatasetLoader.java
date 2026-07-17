@@ -16,6 +16,8 @@ import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
@@ -38,6 +40,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 public class DatasetLoader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatasetLoader.class);
 
     private static final ServiceManager serviceManager = new ServiceManager(false);
 
@@ -271,7 +275,18 @@ public class DatasetLoader {
                             URI.create(connection.getExternalPath().toString()
                                     .replace(EndpointNames.ONTOP, newOntopServiceName))));
 
-            serviceManager.initialiseService(StackClient.getStackName(), newOntopServiceName);
+            try {
+                serviceManager.initialiseService(StackClient.getStackName(), newOntopServiceName);
+            } catch (IllegalArgumentException ex) {
+                if (isContainerRuntimeUnavailable(ex)) {
+                    LOGGER.warn(
+                            "Skipping Ontop service '{}' initialisation because Docker runtime is unavailable in this environment.",
+                            newOntopServiceName,
+                            ex);
+                    return;
+                }
+                throw ex;
+            }
 
             List<String> ontopMappings = dataset.getOntopMappings();
 
@@ -289,5 +304,19 @@ public class DatasetLoader {
             
             ontopClient.uploadLenses(dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
         }
+    }
+
+    private boolean isContainerRuntimeUnavailable(Throwable ex) {
+        Throwable current = ex;
+        while (null != current) {
+            String message = current.getMessage();
+            if (null != message && (message.contains("Service 'docker'")
+                    || message.contains("unix://localhost:2375")
+                    || message.contains("No such file or directory"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
