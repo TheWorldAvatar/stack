@@ -1,6 +1,5 @@
 package com.cmclinnovations.stack.clients.postgis;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -177,22 +176,12 @@ public class PostGISClient extends ClientWithEndpoint<PostGISEndpointConfig> {
 
     public void addProjectionsToPostgis(String database, String proj4String,
             String wktString, String authName, String srid) {
-        String execId;
-
-        String postGISContainerId = getContainerId("postgis");
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        execId = createComplexCommand(postGISContainerId,
-                "psql", "-U", readEndpointConfig().getUsername(), "-d", database, "-w")
-                .withHereDocument(
-                        "INSERT INTO spatial_ref_sys (srid, auth_name, auth_srid, srtext, proj4text) VALUES ("
-                                + srid + ",'"
-                                + authName + "'," + srid + ",'" + wktString + "','" + proj4String + "');")
-                .withErrorStream(errorStream)
-                .withOutputStream(outputStream)
-                .exec(); // will throw error if EPSG exists in table due to constraint
-                         // "spatial_ref_system_pkey".
-        handleErrors(errorStream, execId, logger);
+        String escapedAuthName = authName.replace("'", "''");
+        String escapedWkt = wktString.replace("'", "''");
+        String escapedProj4 = proj4String.replace("'", "''");
+        String sql = "INSERT INTO spatial_ref_sys (srid, auth_name, auth_srid, srtext, proj4text) VALUES ("
+                + srid + ",'"
+                + escapedAuthName + "'," + srid + ",'" + escapedWkt + "','" + escapedProj4 + "')";
+        executeUpdate(database, sql);
     }
 }
