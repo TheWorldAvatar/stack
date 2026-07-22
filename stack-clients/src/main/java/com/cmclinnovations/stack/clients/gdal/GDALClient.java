@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,11 +18,18 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.Vector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.gdal.gdal.Dataset;
+import org.gdal.gdal.MultiDimInfoOptions;
+import org.gdal.gdal.TranslateOptions;
+import org.gdal.gdal.WarpOptions;
+import org.gdal.gdal.gdal;
+import org.gdal.osr.SpatialReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +58,16 @@ public class GDALClient extends ContainerClient {
 
     private static final String POSTGIS = "postgis";
 
-    private static final String GDALSRSINFO = "gdalsrsinfo";
-
     private static final Logger logger = LoggerFactory.getLogger(GDALClient.class);
 
     private final PostGISEndpointConfig postgreSQLEndpoint;
 
     private static GDALClient instance = null;
+
+    static {
+        gdal.AllRegister();
+        gdal.UseExceptions();
+    }
 
     public static GDALClient getInstance() {
         if (null == instance) {
@@ -67,6 +78,14 @@ public class GDALClient extends ContainerClient {
 
     private GDALClient() {
         postgreSQLEndpoint = readEndpointConfig(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
+    }
+
+    private static Vector<String> toVector(String... values) {
+        return new Vector<>(Arrays.asList(values));
+    }
+
+    private static Vector<String> commandToOptions(String[] command) {
+        return new Vector<>(Arrays.asList(Arrays.copyOfRange(command, 1, command.length - 2)));
     }
 
     private String computePGSQLSourceString(String database) {
@@ -110,8 +129,7 @@ public class GDALClient extends ContainerClient {
                             String newDirPath = excelToCSV(filePath);
                             filesToRemove.add(filePath);
                             try (Stream<Path> files = Files.list(Path.of(newDirPath))) {
-                                filesToAdd.addAll(files.map(Object::toString)
-                                        .collect(Collectors.toList()));
+                                files.forEach(file -> filesToAdd.add(file.toString()));
                             } catch (IOException e) {
                                 throw new RuntimeException(e);
                             }
@@ -227,12 +245,14 @@ public class GDALClient extends ContainerClient {
 
         // Directories are filtered out from the result
 
-        return outputStream.toString().lines()
-                .map(entry -> entry.split(": "))
-                .filter(a -> Files.isRegularFile(Path.of(a[0])))
-                .collect(ArrayListMultimap::create,
-                        (m, pair) -> m.put(pair[1], pair[0]),
-                        Multimap::putAll);
+        Multimap<String, String> foundGeoFiles = ArrayListMultimap.create();
+        outputStream.toString().lines().forEach(entry -> {
+            String[] parts = entry.split(": ");
+            if (2 == parts.length && Files.isRegularFile(Path.of(parts[0]))) {
+                foundGeoFiles.put(parts[1], parts[0]);
+            }
+        });
+        return foundGeoFiles;
     }
 
     private void addCustomCRStoPostGis(String gdalContainerId, String filePath, String databaseName, String newSrid) {
@@ -262,54 +282,88 @@ public class GDALClient extends ContainerClient {
     }
 
     private String getDetectedSrid(String gdalContainerId, String filePath) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        String execId = createComplexCommand(gdalContainerId, GDALSRSINFO, "-o", "epsg", filePath)
-                .withOutputStream(outputStream)
-                .withErrorStream(errorStream)
-                .exec();
-        handleErrors(errorStream, execId, logger);
-        return outputStream.toString().replace("\n", "");
+        Dataset dataset = gdal.Open(filePath);
+        if (null == dataset) {
+            return "EPSG:-1";
+        }
+
+        try {
+            String projection = dataset.GetProjection();
+            if (null == projection || projection.isBlank()) {
+                return "EPSG:-1";
+            }
+
+            SpatialReference spatialReference = new SpatialReference(projection);
+            try {
+                spatialReference.AutoIdentifyEPSG();
+                String authorityName = spatialReference.GetAuthorityName(null);
+                String authorityCode = spatialReference.GetAuthorityCode(null);
+                if (null != authorityName && null != authorityCode) {
+                    return authorityName + ":" + authorityCode;
+                }
+                return "EPSG:-1";
+            } finally {
+                spatialReference.delete();
+            }
+        } finally {
+            dataset.delete();
+        }
     }
 
     private String getProj4String(String gdalContainerId, String filePath) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        String execId = createComplexCommand(gdalContainerId, GDALSRSINFO, "-o", "proj4", filePath)
-                .withOutputStream(outputStream)
-                .withErrorStream(errorStream)
-                .exec();
-        handleErrors(errorStream, execId, logger);
-        return outputStream.toString().replace("\n", "");
+        Dataset dataset = gdal.Open(filePath);
+        if (null == dataset) {
+            return "";
+        }
+
+        try {
+            SpatialReference spatialReference = new SpatialReference(dataset.GetProjection());
+            try {
+                return spatialReference.ExportToProj4();
+            } finally {
+                spatialReference.delete();
+            }
+        } finally {
+            dataset.delete();
+        }
     }
 
     private String getWktString(String gdalContainerId, String filePath) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        String execId = createComplexCommand(gdalContainerId, GDALSRSINFO, "-o", "wkt", "--single-line", filePath)
-                // This will get either wkt1 or wkt2 whichever exists. Other options exist
-                // instead of "wkt": {wkt_all, wkt1, wkt_simple, wkt_noct, wkt_esri, wkt2,
-                // wkt2_2015, wkt2_2018}).withOutputStream(outputStream)
+        Dataset dataset = gdal.Open(filePath);
+        if (null == dataset) {
+            return "";
+        }
 
-                .withOutputStream(outputStream)
-                .withErrorStream(errorStream)
-                .exec();
-        handleErrors(errorStream, execId, logger);
-        return outputStream.toString();
+        try {
+            SpatialReference spatialReference = new SpatialReference(dataset.GetProjection());
+            try {
+                return spatialReference.ExportToWkt();
+            } finally {
+                spatialReference.delete();
+            }
+        } finally {
+            dataset.delete();
+        }
     }
 
     private JSONArray getTimeFromGdalmdiminfo(String timeArrayName, String filePath) {
-        String gdalContainerId = getContainerId(GDAL);
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        String execId = createComplexCommand(gdalContainerId, "gdalmdiminfo", "-detailed", "-array", timeArrayName,
-                filePath)
-                .withOutputStream(outputStream)
-                .withErrorStream(errorStream)
-                .exec();
-        handleErrors(errorStream, execId, logger);
+        Dataset dataset = gdal.Open(filePath);
+        if (null == dataset) {
+            throw new RuntimeException("Failed to open multidimensional raster '" + filePath + "'.");
+        }
 
-        String inputString = outputStream.toString().replace(" ", "");
+        String inputString;
+        try {
+            MultiDimInfoOptions infoOptions = new MultiDimInfoOptions(toVector("-detailed", "-array", timeArrayName));
+            try {
+                inputString = gdal.GDALMultiDimInfo(dataset, infoOptions).replace(" ", "");
+            } finally {
+                infoOptions.delete();
+            }
+        } finally {
+            dataset.delete();
+        }
+
         return new JSONObject(inputString).getJSONArray("values");
     }
 
@@ -319,38 +373,48 @@ public class GDALClient extends ContainerClient {
         String variableArrayName = mdimSettings.getLayerArrayName();
         String dateTimeFormat = mdimSettings.getTimeOptions().getFormat();
 
-        String gdalContainerId = getContainerId(GDAL);
-
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-
         List<String> filenames = new ArrayList<>(timeArray.length());
 
         String inputRasterFilePath = "NETCDF:" + filePath + ":" + variableArrayName;
+        Dataset sourceDataset = gdal.Open(inputRasterFilePath);
+        if (null == sourceDataset) {
+            throw new RuntimeException(
+                    "Failed to open multidimensional raster subdataset '" + inputRasterFilePath + "'.");
+        }
 
-        for (int index = 0; index < timeArray.length(); index++) {
+        try {
+            for (int index = 0; index < timeArray.length(); index++) {
 
-            String filename;
-            if (null != dateTimeFormat) {
-                filename = variableArrayName + "_" + timeArray.getString(index) + ".tif";
-            } else {
-                filename = variableArrayName + "_" + (index + 1) + ".tif";
+                String filename;
+                if (null != dateTimeFormat) {
+                    filename = variableArrayName + "_" + timeArray.getString(index) + ".tif";
+                } else {
+                    filename = variableArrayName + "_" + (index + 1) + ".tif";
+                }
+                filenames.add(filename);
+                String outputRasterFilePath = outputDirectory.resolve(filename).toString();
+
+                WarpOptions warpOptions = new WarpOptions(toVector(
+                        "-srcband", Integer.toString(index + 1),
+                        "-t_srs", "EPSG:4326",
+                        "-r", "cubicspline",
+                        "-wo", "OPTIMIZE_SIZE=YES",
+                        "-multi",
+                        "-wo", "NUM_THREADS=ALL_CPUS"));
+                try {
+                    Dataset outputDataset = gdal.Warp(outputRasterFilePath, new Dataset[] { sourceDataset },
+                            warpOptions);
+                    if (null == outputDataset) {
+                        throw new RuntimeException(
+                                "Failed to warp '" + inputRasterFilePath + "' to '" + outputRasterFilePath + "'.");
+                    }
+                    outputDataset.delete();
+                } finally {
+                    warpOptions.delete();
+                }
             }
-            filenames.add(filename);
-            String outputRasterFilePath = outputDirectory.resolve(filename).toString();
-
-            String execId = createComplexCommand(gdalContainerId, "gdalwarp",
-                    "-srcband", Integer.toString(index + 1),
-                    "-t_srs", "EPSG:4326",
-                    "-r", "cubicspline",
-                    "-wo", "OPTIMIZE_SIZE=YES",
-                    "-multi",
-                    "-wo", "NUM_THREADS=ALL_CPUS",
-                    inputRasterFilePath,
-                    outputRasterFilePath)
-                    .withErrorStream(errorStream)
-                    .exec();
-            handleErrors(errorStream, execId, logger);
-            errorStream.reset();
+        } finally {
+            sourceDataset.delete();
         }
 
         return filenames;
@@ -522,16 +586,29 @@ public class GDALClient extends ContainerClient {
     private List<String> generateGeoTiffRaster(String gdalContainerId, String inputFormat, String filePath,
             String postgresOutputPath, GDALOptions<?> options) {
 
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-        String execId = createComplexCommand(gdalContainerId, options.generateCommand(
-                inputFormat,
-                filePath,
-                postgresOutputPath))
-                .withErrorStream(errorStream)
-                .withEnvVars(options.getEnv())
-                .withEvaluationTimeout(300)
-                .exec();
-        handleErrors(errorStream, execId, logger);
+        Dataset sourceDataset = gdal.Open(filePath);
+        if (null == sourceDataset) {
+            throw new RuntimeException("Failed to open raster source '" + filePath + "'.");
+        }
+
+        try {
+            TranslateOptions translateOptions = new TranslateOptions(commandToOptions(options.generateCommand(
+                    inputFormat,
+                    filePath,
+                    postgresOutputPath)));
+            try {
+                Dataset outputDataset = gdal.Translate(postgresOutputPath, sourceDataset, translateOptions);
+                if (null == outputDataset) {
+                    throw new RuntimeException(
+                            "Failed to translate raster '" + filePath + "' to '" + postgresOutputPath + "'.");
+                }
+                outputDataset.delete();
+            } finally {
+                translateOptions.delete();
+            }
+        } finally {
+            sourceDataset.delete();
+        }
 
         return List.of(postgresOutputPath);
     }
@@ -551,27 +628,40 @@ public class GDALClient extends ContainerClient {
             String postgresOutputPath, List<String> geoTiffFilenames) {
         Map<String, Integer> postgresOutputPathsAndNBands = new LinkedHashMap<>();
 
-        String execId;
         String inputRasterFilePath = "NETCDF:" + postgresOutputPath + ":" + mdimSettings.getLayerArrayName();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+        Dataset sourceDataset = gdal.Open(inputRasterFilePath);
+        if (null == sourceDataset) {
+            throw new RuntimeException(
+                    "Failed to open multidimensional raster subdataset '" + inputRasterFilePath + "'.");
+        }
 
-        for (int index = 0; index < geoTiffFilenames.size(); ++index) {
-            String geoTiffFilename = geoTiffFilenames.get(index);
-            String outputRasterFilePath = Paths.get(postgresOutputPath)
-                    .resolveSibling(FileUtils.replaceExtension(geoTiffFilename, "vrt"))
-                    .toString();
-            execId = createComplexCommand(gdalContainerId, "gdalwarp",
-                    "-srcband", Integer.toString(index + 1),
-                    "-t_srs", "EPSG:4326",
-                    "-wo", "OPTIMIZE_SIZE=YES",
-                    inputRasterFilePath,
-                    outputRasterFilePath)
-                    .withErrorStream(errorStream)
-                    .exec();
-            handleErrors(errorStream, execId, logger);
-            errorStream.reset();
+        try {
+            for (int index = 0; index < geoTiffFilenames.size(); ++index) {
+                String geoTiffFilename = geoTiffFilenames.get(index);
+                String outputRasterFilePath = Paths.get(postgresOutputPath)
+                        .resolveSibling(FileUtils.replaceExtension(geoTiffFilename, "vrt"))
+                        .toString();
 
-            postgresOutputPathsAndNBands.put(outputRasterFilePath, 1);
+                WarpOptions warpOptions = new WarpOptions(toVector(
+                        "-srcband", Integer.toString(index + 1),
+                        "-t_srs", "EPSG:4326",
+                        "-wo", "OPTIMIZE_SIZE=YES"));
+                try {
+                    Dataset outputDataset = gdal.Warp(outputRasterFilePath, new Dataset[] { sourceDataset },
+                            warpOptions);
+                    if (null == outputDataset) {
+                        throw new RuntimeException(
+                                "Failed to warp '" + inputRasterFilePath + "' to '" + outputRasterFilePath + "'.");
+                    }
+                    outputDataset.delete();
+                } finally {
+                    warpOptions.delete();
+                }
+
+                postgresOutputPathsAndNBands.put(outputRasterFilePath, 1);
+            }
+        } finally {
+            sourceDataset.delete();
         }
         return postgresOutputPathsAndNBands;
     }
