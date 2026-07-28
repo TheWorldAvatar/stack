@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -62,7 +63,8 @@ public class DockerClientTest {
         }
 
         try (CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image)) {
-            containerId = createContainerCmd.withName("testContainer")
+            String containerName = "testContainer-" + UUID.randomUUID();
+            containerId = createContainerCmd.withName(containerName)
                     .withCmd("tail", "-f", "/dev/null")
                     .exec().getId();
             try (StartContainerCmd startContainerCmd = dockerClient.startContainerCmd(containerId)) {
