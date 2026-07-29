@@ -15,6 +15,8 @@ import uk.ac.cam.cares.jps.base.timeseries.TimeSeriesClient;
 public final class StackClient {
 
     public static final String EXECUTABLE_KEY = "EXECUTABLE";
+    public static final String GDAL_EXECUTION_MODE_KEY = "STACK_GDAL_EXECUTION_MODE";
+    public static final String SHARED_POSTGIS_DATABASE_KEY = "STACK_SHARED_POSTGIS_DATABASE";
     public static final String STACK_NAME_KEY = "STACK_NAME";
     private static final String STACK_BASE_DIR_KEY = "STACK_BASE_DIR";
     public static final String STACK_NAME_LABEL = "com.docker.stack.namespace";
@@ -97,6 +99,11 @@ public final class StackClient {
 
     public static String getContainerEngineName() {
         return System.getenv().getOrDefault(EXECUTABLE_KEY, "docker");
+    }
+
+    public static boolean isRunningInKubernetes() {
+        String kubernetesHost = System.getenv("KUBERNETES_SERVICE_HOST");
+        return null != kubernetesHost && !kubernetesHost.isBlank();
     }
 
     private static Path getStackBaseDir() {

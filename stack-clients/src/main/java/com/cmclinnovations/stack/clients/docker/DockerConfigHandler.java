@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class DockerConfigHandler {
     private static final ObjectMapper objectMapper = JsonHelper.getMapper();
     private static final Path configsDir;
+    private static final Path k8sConfigsDir = Path.of("/run/configs");
 
     private DockerConfigHandler() {
     }
@@ -69,8 +70,8 @@ public class DockerConfigHandler {
 
     public static final <E extends EndpointConfig> E readEndpointConfig(String endpointName,
             Class<E> endpointConfigClass) {
-        Path configFilePath = configsDir.resolve(endpointName);
-        if (Files.exists(configFilePath)) {
+        Path configFilePath = getReadableConfigPath(endpointName);
+        if (null != configFilePath) {
             try {
                 return objectMapper.readValue(configFilePath.toFile(), endpointConfigClass);
             } catch (IOException ex) {
@@ -78,6 +79,22 @@ public class DockerConfigHandler {
             }
         }
         throw new RuntimeException("No Docker config file with name '" + endpointName + "' exists.");
+    }
+
+    private static Path getReadableConfigPath(String endpointName) {
+        if (StackClient.isRunningInKubernetes()) {
+            Path k8sConfigPath = k8sConfigsDir.resolve(endpointName);
+            if (Files.isRegularFile(k8sConfigPath)) {
+                return k8sConfigPath;
+            }
+        }
+
+        Path defaultConfigPath = configsDir.resolve(endpointName);
+        if (Files.isRegularFile(defaultConfigPath)) {
+            return defaultConfigPath;
+        }
+
+        return null;
     }
 
     public static final List<ExternalEndpointConfig> readExternalEndpointConfig() {

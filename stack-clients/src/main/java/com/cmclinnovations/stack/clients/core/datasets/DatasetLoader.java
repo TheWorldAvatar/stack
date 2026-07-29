@@ -16,6 +16,8 @@ import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
@@ -38,6 +40,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import uk.ac.cam.cares.jps.base.query.RemoteStoreClient;
 
 public class DatasetLoader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DatasetLoader.class);
 
     private static final ServiceManager serviceManager = new ServiceManager(false);
 
@@ -258,27 +262,43 @@ public class DatasetLoader {
 
     private void configureOntop(Dataset dataset, Path directory, List<String> ontologyDatasetNames) {
         if (dataset.usesOntop()) {
-            String newOntopServiceName = dataset.getOntopName();
+            String targetOntopServiceName = dataset.getOntopName();
+            boolean useExistingOntopService = StackClient.isRunningInKubernetes();
 
+            if (useExistingOntopService) {
+            if (!PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
+                throw new RuntimeException(
+                    "Kubernetes shared Ontop service currently supports only database '"
+                        + PostGISClient.DEFAULT_DATABASE_NAME
+                        + "', but dataset '" + dataset.getName() + "' requires database '"
+                        + dataset.getDatabase()
+                        + "'. Configure dataset-specific Ontop services per database or migrate the"
+                        + " dataset to the shared Ontop database before upload.");
+            }
+            targetOntopServiceName = EndpointNames.ONTOP;
+            } else {
+                final String ontopServiceName = targetOntopServiceName;
             ServiceConfig newOntopServiceConfig = serviceManager.duplicateServiceConfig(EndpointNames.ONTOP,
-                    newOntopServiceName);
+                ontopServiceName);
 
             newOntopServiceConfig.setEnvironmentVariable(OntopService.ONTOP_DB_NAME, dataset.getDatabase());
             newOntopServiceConfig.getEndpoints()
-                    .replaceAll((endpointName, connection) -> new Connection(
-                            connection.getUrl(),
-                            connection.getUri(),
-                            URI.create(connection.getExternalPath().toString()
-                                    .replace(EndpointNames.ONTOP, newOntopServiceName))));
+                .replaceAll((endpointName, connection) -> new Connection(
+                    connection.getUrl(),
+                    connection.getUri(),
+                    URI.create(connection.getExternalPath().toString()
+                        .replace(EndpointNames.ONTOP, ontopServiceName))));
 
-            serviceManager.initialiseService(StackClient.getStackName(), newOntopServiceName);
+                serviceManager.initialiseService(StackClient.getStackName(), ontopServiceName);
+            }
 
             List<String> ontopMappings = dataset.getOntopMappings();
 
-            OntopClient ontopClient = OntopClient.getInstance(newOntopServiceName);
+            OntopClient ontopClient = OntopClient.getInstance(targetOntopServiceName);
             ontopMappings.forEach(mapping -> ontopClient.updateOBDA(directory.resolve(mapping)));
 
-            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
+            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())
+                && !EndpointNames.ONTOP.equals(targetOntopServiceName)) {
                 OntopClient defaultOntopClient = OntopClient.getInstance(EndpointNames.ONTOP);
                 ontopMappings.forEach(mapping -> defaultOntopClient.updateOBDA(directory.resolve(mapping)));
             }

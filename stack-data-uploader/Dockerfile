@@ -41,6 +41,14 @@ CMD ["mvn", "test"]
 #==================================================================================================
 FROM adoptopenjdk/openjdk11:jre-11.0.13_8 AS agent
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    gdal-bin \
+    libgdal-java \
+    postgis \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy in the entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh
 
