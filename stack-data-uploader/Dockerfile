@@ -27,7 +27,7 @@ COPY src ./src/
 # Ensure that the latest versions of SNAPSHOT dependencies are always used
 ARG CACHEBUST=1
 
-RUN --mount=type=cache,id=stack-mvn,target=/root/.m2/repository,sharing=locked mvn package --update-snapshots
+RUN --mount=type=cache,id=stack-mvn,target=/root/.m2/repository,sharing=locked mvn clean package --update-snapshots
 
 FROM builder AS test
 
