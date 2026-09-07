@@ -1,4 +1,4 @@
 services:
   postgis:
-    image: ghcr.io/cambridge-cares/cambridge-cares/postgis:pgrouting-extra-17-3.5-3.8-3dcitydb
+    image: ghcr.io/theworldavatar/postgis:pgrouting-extra-17-3.5-3.8-3dcitydb
     build: .
