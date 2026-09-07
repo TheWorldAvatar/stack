@@ -1,4 +1,4 @@
 services:
   postgis:
-    image: ghcr.io/theworldavatar/postgis:pgrouting-extra-17-3.5-3.8-3dcitydb
+    image: ghcr.io/theworldavatar/postgis:pgrouting-extra-18-3.6-4.0.1-3dcitydb
     build: .

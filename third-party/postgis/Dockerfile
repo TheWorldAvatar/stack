@@ -5,7 +5,7 @@
 ###############################################################################
 
 # Base image changed to pgrouting-extra
-FROM pgrouting/pgrouting-extra:17-3.5-3.8
+FROM pgrouting/pgrouting-extra:18-3.6-4.0.1
 
 # Set 3DCityDB version
 ARG CITYDB_VERSION='4.4.0'
