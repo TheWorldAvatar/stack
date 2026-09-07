@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<project 
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.60.2</version>
-
+    <version>1.60.3-update-postgis-SNAPSHOT</version>
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
-
     <parent>
         <groupId>uk.ac.cam.cares.jps</groupId>
         <artifactId>jps-parent-pom</artifactId>
         <version>2.4.0</version>
     </parent>
-
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.release>11</maven.compiler.release>
     </properties>
-
     <!-- Repository locations to fetch from -->
     <repositories>
         <repository>
@@ -32,7 +28,6 @@
             <url>https://maven.pkg.github.com/TheWorldAvatar/*</url>
         </repository>
     </repositories>
-
     <!-- Repository locations to deploy to -->
     <distributionManagement>
         <repository>
@@ -46,7 +41,6 @@
             <url>https://maven.pkg.github.com/TheWorldAvatar/stack/</url>
         </snapshotRepository>
     </distributionManagement>
-
     <!-- Ensure consistent versions of Jersey dependencies generated dynamically by Swagger for Podman API -->
     <dependencyManagement>
         <dependencies>
@@ -59,21 +53,17 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <dependencies>
-
         <dependency>
             <groupId>io.theworldavatar</groupId>
             <artifactId>podman-java-client</artifactId>
             <version>4.4.0-1</version>
         </dependency>
-
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.4</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/com.github.docker-java/docker-java -->
         <dependency>
             <groupId>com.github.docker-java</groupId>
@@ -85,17 +75,14 @@
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-transport-httpclient5</artifactId>
         </dependency>
-
         <dependency>
             <groupId>it.geosolutions</groupId>
             <artifactId>geoserver-manager</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.github.odiszapc</groupId>
             <artifactId>nginxparser</artifactId>
         </dependency>
-
         <dependency>
             <groupId>it.unibz.inf.ontop</groupId>
             <artifactId>ontop-system-sql-owlapi</artifactId>
@@ -106,13 +93,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <!-- used in the DerivationClient to detect circular dependencies -->
         <dependency>
             <groupId>org.jgrapht</groupId>
             <artifactId>jgrapht-core</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -121,54 +106,45 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-
         <dependency>
             <groupId>net.sf.py4j</groupId>
             <artifactId>py4j</artifactId>
         </dependency>
-
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
             <version>1.49.0</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
         </dependency>
-
         <dependency>
             <artifactId>junit-jupiter-api</artifactId>
             <groupId>org.junit.jupiter</groupId>
             <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <version>5.11.0</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>5.12.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
@@ -181,17 +157,13 @@
             <version>5.15.0</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.moandjiezana.toml</groupId>
             <artifactId>toml4j</artifactId>
             <version>0.7.2</version>
         </dependency>
-    
     </dependencies>
-
     <build>
-
         <plugins>
             <plugin>
                 <!-- This plugin edits the manifest file that goes inside the .jar file -->
@@ -235,9 +207,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
-
     </build>
-
 </project>

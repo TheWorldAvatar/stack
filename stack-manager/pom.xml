@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<project xmlns="http://maven.apache.org/POM/4.0.0"
+<project 
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.60.2</version>
-
+    <version>1.60.3-update-postgis-SNAPSHOT</version>
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
-
     <parent>
         <groupId>uk.ac.cam.cares.jps</groupId>
         <artifactId>jps-parent-pom</artifactId>
         <version>2.3.2</version>
     </parent>
-
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <maven.compiler.release>11</maven.compiler.release>
     </properties>
-
     <!-- Repository locations to fetch from -->
     <repositories>
         <repository>
@@ -32,34 +28,26 @@
             <url>https://maven.pkg.github.com/TheWorldAvatar/*</url>
         </repository>
     </repositories>
-
     <dependencies>
-
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.60.2</version>
+            <version>1.60.3-update-postgis-SNAPSHOT</version>
         </dependency>
-
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
         </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-
     </dependencies>
-
     <build>
-
         <plugins>
             <plugin>
                 <!-- This plugin edits the manifest file that goes inside the .jar file -->
@@ -102,5 +90,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
