@@ -13,13 +13,13 @@
                 "Command": [
                     "sh",
                     "-c",
-                    "sed -i 's/postgis-3,timescaledb/postgis-3/' /var/lib/postgresql/data/postgresql.conf; docker-entrypoint.sh postgres -c shared_buffers=1GB -c max_connections=200"
+                    "sed -i 's/postgis-3,timescaledb/postgis-3/' /var/lib/postgresql/18/docker/postgresql.conf; docker-entrypoint.sh postgres -c shared_buffers=1GB -c max_connections=200"
                 ],
                 "Mounts": [
                     {
                         "Type": "volume",
                         "Source": "postgis_data",
-                        "Target": "/var/lib/postgresql/data"
+                        "Target": "/var/lib/postgresql"
                     },
                     {
                         "Type": "volume",
