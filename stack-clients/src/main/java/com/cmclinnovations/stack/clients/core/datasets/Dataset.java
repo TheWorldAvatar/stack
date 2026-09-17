@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.Namespace;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerStyle;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
 import com.fasterxml.jackson.annotation.JacksonInject;
@@ -141,6 +142,10 @@ public class Dataset extends AbstractDataObject {
     }
 
     public String getDatabase() {
+        String sharedPostGISDatabase = System.getenv(StackClient.SHARED_POSTGIS_DATABASE_KEY);
+        if (null != sharedPostGISDatabase && !sharedPostGISDatabase.isBlank()) {
+            return sharedPostGISDatabase;
+        }
         if (database.isPresent()) {
             LOGGER.warn(NAME_DEPRECATION_NOTICE, "database", getName(), database.get());
             return database.get();
