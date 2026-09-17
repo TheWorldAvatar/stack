@@ -9,6 +9,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
 
+    private static final String PG_USE_COPY_ENV = "STACK_GDAL_PG_USE_COPY";
+    private static final String PG_USE_COPY_DEFAULT = "YES";
+    private static final String OGR2OGR_GT_ENV = "STACK_GDAL_OGR2OGR_GT";
+
     @JsonProperty
     private final Map<String, String> datasetCreationOptions = new HashMap<>();
     @JsonProperty
@@ -76,7 +80,11 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
 
         processOtherOption(args, "-f", "PostgreSQL");
 
-        processConfigOption(args, "PG_USE_COPY", "YES");
+        processConfigOption(args, "PG_USE_COPY", resolvePgUseCopySetting());
+        String transactionSize = resolveOgr2OgrGtSetting();
+        if (null != transactionSize) {
+            processOtherOption(args, "-gt", transactionSize);
+        }
 
         // Setting this option prevents GDAL from "cleaning" the table and column
         // names for Postgres, as described here:
@@ -86,6 +94,28 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
         datasetCreationOptions.forEach((name, value) -> processDatasetCreationOption(args, name, value));
         layerCreationOptions.forEach((name, value) -> processLayerCreationOption(args, name, value));
         outputDatasetOpenOptions.forEach((name, value) -> processOutputDatasetOpenOption(args, name, value));
+    }
+
+    private String resolvePgUseCopySetting() {
+        String value = System.getenv(PG_USE_COPY_ENV);
+        if (null == value || value.isBlank()) {
+            return PG_USE_COPY_DEFAULT;
+        }
+        return value.trim().toUpperCase();
+    }
+
+    private String resolveOgr2OgrGtSetting() {
+        String value = System.getenv(OGR2OGR_GT_ENV);
+        if (null == value || value.isBlank()) {
+            return null;
+        }
+
+        String trimmedValue = value.trim();
+        if (!trimmedValue.matches("[1-9][0-9]*")) {
+            throw new RuntimeException(
+                    "Invalid value for " + OGR2OGR_GT_ENV + ": '" + value + "'. Expected a positive integer.");
+        }
+        return trimmedValue;
     }
 
     public void setSchema(String schema) {

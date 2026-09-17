@@ -1,6 +1,7 @@
 package com.cmclinnovations.stack.clients.gdal;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +54,7 @@ public class GDALClient extends ContainerClient {
     private static final Logger logger = LoggerFactory.getLogger(GDALClient.class);
 
     private final PostGISEndpointConfig postgreSQLEndpoint;
+    private final long commandTimeoutSeconds;
 
     private static GDALClient instance = null;
 
@@ -65,6 +67,9 @@ public class GDALClient extends ContainerClient {
 
     private GDALClient() {
         postgreSQLEndpoint = readEndpointConfig(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
+        commandTimeoutSeconds = GdalExecutionConfig.resolveCommandTimeoutSeconds(
+            System.getenv(StackClient.GDAL_COMMAND_TIMEOUT_KEY), 300L);
+        logger.info("Using GDAL command timeout of {}s.", commandTimeoutSeconds);
     }
 
     private String computePGSQLSourceString(String database) {
@@ -165,7 +170,7 @@ public class GDALClient extends ContainerClient {
                 command,
                 options.getEnv(),
                 null,
-                300);
+            commandTimeoutSeconds);
 
         // Some GDAL builds do not support '-if'; if encountered, retry once without it.
         if (result.exitCode != 0 && result.stderr.contains("Unknown option name '-if'")) {
@@ -175,7 +180,7 @@ public class GDALClient extends ContainerClient {
                     fallbackCommand,
                     options.getEnv(),
                     null,
-                    300);
+                    commandTimeoutSeconds);
         }
 
         handleLocalCommandErrors(result, "ogr2ogr");
@@ -208,7 +213,7 @@ public class GDALClient extends ContainerClient {
                         filePath),
                 Map.of(),
                 null,
-                300);
+                commandTimeoutSeconds);
         handleLocalCommandErrors(result, "ogr2ogr");
         return outputDirectory;
     }
@@ -612,13 +617,20 @@ public class GDALClient extends ContainerClient {
 
     private CommandResult runLocalCommand(List<String> command, Map<String, String> env, String stdin,
             long timeoutSeconds) {
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        processBuilder.environment().putAll(env);
-        Process process;
+        Path stdoutPath = null;
+        Path stderrPath = null;
+        Process process = null;
         try {
+            stdoutPath = Files.createTempFile("gdal-local-stdout", ".log");
+            stderrPath = Files.createTempFile("gdal-local-stderr", ".log");
+
+            ProcessBuilder processBuilder = new ProcessBuilder(command)
+                    .redirectOutput(stdoutPath.toFile())
+                    .redirectError(stderrPath.toFile());
+            processBuilder.environment().putAll(env);
             process = processBuilder.start();
             if (null != stdin) {
-                process.getOutputStream().write(stdin.getBytes());
+                process.getOutputStream().write(stdin.getBytes(StandardCharsets.UTF_8));
             }
             process.getOutputStream().close();
 
@@ -627,14 +639,29 @@ public class GDALClient extends ContainerClient {
                 process.destroyForcibly();
                 throw new RuntimeException("Timed out running local command: " + String.join(" ", command));
             }
-            String stdout = new String(process.getInputStream().readAllBytes());
-            String stderr = new String(process.getErrorStream().readAllBytes());
+            String stdout = Files.readString(stdoutPath, StandardCharsets.UTF_8);
+            String stderr = Files.readString(stderrPath, StandardCharsets.UTF_8);
             return new CommandResult(process.exitValue(), stdout, stderr);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to run local command: " + String.join(" ", command), ex);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted while running local command: " + String.join(" ", command), ex);
+        } finally {
+            if (null != stdoutPath) {
+                try {
+                    Files.deleteIfExists(stdoutPath);
+                } catch (IOException ex) {
+                    logger.warn("Failed to delete GDAL command output file '{}'.", stdoutPath, ex);
+                }
+            }
+            if (null != stderrPath) {
+                try {
+                    Files.deleteIfExists(stderrPath);
+                } catch (IOException ex) {
+                    logger.warn("Failed to delete GDAL command error file '{}'.", stderrPath, ex);
+                }
+            }
         }
     }
 
