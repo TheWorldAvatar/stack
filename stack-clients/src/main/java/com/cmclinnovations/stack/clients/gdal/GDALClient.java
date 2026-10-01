@@ -128,7 +128,10 @@ public class GDALClient extends ContainerClient {
                         break;
                 }
 
+                int fileCount = filesOfType.size();
+                int fileIndex = 0;
                 for (String filePath : filesOfType) {
+                    logFileProgress(entry.getKey(), layerName, ++fileIndex, fileCount, filePath);
                     uploadVectorToPostGIS(database, schema, layerName, filePath, options, append);
                     // If inserting multiple sources into a single layer then ensure subsequent
                     // files are appended.
@@ -244,12 +247,17 @@ public class GDALClient extends ContainerClient {
 
         // Directories are filtered out from the result
 
-        return result.stdout.lines()
+        Multimap<String, String> geoFiles = result.stdout.lines()
                 .map(entry -> entry.split(": "))
                 .filter(a -> Files.isRegularFile(Path.of(a[0])))
                 .collect(ArrayListMultimap::create,
                         (m, pair) -> m.put(pair[1], pair[0]),
                         Multimap::putAll);
+
+        geoFiles.asMap().forEach(
+                (format, files) -> logger.info("Found {} '{}' file(s) to process.", files.size(), format));
+
+        return geoFiles;
     }
 
     private void addCustomCRStoPostGis(String filePath, String databaseName, String newSrid) {
@@ -445,7 +453,10 @@ public class GDALClient extends ContainerClient {
 
         for (Map.Entry<String, Collection<String>> fileTypeEntry : foundRasterFiles.asMap().entrySet()) {
             String inputFormat = fileTypeEntry.getKey();
+            int fileCount = fileTypeEntry.getValue().size();
+            int fileIndex = 0;
             for (String filePath : fileTypeEntry.getValue()) {
+                logFileProgress(inputFormat, layerName, ++fileIndex, fileCount, filePath);
 
                 if (null == options.getSridIn()) {
                     addCustomCRStoPostGis(filePath, databaseName, options.getSridOut());
@@ -663,6 +674,11 @@ public class GDALClient extends ContainerClient {
                 }
             }
         }
+    }
+
+    private void logFileProgress(String format, String layerName, int index, int total, String filePath) {
+        logger.info("[{}] {} {}/{} ({}%): {}", layerName, format, index, total,
+                (index * 100) / total, Path.of(filePath).getFileName());
     }
 
     private void handleLocalCommandErrors(CommandResult result, String commandName) {
