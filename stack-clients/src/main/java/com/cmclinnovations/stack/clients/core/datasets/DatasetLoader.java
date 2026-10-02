@@ -263,47 +263,48 @@ public class DatasetLoader {
     private void configureOntop(Dataset dataset, Path directory, List<String> ontologyDatasetNames) {
         if (dataset.usesOntop()) {
             String newOntopServiceName = StackClient.isRunningInKubernetes()
-                ? EndpointNames.ONTOP
-                : dataset.getOntopName();
+                    ? EndpointNames.ONTOP
+                    : dataset.getOntopName();
 
-            if (StackClient.isRunningInKubernetes()) {
-            if (!PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
-                throw new RuntimeException("Kubernetes Ontop service requires database '"
-                    + PostGISClient.DEFAULT_DATABASE_NAME + "', but dataset '" + dataset.getName()
-                    + "' uses database '" + dataset.getDatabase() + "'.");
-            }
-            } else {
-            ServiceConfig newOntopServiceConfig = serviceManager.duplicateServiceConfig(EndpointNames.ONTOP,
-                newOntopServiceName);
+            OntopClient ontopClient;
+            if (!StackClient.isRunningInKubernetes()) {
+                ServiceConfig newOntopServiceConfig = serviceManager.duplicateServiceConfig(EndpointNames.ONTOP,
+                        newOntopServiceName);
 
-            newOntopServiceConfig.setEnvironmentVariable(OntopService.ONTOP_DB_NAME, dataset.getDatabase());
-            newOntopServiceConfig.getEndpoints()
-                .replaceAll((endpointName, connection) -> new Connection(
-                    connection.getUrl(),
-                    connection.getUri(),
-                    URI.create(connection.getExternalPath().toString()
-                        .replace(EndpointNames.ONTOP, newOntopServiceName))));
+                newOntopServiceConfig.setEnvironmentVariable(OntopService.ONTOP_DB_NAME, dataset.getDatabase());
+                newOntopServiceConfig.getEndpoints()
+                        .replaceAll((endpointName, connection) -> new Connection(
+                                connection.getUrl(),
+                                connection.getUri(),
+                                URI.create(connection.getExternalPath().toString()
+                                        .replace(EndpointNames.ONTOP, newOntopServiceName))));
 
                 serviceManager.initialiseService(StackClient.getStackName(), newOntopServiceName);
+
+                ontopClient = OntopClient.getInstance(newOntopServiceName);
+
+                uploadOntopConfigFiles(dataset, directory, ontologyDatasetNames, ontopClient);
             }
 
-            List<String> ontopMappings = dataset.getOntopMappings();
-
-            OntopClient ontopClient = OntopClient.getInstance(newOntopServiceName);
-            ontopMappings.forEach(mapping -> ontopClient.updateOBDA(directory.resolve(mapping)));
-
-                if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())
+            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())
                     && !EndpointNames.ONTOP.equals(newOntopServiceName)) {
                 OntopClient defaultOntopClient = OntopClient.getInstance(EndpointNames.ONTOP);
-                ontopMappings.forEach(mapping -> defaultOntopClient.updateOBDA(directory.resolve(mapping)));
+
+                uploadOntopConfigFiles(dataset, directory, ontologyDatasetNames, defaultOntopClient);
             }
-
-            ontopClient.uploadOntology(catalogNamespace, ontologyDatasetNames);
-
-            ontopClient.uploadRules(dataset.getRules().stream().map(directory::resolve).collect(Collectors.toList()));
-            
-            ontopClient.uploadLenses(dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
         }
+    }
+
+    private void uploadOntopConfigFiles(Dataset dataset, Path directory, List<String> ontologyDatasetNames,
+            OntopClient ontopClient) {
+        dataset.getOntopMappings().forEach(mapping -> ontopClient.updateOBDA(directory.resolve(mapping)));
+
+        ontopClient.uploadOntology(catalogNamespace, ontologyDatasetNames);
+
+        ontopClient.uploadRules(dataset.getRules().stream().map(directory::resolve).collect(Collectors.toList()));
+
+        ontopClient.uploadLenses(
+                dataset.getOntopLenses().stream().map(directory::resolve).collect(Collectors.toList()));
     }
 
 }

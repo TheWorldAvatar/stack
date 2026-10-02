@@ -16,7 +16,6 @@ public final class StackClient {
 
     public static final String EXECUTABLE_KEY = "EXECUTABLE";
     public static final String GDAL_COMMAND_TIMEOUT_KEY = "STACK_GDAL_COMMAND_TIMEOUT_SECONDS";
-    public static final String SHARED_POSTGIS_DATABASE_KEY = "STACK_SHARED_POSTGIS_DATABASE";
     public static final String STACK_NAME_KEY = "STACK_NAME";
     private static final String STACK_BASE_DIR_KEY = "STACK_BASE_DIR";
     public static final String STACK_NAME_LABEL = "com.docker.stack.namespace";
