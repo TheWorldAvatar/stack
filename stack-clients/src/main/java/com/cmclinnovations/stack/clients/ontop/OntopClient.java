@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.ClientWithEndpoint;
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.core.datasets.CopyDatasetQuery;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
 import com.cmclinnovations.stack.clients.utils.SparqlRulesFile;
@@ -55,13 +56,13 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     }
 
     public void updateOBDA(Path newMappingFilePath) {
-        String containerId = getContainerId(getContainerName());
+        String containerId = StackClient.isRunningInKubernetes() ? null : getContainerId(getContainerName());
         Path ontopMappingFilePath = getFilePath(containerId, ONTOP_MAPPING_FILE);
 
         try {
             SQLPPMappingImplementation mapping = new SQLPPMappingImplementation();
 
-            if (fileExists(containerId, ontopMappingFilePath.toString())) {
+            if (fileExistsAtRuntime(containerId, ontopMappingFilePath)) {
 
                 if (null == newMappingFilePath) {
                     // A mapping file already exists and no new one has been passed to be added.
@@ -70,7 +71,7 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
                 try (TempFile localTempOntopMappingFilePath = SQLPPMappingImplementation
                         .createTempOBDAFile(ontopMappingFilePath);
                         OutputStream outputStream = Files.newOutputStream(localTempOntopMappingFilePath.getPath())) {
-                    outputStream.write(retrieveFile(containerId, ontopMappingFilePath.toString()));
+                    outputStream.write(readFileContent(containerId, ontopMappingFilePath));
                     mapping.addMappings(localTempOntopMappingFilePath.getPath());
                 }
             }
@@ -82,8 +83,8 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
                     .createTempOBDAFile(ontopMappingFilePath)) {
                 mapping.serialize(localTempOntopMappingFilePath.getPath());
 
-                sendFileContent(containerId, ontopMappingFilePath,
-                        Files.readAllBytes(localTempOntopMappingFilePath.getPath()));
+                writeFileContent(containerId, ontopMappingFilePath,
+                    Files.readAllBytes(localTempOntopMappingFilePath.getPath()));
             }
         } catch (IOException ex) {
             throw new RuntimeException(
@@ -92,13 +93,13 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     }
 
     public void uploadRules(List<Path> ruleFiles) {
-        String containerId = getContainerId(getContainerName());
+        String containerId = StackClient.isRunningInKubernetes() ? null : getContainerId(getContainerName());
         Path sparqlRulesFilePath = getFilePath(containerId, ONTOP_SPARQL_RULES_FILE);
         SparqlRulesFile sparqlRules = new SparqlRulesFile(ruleFiles);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             sparqlRules.write(outputStream);
-            sendFileContent(containerId, sparqlRulesFilePath, outputStream.toByteArray());
+            writeFileContent(containerId, sparqlRulesFilePath, outputStream.toByteArray());
         } catch (IOException ex) {
             throw new RuntimeException(
                     "Failed to write SPARQL Rules file.", ex);
@@ -106,7 +107,7 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     }
 
     public void uploadLenses(List<Path> lensesFiles) {
-        String containerId = getContainerId(getContainerName());
+        String containerId = StackClient.isRunningInKubernetes() ? null : getContainerId(getContainerName());
         Path lensesFilePath = getFilePath(containerId, ONTOP_LENSES_FILE);
         List<JsonLens> mergedRelations = new ArrayList<>();
 
@@ -124,7 +125,7 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             mapper.writeValue(outputStream, mergedLenses);
-            sendFileContent(containerId, lensesFilePath, outputStream.toByteArray());
+            writeFileContent(containerId, lensesFilePath, outputStream.toByteArray());
         } catch (IOException ex) {
             throw new RuntimeException(
                     "Failed to write lenses file.", ex);
@@ -132,12 +133,12 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     }
 
     private void writeTurtleToFile(Model model) {
-        String containerId = getContainerId(getContainerName());
+        String containerId = StackClient.isRunningInKubernetes() ? null : getContainerId(getContainerName());
         Path ontopOntologyFilePath = getFilePath(containerId, ONTOP_ONTOLOGY_FILE);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             model.write(outputStream, "TURTLE");
-            sendFileContent(containerId, ontopOntologyFilePath, outputStream.toByteArray());
+            writeFileContent(containerId, ontopOntologyFilePath, outputStream.toByteArray());
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -145,10 +146,42 @@ public class OntopClient extends ClientWithEndpoint<OntopEndpointConfig> {
     }
 
     private Path getFilePath(String containerId, String filenameKey) {
+        if (StackClient.isRunningInKubernetes()) {
+            String filePath = System.getenv(filenameKey);
+            if (null != filePath && !filePath.isBlank()) {
+                return Path.of(filePath);
+            }
+            throw new RuntimeException("Environment variable '" + filenameKey
+                    + "' is not set for the Kubernetes uploader runtime.");
+        }
         return getEnvironmentVariable(containerId, filenameKey)
                 .map(Path::of)
                 .orElseThrow(() -> new RuntimeException("Environment variable '" + filenameKey
                         + " not set through Docker for '" + getContainerName() + "' container."));
+    }
+
+    private boolean fileExistsAtRuntime(String containerId, Path filePath) {
+        return StackClient.isRunningInKubernetes()
+                ? Files.exists(filePath)
+                : fileExists(containerId, filePath.toString());
+    }
+
+    private byte[] readFileContent(String containerId, Path filePath) throws IOException {
+        return StackClient.isRunningInKubernetes()
+                ? Files.readAllBytes(filePath)
+                : retrieveFile(containerId, filePath.toString());
+    }
+
+    private void writeFileContent(String containerId, Path filePath, byte[] content) throws IOException {
+        if (StackClient.isRunningInKubernetes()) {
+            Path parent = filePath.getParent();
+            if (null != parent) {
+                Files.createDirectories(parent);
+            }
+            Files.write(filePath, content);
+        } else {
+            sendFileContent(containerId, filePath, content);
+        }
     }
 
 }

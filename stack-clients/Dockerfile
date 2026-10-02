@@ -46,7 +46,7 @@ RUN --mount=type=cache,id=stack-mvn,target=/root/.m2/repository,sharing=locked m
 
 # Second stage: copy the output into a clean image
 #==================================================================================================
-FROM adoptopenjdk/openjdk11:jre-11.0.13_8 AS agent
+FROM eclipse-temurin:11-jdk AS agent
 
 # Copy in the entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh
