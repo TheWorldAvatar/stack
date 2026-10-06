@@ -39,7 +39,14 @@ CMD ["mvn", "test"]
 
 # Second stage: copy the output into a clean image
 #==================================================================================================
-FROM adoptopenjdk/openjdk11:jre-11.0.13_8 AS agent
+FROM eclipse-temurin:11-jdk AS agent
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    gdal-bin \
+    postgresql-client \
+    postgis \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy in the entrypoint script
 COPY docker/entrypoint.sh /entrypoint.sh

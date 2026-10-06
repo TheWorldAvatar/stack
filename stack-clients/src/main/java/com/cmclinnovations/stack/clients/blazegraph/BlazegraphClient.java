@@ -3,6 +3,7 @@ package com.cmclinnovations.stack.clients.blazegraph;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.jena.http.auth.AuthEnv;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.ModifyQuery;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.slf4j.Logger;
@@ -194,6 +196,12 @@ public class BlazegraphClient extends ClientWithEndpoint<BlazegraphEndpointConfi
     public RemoteStoreClient getRemoteStoreClient(String namespace) {
         BlazegraphEndpointConfig endpointConfig = readEndpointConfig();
         String url = endpointConfig.getUrl(namespace);
+        // RemoteStoreClient.executeConstruct builds its RDFConnection without an
+        // HttpClient, so Jena needs the credentials registered separately or those
+        // requests are sent unauthenticated.
+        AuthEnv.get().registerUsernamePassword(URI.create(url),
+                endpointConfig.getUsername(),
+                endpointConfig.getPassword());
         return new RemoteStoreClient(url, url,
                 endpointConfig.getUsername(),
                 endpointConfig.getPassword());

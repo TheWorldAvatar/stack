@@ -20,6 +20,7 @@ import org.eclipse.rdf4j.sparqlbuilder.rdf.Rdf;
 import org.eclipse.rdf4j.sparqlbuilder.rdf.RdfLiteral.StringLiteral;
 
 import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
+import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
@@ -227,7 +228,7 @@ final class DCATUpdateQuery {
 
     private void addOntopServer(Dataset dataset) {
         boolean used = dataset.usesOntop();
-        String ontopName = dataset.getOntopName();
+        String ontopName = StackClient.isRunningInKubernetes() ? EndpointNames.ONTOP : dataset.getOntopName();
         String url = used ? OntopClient.getInstance(ontopName).readEndpointConfig().getUrl() : null;
         addService(ontopServiceVar, StackClient.prependStackName(ontopName),
                 SparqlConstants.ONTOP_SERVICE, url, DCTERMS.REQUIRES, null, used);
