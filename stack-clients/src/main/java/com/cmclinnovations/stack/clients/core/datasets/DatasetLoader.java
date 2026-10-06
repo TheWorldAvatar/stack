@@ -286,8 +286,7 @@ public class DatasetLoader {
                 uploadOntopConfigFiles(dataset, directory, ontologyDatasetNames, ontopClient);
             }
 
-            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())
-                    && !EndpointNames.ONTOP.equals(newOntopServiceName)) {
+            if (PostGISClient.DEFAULT_DATABASE_NAME.equals(dataset.getDatabase())) {
                 OntopClient defaultOntopClient = OntopClient.getInstance(EndpointNames.ONTOP);
 
                 uploadOntopConfigFiles(dataset, directory, ontologyDatasetNames, defaultOntopClient);
