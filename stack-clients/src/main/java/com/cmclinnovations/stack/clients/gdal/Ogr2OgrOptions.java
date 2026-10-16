@@ -57,6 +57,9 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
         }
 
         processConfigOption(args, "OGR_TRUNCATE", append ? "NO" : "YES");
+        if (append) {
+            args.add("-append");
+        }
 
         return generateCommandInternal(args, source, destination, extraArgs);
     }
