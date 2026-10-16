@@ -52,14 +52,16 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
 
         List<String> args = new ArrayList<>(2 * extraArgs.length);
 
+        if (append) {
+            args.add("-append");
+            args.add("-update");
+        }
+
         if (null != layerName) {
             processOtherOption(args, "-nln", layerName);
         }
 
         processConfigOption(args, "OGR_TRUNCATE", append ? "NO" : "YES");
-        if (append) {
-            args.add("-append");
-        }
 
         return generateCommandInternal(args, source, destination, extraArgs);
     }
