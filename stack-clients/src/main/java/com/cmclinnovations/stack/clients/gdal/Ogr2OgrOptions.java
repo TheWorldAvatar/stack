@@ -96,6 +96,7 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
     public void setSchema(String schema) {
         if (null != schema) {
             layerCreationOptions.put("SCHEMA", schema);
+            outputDatasetOpenOptions.put("ACTIVE_SCHEMA", schema);
         }
     }
 }
