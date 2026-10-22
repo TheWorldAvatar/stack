@@ -21,7 +21,7 @@ public class CityDB extends GeoServerDataSubset {
     private static final Logger logger = LoggerFactory.getLogger(CityDB.class);
 
     public CityDB() {
-        this.append = true;
+        setAppend(true);
     }
 
     @Override
