@@ -19,7 +19,7 @@ public abstract class PostgresDataSubset extends DataSubset {
     private final Optional<String> schema = Optional.empty();
     private final Optional<String> table = Optional.empty();
     @JsonProperty
-    protected boolean append = false;
+    private boolean append = false;
     @JsonProperty
     private final Optional<String> sql = Optional.empty();
 
