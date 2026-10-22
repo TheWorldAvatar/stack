@@ -130,30 +130,28 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             }
         }
 
-        Legend legend = style.getLegend();
-        if (null != legend) {
-            updateStyleLegend(workspaceName, name, legend);
+        if (null != style.getLegend()) {
+            updateStyleLegend(style, workspaceName);
         }
     }
 
-    private void updateStyleLegend(String workspaceName, String styleName, Legend legend) {
+    private void updateStyleLegend(GeoServerStyle style, String workspaceName) {
         RESTEndpointConfig endpointConfig = readEndpointConfig();
         String baseUrl = endpointConfig.getUrl().toString();
         if (!baseUrl.endsWith("/")) {
             baseUrl += "/";
         }
-        String styleEndpoint = String.format("%srest/workspaces/%s/styles/%s.json", baseUrl, workspaceName, styleName);
+        String styleEndpoint = String.format("%srest/workspaces/%s/styles/%s.json", baseUrl, workspaceName,
+                style.getName());
 
         String payloadJson;
         try {
             ObjectNode payload = JsonHelper.getMapper().createObjectNode();
-            ObjectNode styleJson = payload.putObject("style");
-            styleJson.put("name", styleName);
-            styleJson.set("legend", JsonHelper.getMapper().valueToTree(legend));
+            payload.set("style", JsonHelper.getMapper().valueToTree(style));
             payloadJson = JsonHelper.getMapper().writeValueAsString(payload);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to serialise GeoServer style legend payload for style '" + workspaceName
-                    + ":" + styleName + "'.", ex);
+                    + ":" + style.getName() + "'.", ex);
         }
 
         HttpRequest request = HttpRequest.newBuilder(URI.create(styleEndpoint))
@@ -170,16 +168,16 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                     HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new RuntimeException("GeoServer legend update failed for style '" + workspaceName + ":"
-                        + styleName + "' with status " + response.statusCode() + ": " + response.body());
+                        + style.getName() + "' with status " + response.statusCode() + ": " + response.body());
             }
-            logger.info("GeoServer legend for '{}:{}' updated.", workspaceName, styleName);
+            logger.info("GeoServer legend for '{}:{}' updated.", workspaceName, style.getName());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(
-                    "GeoServer legend update failed for style '" + workspaceName + ":" + styleName + "'.", ex);
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.", ex);
         } catch (IOException ex) {
             throw new RuntimeException(
-                    "GeoServer legend update failed for style '" + workspaceName + ":" + styleName + "'.", ex);
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.", ex);
         }
     }
 

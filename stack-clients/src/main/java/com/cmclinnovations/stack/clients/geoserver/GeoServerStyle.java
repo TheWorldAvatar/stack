@@ -15,8 +15,8 @@ public class GeoServerStyle {
 
     @JsonCreator
     private GeoServerStyle(
-            @JsonProperty(value = "name", required = true) @Nonnull String name,
-            @JsonProperty(value = "file", required = true) @Nonnull Path file,
+            @JsonProperty(value = "name", required = true, access = JsonProperty.Access.READ_ONLY) @Nonnull String name,
+            @JsonProperty(value = "file", required = true, access = JsonProperty.Access.READ_ONLY) @Nonnull Path file,
             @JsonProperty("legend") Legend legend) {
         this.name = name;
         this.file = file;
