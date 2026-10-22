@@ -18,7 +18,7 @@ public abstract class PostgresDataSubset extends DataSubset {
     @JsonProperty(defaultValue = PostGISClient.DEFAULT_SCHEMA_NAME)
     private final Optional<String> schema = Optional.empty();
     private final Optional<String> table = Optional.empty();
-    @JsonProperty(defaultValue = "false")
+    @JsonProperty
     protected boolean append = false;
     @JsonProperty
     private final Optional<String> sql = Optional.empty();
