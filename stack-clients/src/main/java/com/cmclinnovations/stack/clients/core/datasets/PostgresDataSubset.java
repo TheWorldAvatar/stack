@@ -18,6 +18,8 @@ public abstract class PostgresDataSubset extends DataSubset {
     @JsonProperty(defaultValue = PostGISClient.DEFAULT_SCHEMA_NAME)
     private final Optional<String> schema = Optional.empty();
     private final Optional<String> table = Optional.empty();
+    @JsonProperty(defaultValue = "false")
+    protected boolean append = false;
     @JsonProperty
     private final Optional<String> sql = Optional.empty();
 
@@ -40,6 +42,16 @@ public abstract class PostgresDataSubset extends DataSubset {
                 .map(Optional::get)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @JsonProperty(defaultValue = "false")
+    public boolean isAppend() {
+        return append;
+    }
+
+    @JsonProperty
+    public void setAppend(boolean append) {
+        this.append = append;
     }
 
     @Override

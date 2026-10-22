@@ -20,12 +20,20 @@ public class CityDB extends GeoServerDataSubset {
 
     private static final Logger logger = LoggerFactory.getLogger(CityDB.class);
 
+    public CityDB() {
+        this.append = true;
+    }
+
+    @Override
+    @JsonProperty(defaultValue = "true")
+    public boolean isAppend() {
+        return append;
+    }
+
     @JsonProperty
     private final ImpExpOptions importOptions = new ImpExpOptions();
     @JsonProperty
     private final CityTilerOptions cityTilerOptions = new CityTilerOptions();
-    @JsonProperty
-    private boolean append = true;
     @JsonProperty
     private boolean skipThematicSurfacesFudge = false;
     @JsonProperty
