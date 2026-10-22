@@ -3,9 +3,15 @@ package com.cmclinnovations.stack.clients.geoserver;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +28,7 @@ import com.cmclinnovations.stack.clients.docker.DockerClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import it.geosolutions.geoserver.rest.GeoServerRESTManager;
 import it.geosolutions.geoserver.rest.Util;
@@ -121,6 +128,55 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                 throw new RuntimeException("GeoServer style '" + workspaceName + ":" + name
                         + "' does not exist and could not be created.");
             }
+        }
+
+        Legend legend = style.getLegend();
+        if (null != legend) {
+            updateStyleLegend(workspaceName, name, legend);
+        }
+    }
+
+    private void updateStyleLegend(String workspaceName, String styleName, Legend legend) {
+        RESTEndpointConfig endpointConfig = readEndpointConfig();
+        String baseUrl = endpointConfig.getUrl().toString();
+        if (!baseUrl.endsWith("/")) {
+            baseUrl += "/";
+        }
+        String styleEndpoint = String.format("%srest/workspaces/%s/styles/%s.json", baseUrl, workspaceName, styleName);
+
+        String payloadJson;
+        try {
+            ObjectNode payload = JsonHelper.getMapper().createObjectNode();
+            ObjectNode styleJson = payload.putObject("style");
+            styleJson.put("name", styleName);
+            styleJson.set("legend", JsonHelper.getMapper().valueToTree(legend));
+            payloadJson = JsonHelper.getMapper().writeValueAsString(payload);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to serialise GeoServer style legend payload for style '" + workspaceName
+                    + ":" + styleName + "'.", ex);
+        }
+
+        HttpRequest request = HttpRequest.newBuilder(URI.create(styleEndpoint))
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(
+                        (endpointConfig.getUserName() + ":" + endpointConfig.getPassword())
+                                .getBytes(StandardCharsets.UTF_8)))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(payloadJson))
+                .build();
+
+        try {
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("GeoServer legend update failed for style '" + workspaceName + ":"
+                        + styleName + "' with status " + response.statusCode() + ": " + response.body());
+            }
+            logger.info("GeoServer legend for '{}:{}' updated.", workspaceName, styleName);
+        } catch (IOException | InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + styleName + "'.", ex);
         }
     }
 
