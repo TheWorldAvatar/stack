@@ -173,8 +173,11 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                         + styleName + "' with status " + response.statusCode() + ": " + response.body());
             }
             logger.info("GeoServer legend for '{}:{}' updated.", workspaceName, styleName);
-        } catch (IOException | InterruptedException ex) {
+        } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            throw new RuntimeException(
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + styleName + "'.", ex);
+        } catch (IOException ex) {
             throw new RuntimeException(
                     "GeoServer legend update failed for style '" + workspaceName + ":" + styleName + "'.", ex);
         }
