@@ -52,6 +52,11 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
 
         List<String> args = new ArrayList<>(2 * extraArgs.length);
 
+        if (append) {
+            args.add("-append");
+            args.add("-update");
+        }
+
         if (null != layerName) {
             processOtherOption(args, "-nln", layerName);
         }
@@ -91,6 +96,7 @@ public class Ogr2OgrOptions extends CommonOptions<Ogr2OgrOptions> {
     public void setSchema(String schema) {
         if (null != schema) {
             layerCreationOptions.put("SCHEMA", schema);
+            outputDatasetOpenOptions.put("ACTIVE_SCHEMA", schema);
         }
     }
 }
