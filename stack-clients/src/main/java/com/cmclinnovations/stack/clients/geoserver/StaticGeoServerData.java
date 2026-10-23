@@ -9,8 +9,8 @@ public class StaticGeoServerData {
     private final String iconsDir = null;
     private final Optional<List<GeoserverOtherStaticFile>> otherFiles = Optional.empty();
 
-    public String getIconsDir() {
-        return iconsDir;
+    public Optional<String> getIconsDir() {
+        return Optional.ofNullable(iconsDir);
     }
 
     public List<GeoserverOtherStaticFile> getOtherFiles() {
