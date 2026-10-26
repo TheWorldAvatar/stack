@@ -10,9 +10,7 @@
             "subdirectory": "elevation",
             "skip": false,
             "geoServerSettings": {
-                "layerSettings": {
-                    "defaultStyle": "elevation"
-                }
+                "defaultStyle": "elevation"
             }
         }
     ],

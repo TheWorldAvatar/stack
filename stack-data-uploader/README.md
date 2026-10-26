@@ -616,8 +616,7 @@ netCDF files are commonly used in climate science projection data. The uploader 
 For raster data you can add a `geoServerSettings` node within the relevant data subset in the configuration json.
 Within that the following nodes can be added.
 
-- `"layerSettings"`
-  - `"defaultStyle"`: name of style within GeoServer that will be the style if of this layer if no other style is specified.
+- `"defaultStyle"` name of style within GeoServer that will be the style if of this layer if no other style is specified.
 
 ### Tabular Data
 
