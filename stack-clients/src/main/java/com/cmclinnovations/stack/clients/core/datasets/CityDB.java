@@ -24,12 +24,6 @@ public class CityDB extends GeoServerDataSubset {
         setAppend(true);
     }
 
-    @Override
-    @JsonProperty(defaultValue = "true")
-    public boolean isAppend() {
-        return append;
-    }
-
     @JsonProperty
     private final ImpExpOptions importOptions = new ImpExpOptions();
     @JsonProperty
@@ -105,14 +99,14 @@ public class CityDB extends GeoServerDataSubset {
         if (usePreviousIRIs) {
             logger.info("Loading previous data...");
             CityDBClient.getInstance().uploadFileToPostGIS(previousFile.toString(), database, importOptions,
-                    lineage, baseIRI, append);
+                    lineage, baseIRI, isAppend());
         }
 
         logger.info("Uploading data...");
 
         CityDBClient.getInstance()
                 .uploadFilesToPostGIS(dataSubsetDir.toString(), database, importOptions, lineage, baseIRI,
-                        append || usePreviousIRIs);
+                        isAppend() || usePreviousIRIs);
     }
 
     protected void augmentData(String database) {
