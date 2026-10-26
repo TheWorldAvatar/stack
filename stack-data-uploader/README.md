@@ -311,6 +311,18 @@ Each entry requires the following values to be specified:
 | -------- | ---------------------------------------------------------------------------------------------------------- |
 | `"name"` | The name of the style, it will need to be prefixed by the dataset's workspace when referenced in GeoServer |
 | `"file"` | The style file's path, relative to the dataset directory                                                   |
+| `"legend"` | Optional legend metadata to attach to the style in GeoServer after the style is created/updated          |
+
+If `"legend"` is provided, it supports the following fields:
+
+| Key                | Required | Description                                                   |
+| ------------------ | -------- | ------------------------------------------------------------- |
+| `"onlineResource"` | Yes      | Path/URL to the legend image resource in GeoServer            |
+| `"format"`         | No       | MIME type of the legend image (for example `image/png`)       |
+| `"height"`         | No       | Legend image height in pixels                                 |
+| `"width"`          | No       | Legend image width in pixels                                  |
+
+Only `"onlineResource"` is required; the other fields are optional and only sent when set.
 
 Currently only `.sld` style files are supported.
 Worked examples of different SLD styles can be found in the [GeoServer manual][sld-cookbook].
@@ -322,7 +334,13 @@ An example of a style specification in the configuration file is:
 "styles": [
     {
         "name": "elevation",
-        "file": "elevation.sld"
+        "file": "elevation.sld",
+        "legend": {
+            "onlineResource": "grass_fill.png",
+            "format": "image/png; charset=UTF-8",
+            "height": 32,
+            "width": 32
+        }
     }
 ]
 ```
