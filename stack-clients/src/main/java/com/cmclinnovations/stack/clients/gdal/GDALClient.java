@@ -210,8 +210,10 @@ public class GDALClient extends ContainerClient {
 
             ensurePostGISRasterSupportEnabled(postGISContainerId, database);
 
-            append = append && PostGISClient.getInstance().getRemoteStoreClient(database)
-                    .executeQuery("SELECT * FROM " + schema + ":" + layerName + " LIMIT 1").length() == 1;
+            // Check if the table already exists in PostGIS and update the append flag
+            // accordingly. Needed as GDAL raster append will throw an error if table does
+            // not exist.
+            append = append && PostGISClient.getInstance().tableExists(database, schema, layerName);
 
             uploadRasters(postGISContainerId, database, schema, layerName, postgresFiles, append);
         }
