@@ -209,6 +209,10 @@ public class GDALClient extends ContainerClient {
                     gdalOptions, mdimSettings);
 
             ensurePostGISRasterSupportEnabled(postGISContainerId, database);
+
+            append = append && PostGISClient.getInstance().getRemoteStoreClient(database)
+                    .executeQuery("SELECT * FROM " + schema + ":" + layerName + " LIMIT 1").length() == 1;
+
             uploadRasters(postGISContainerId, database, schema, layerName, postgresFiles, append);
         }
     }
