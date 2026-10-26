@@ -28,6 +28,7 @@ import com.cmclinnovations.stack.clients.docker.DockerClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import it.geosolutions.geoserver.rest.GeoServerRESTManager;
@@ -48,6 +49,8 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
     private final PostGISEndpointConfig postgreSQLEndpoint;
 
     private static GeoServerClient instance = null;
+
+    private static final ObjectMapper objectMapper = JsonHelper.getMapper();
 
     public static final Path SERVING_DIRECTORY = Path.of("/opt/geoserver_data/www");
     private static final Path STATIC_DATA_DIRECTORY = SERVING_DIRECTORY.resolve("static_data");
@@ -146,9 +149,9 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
 
         String payloadJson;
         try {
-            ObjectNode payload = JsonHelper.getMapper().createObjectNode();
-            payload.set("style", JsonHelper.getMapper().valueToTree(style));
-            payloadJson = JsonHelper.getMapper().writeValueAsString(payload);
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.set("style", objectMapper.valueToTree(style));
+            payloadJson = objectMapper.writeValueAsString(payload);
         } catch (IOException ex) {
             throw new RuntimeException("Failed to serialise GeoServer style legend payload for style '" + workspaceName
                     + ":" + style.getName() + "'.", ex);
