@@ -52,12 +52,17 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
 
     private static final ObjectMapper objectMapper = JsonHelper.getMapper();
 
-    public static final Path SERVING_DIRECTORY = Path.of("/opt/geoserver_data/www");
+    private static final Path GEOSERVER_DATA_DIRECTORY = Path.of("/opt/geoserver_data");
+
+    public static final Path SERVING_DIRECTORY = GEOSERVER_DATA_DIRECTORY.resolve("www");
     private static final Path STATIC_DATA_DIRECTORY = SERVING_DIRECTORY.resolve("static_data");
     private static final Path ICONS_DIRECTORY = SERVING_DIRECTORY.resolve("icons");
+    private static final Path WORKSPACES_DIRECTORY = GEOSERVER_DATA_DIRECTORY.resolve("workspaces");
     private static final String USER_PROJECTIONS_DIR = "/opt/geoserver_data/user_projections";
     private static final String GEOSERVER_RASTER_INDEX_DATABASE_SUFFIX = "_geoserver_indices";
     private static final String DIM_PREFIX = "dim_";
+
+    private static final Path STYLES_RELATIVE_PATH = Path.of("styles").resolve("legend");
 
     public static GeoServerClient getInstance() {
         if (null == instance) {
@@ -138,7 +143,32 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         }
     }
 
+    private Path getStyleDirectory(String workspaceName) {
+        return WORKSPACES_DIRECTORY.resolve(workspaceName).resolve(STYLES_RELATIVE_PATH);
+    }
+
     private void updateStyleLegend(GeoServerStyle style, String workspaceName) {
+        Path legendPath = getStyleDirectory(workspaceName);
+
+        String containerId = getContainerId(EndpointNames.GEOSERVER);
+
+        if (style.getLegend().getFile() != null) {
+            Path sourcePath = Path.of("/inputs/config").resolve(style.getLegend().getFile());
+            Path targetPath = legendPath.resolve(style.getLegend().getFile());
+            try {
+                sendFileContent(containerId, targetPath, Files.readAllBytes(sourcePath));
+            } catch (IOException ex) {
+                throw new RuntimeException(
+                        "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.",
+                        ex);
+            }
+
+            createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
+                    targetPath.toAbsolutePath().toString()).exec();
+
+            style.getLegend().setOnlineResource("legend/" + style.getLegend().getFile());
+        }
+
         RESTEndpointConfig endpointConfig = readEndpointConfig();
         String baseUrl = endpointConfig.getUrl().toString();
         if (!baseUrl.endsWith("/")) {
