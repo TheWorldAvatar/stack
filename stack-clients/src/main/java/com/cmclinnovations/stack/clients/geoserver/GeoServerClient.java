@@ -189,6 +189,8 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             loadStaticFile(baseDirectory, file);
         });
 
+        createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
+                STATIC_DATA_DIRECTORY.toAbsolutePath().toString()).exec();
     }
 
     private void loadStaticFile(Path baseDirectory, GeoserverOtherStaticFile file) {
