@@ -62,7 +62,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
     private static final String GEOSERVER_RASTER_INDEX_DATABASE_SUFFIX = "_geoserver_indices";
     private static final String DIM_PREFIX = "dim_";
 
-    private static final Path STYLES_RELATIVE_PATH = Path.of("styles").resolve("legend");
+    private static final Path STYLES_RELATIVE_PATH = Path.of("styles");
 
     public static GeoServerClient getInstance() {
         if (null == instance) {
@@ -148,13 +148,14 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
     }
 
     private void updateStyleLegend(GeoServerStyle style, String workspaceName) {
+        Legend legend = style.getLegend();
         Path legendPath = getStyleDirectory(workspaceName);
 
         String containerId = getContainerId(EndpointNames.GEOSERVER);
 
-        if (style.getLegend().getFile() != null) {
-            Path sourcePath = Path.of("/inputs/config").resolve(style.getLegend().getFile());
-            Path targetPath = legendPath.resolve(style.getLegend().getFile());
+        if (legend.getFile() != null) {
+            Path sourcePath = Path.of("/inputs/config").resolve(legend.getFile());
+            Path targetPath = legendPath.resolve(legend.getFile());
             try {
                 sendFileContent(containerId, targetPath, Files.readAllBytes(sourcePath));
             } catch (IOException ex) {
@@ -166,7 +167,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
                     targetPath.toAbsolutePath().toString()).exec();
 
-            style.getLegend().setOnlineResource("legend/" + style.getLegend().getFile());
+            legend.setOnlineResource(legend.getFile());
         }
 
         RESTEndpointConfig endpointConfig = readEndpointConfig();
