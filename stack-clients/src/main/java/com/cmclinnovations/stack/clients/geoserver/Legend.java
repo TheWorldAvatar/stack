@@ -1,7 +1,5 @@
 package com.cmclinnovations.stack.clients.geoserver;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,21 +7,29 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Legend {
 
+    private final String file;
+
     private final String format;
     private final Integer height;
     private final Integer width;
-    private final String onlineResource;
+    private String onlineResource;
 
     @JsonCreator
     public Legend(
-            @JsonProperty(value = "onlineResource", required = true) String onlineResource,
+            @JsonProperty(value = "file", access = JsonProperty.Access.WRITE_ONLY) String file,
+            @JsonProperty("onlineResource") String onlineResource,
             @JsonProperty("format") String format,
             @JsonProperty("height") Integer height,
             @JsonProperty("width") Integer width) {
-        this.onlineResource = Objects.requireNonNull(onlineResource, "onlineResource is required");
+        this.file = file;
+        this.onlineResource = onlineResource;
         this.format = format;
         this.height = height;
         this.width = width;
+    }
+
+    public String getFile() {
+        return file;
     }
 
     public String getFormat() {
@@ -40,5 +46,9 @@ public class Legend {
 
     public String getOnlineResource() {
         return onlineResource;
+    }
+
+    public void setOnlineResource(String onlineResource) {
+        this.onlineResource = onlineResource;
     }
 }
