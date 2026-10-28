@@ -20,12 +20,14 @@ public class CityDB extends GeoServerDataSubset {
 
     private static final Logger logger = LoggerFactory.getLogger(CityDB.class);
 
+    public CityDB() {
+        setAppend(true);
+    }
+
     @JsonProperty
     private final ImpExpOptions importOptions = new ImpExpOptions();
     @JsonProperty
     private final CityTilerOptions cityTilerOptions = new CityTilerOptions();
-    @JsonProperty
-    private boolean append = true;
     @JsonProperty
     private boolean skipThematicSurfacesFudge = false;
     @JsonProperty
@@ -97,14 +99,14 @@ public class CityDB extends GeoServerDataSubset {
         if (usePreviousIRIs) {
             logger.info("Loading previous data...");
             CityDBClient.getInstance().uploadFileToPostGIS(previousFile.toString(), database, importOptions,
-                    lineage, baseIRI, append);
+                    lineage, baseIRI, isAppend());
         }
 
         logger.info("Uploading data...");
 
         CityDBClient.getInstance()
                 .uploadFilesToPostGIS(dataSubsetDir.toString(), database, importOptions, lineage, baseIRI,
-                        append || usePreviousIRIs);
+                        isAppend() || usePreviousIRIs);
     }
 
     protected void augmentData(String database) {

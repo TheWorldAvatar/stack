@@ -33,7 +33,7 @@ public class XtoCityDB extends CityDB {
                 .resolve("previous.gz"));
         GDALClient.getInstance()
                 .uploadVectorFilesToPostGIS(database, getSchema(), getTable(), dataSubsetDir.toString(),
-                        ogr2ogrOptions, false);
+                        ogr2ogrOptions, isAppend());
         CityDBClient.getInstance()
                 .updateDatabase(database, getSridIn());
         CityDBClient.getInstance().preparePGforCityDB(database, getTable(), JsonHelper.handleFileValues(preprocessSql),

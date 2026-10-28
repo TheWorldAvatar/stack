@@ -22,7 +22,7 @@ public class OSMRouting extends GeoServerDataSubset {
     @Override
     public void loadData(Path dirPath, String database, String baseIRI) {
         PGRoutingClient.getInstance().uploadRoutingDataDirectoryToPostGIS(database, dirPath.toString(),
-                getTablePrefix(), osm2PGRoutingOptions, false);
+                getTablePrefix(), osm2PGRoutingOptions, isAppend());
     }
 
     @Override
