@@ -21,6 +21,7 @@ import com.cmclinnovations.stack.clients.blazegraph.BlazegraphClient;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
 import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerClient;
+import com.cmclinnovations.stack.clients.geoserver.GeoserverOtherStaticFile;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
 import com.cmclinnovations.stack.clients.ontop.OntopClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
@@ -251,8 +252,13 @@ public class DatasetLoader {
         if (dataset.hasStaticGeoServerData()) {
             GeoServerClient geoServerClient = GeoServerClient.getInstance();
             StaticGeoServerData staticGeoServerData = dataset.getStaticGeoServerData();
-            geoServerClient.loadIcons(directory, staticGeoServerData.getIconsDir());
-            geoServerClient.loadOtherFiles(directory, staticGeoServerData.getOtherFiles());
+            staticGeoServerData.getIconsDir()
+                    .filter(iconDir -> !iconDir.isBlank())
+                    .ifPresent(iconDir -> geoServerClient.loadIcons(directory, iconDir));
+            List<GeoserverOtherStaticFile> otherFiles = staticGeoServerData.getOtherFiles();
+            if (!otherFiles.isEmpty()) {
+                geoServerClient.loadOtherFiles(directory, otherFiles);
+            }
         }
     }
 

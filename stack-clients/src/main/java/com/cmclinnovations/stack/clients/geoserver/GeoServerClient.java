@@ -3,9 +3,15 @@ package com.cmclinnovations.stack.clients.geoserver;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +28,8 @@ import com.cmclinnovations.stack.clients.docker.DockerClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.cmclinnovations.stack.clients.postgis.PostGISEndpointConfig;
 import com.cmclinnovations.stack.clients.utils.JsonHelper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import it.geosolutions.geoserver.rest.GeoServerRESTManager;
 import it.geosolutions.geoserver.rest.Util;
@@ -42,12 +50,19 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
 
     private static GeoServerClient instance = null;
 
-    public static final Path SERVING_DIRECTORY = Path.of("/opt/geoserver_data/www");
+    private static final ObjectMapper objectMapper = JsonHelper.getMapper();
+
+    private static final Path GEOSERVER_DATA_DIRECTORY = Path.of("/opt/geoserver_data");
+
+    public static final Path SERVING_DIRECTORY = GEOSERVER_DATA_DIRECTORY.resolve("www");
     private static final Path STATIC_DATA_DIRECTORY = SERVING_DIRECTORY.resolve("static_data");
     private static final Path ICONS_DIRECTORY = SERVING_DIRECTORY.resolve("icons");
+    private static final Path WORKSPACES_DIRECTORY = GEOSERVER_DATA_DIRECTORY.resolve("workspaces");
     private static final String USER_PROJECTIONS_DIR = "/opt/geoserver_data/user_projections";
     private static final String GEOSERVER_RASTER_INDEX_DATABASE_SUFFIX = "_geoserver_indices";
     private static final String DIM_PREFIX = "dim_";
+
+    private static final Path STYLES_RELATIVE_PATH = Path.of("styles");
 
     public static GeoServerClient getInstance() {
         if (null == instance) {
@@ -122,6 +137,82 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                         + "' does not exist and could not be created.");
             }
         }
+
+        if (null != style.getLegend()) {
+            updateStyleLegend(style, workspaceName);
+        }
+    }
+
+    private Path getStyleDirectory(String workspaceName) {
+        return WORKSPACES_DIRECTORY.resolve(workspaceName).resolve(STYLES_RELATIVE_PATH);
+    }
+
+    private void updateStyleLegend(GeoServerStyle style, String workspaceName) {
+        Legend legend = style.getLegend();
+        Path legendPath = getStyleDirectory(workspaceName);
+
+        String containerId = getContainerId(EndpointNames.GEOSERVER);
+
+        if (legend.getFile() != null) {
+            Path sourcePath = Path.of("/inputs/config").resolve(legend.getFile());
+            Path targetPath = legendPath.resolve(legend.getFile());
+            try {
+                sendFileContent(containerId, targetPath, Files.readAllBytes(sourcePath));
+            } catch (IOException ex) {
+                throw new RuntimeException(
+                        "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.",
+                        ex);
+            }
+
+            createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
+                    targetPath.toAbsolutePath().toString()).exec();
+
+            legend.setOnlineResource(legend.getFile());
+        }
+
+        RESTEndpointConfig endpointConfig = readEndpointConfig();
+        String baseUrl = endpointConfig.getUrl().toString();
+        if (!baseUrl.endsWith("/")) {
+            baseUrl += "/";
+        }
+        String styleEndpoint = String.format("%srest/workspaces/%s/styles/%s.json", baseUrl, workspaceName,
+                style.getName());
+
+        String payloadJson;
+        try {
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.set("style", objectMapper.valueToTree(style));
+            payloadJson = objectMapper.writeValueAsString(payload);
+        } catch (IOException ex) {
+            throw new RuntimeException("Failed to serialise GeoServer style legend payload for style '" + workspaceName
+                    + ":" + style.getName() + "'.", ex);
+        }
+
+        HttpRequest request = HttpRequest.newBuilder(URI.create(styleEndpoint))
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(
+                        (endpointConfig.getUserName() + ":" + endpointConfig.getPassword())
+                                .getBytes(StandardCharsets.UTF_8)))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(payloadJson))
+                .build();
+
+        try {
+            HttpResponse<String> response = HttpClient.newHttpClient().send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("GeoServer legend update failed for style '" + workspaceName + ":"
+                        + style.getName() + "' with status " + response.statusCode() + ": " + response.body());
+            }
+            logger.info("GeoServer legend for '{}:{}' updated.", workspaceName, style.getName());
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.", ex);
+        } catch (IOException ex) {
+            throw new RuntimeException(
+                    "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.", ex);
+        }
     }
 
     public void loadOtherFiles(Path baseDirectory, List<GeoserverOtherStaticFile> files) {
@@ -129,6 +220,8 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             loadStaticFile(baseDirectory, file);
         });
 
+        createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
+                STATIC_DATA_DIRECTORY.toAbsolutePath().toString()).exec();
     }
 
     private void loadStaticFile(Path baseDirectory, GeoserverOtherStaticFile file) {

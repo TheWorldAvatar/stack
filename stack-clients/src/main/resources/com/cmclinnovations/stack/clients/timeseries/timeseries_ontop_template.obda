@@ -19,9 +19,9 @@ target		timeseries:data/[SCHEMA]/{data_iri_index} timeseries:hasObservation time
                 timeprefix:unitType timeprefix:unitSecond ;
                 timeprefix:hasTRS <[TRS_REPLACE]> .
             timeseries:result/[SCHEMA]/{id} a timeseries:Result ; 
-                timeseries:hasValue {"double precision"}, {wkt}^^geo:wktLiteral, {int};
+                timeseries:hasValue {"double precision"}, {wkt}^^geo:wktLiteral, {int}, {varchar};
                 timeseries:hasUnit {unit} . 
-source		SELECT id, time_as_number, time_as_timestamp, data_iri_index, "double precision", ST_AsText("geometry(Point,4326)") AS wkt, int, unit FROM "[SCHEMA]".time_series_data
+source		SELECT id, time_as_number, time_as_timestamp, data_iri_index, "double precision", ST_AsText("geometry(Point,4326)") AS wkt, int, varchar, unit FROM "[SCHEMA]".time_series_data
 
 mappingId	equivalent_iri_[SCHEMA]
 target		<{data_iri}> obda:isCanonicalIRIOf timeseries:data/[SCHEMA]/{data_iri_index} . 

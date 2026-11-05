@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-data-uploader</artifactId>
-    <version>1.60.3-update-postgis-SNAPSHOT</version>
+    <version>1.60.6-update-postgis-SNAPSHOT</version>
     <name>Stack Data Uploader</name>
     <url>https://theworldavatar.io</url>
     <parent>
@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.60.3-update-postgis-SNAPSHOT</version>
+            <version>1.60.6-update-postgis-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
