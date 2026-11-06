@@ -27,7 +27,14 @@ public class DatasetReader {
     private static final ObjectMapper objectMapper = JsonHelper.getMapper();
 
     public static Stream<Dataset> getStackSpecificDatasets(List<Dataset> allDatasets, String selectedDatasetName) {
-        Collection<Dataset> selectedDatasets;
+        DirectedAcyclicGraph<Dataset, DefaultEdge> graph = getStackSpecificDatasetGraph(allDatasets,
+                selectedDatasetName);
+        return StreamSupport.stream(graph.spliterator(), false);
+    }
+
+    public static DirectedAcyclicGraph<Dataset, DefaultEdge> getStackSpecificDatasetGraph(
+            List<Dataset> allDatasets, String selectedDatasetName) {
+        List<Dataset> selectedDatasets;
 
         // Check to see if there is a Dataset with the same name as the Stack.
         Optional<Dataset> stackSpecificDataset = allDatasets.stream()
@@ -47,7 +54,7 @@ public class DatasetReader {
         // exist.
         selectedDatasets.forEach(dataset -> addToGraph(allDatasets, graph, dataset));
 
-        return StreamSupport.stream(graph.spliterator(), false);
+        return graph;
     }
 
     public static List<Dataset> getAllDatasets(Path configPath) {
