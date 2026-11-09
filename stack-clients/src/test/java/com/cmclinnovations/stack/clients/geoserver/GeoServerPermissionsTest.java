@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 
 import org.junit.jupiter.api.Test;
@@ -32,19 +33,19 @@ class GeoServerPermissionsTest {
         Files.setPosixFilePermissions(raster, PosixFilePermissions.fromString("rw-------"));
         Files.setPosixFilePermissions(properties, PosixFilePermissions.fromString("rw-r--r--"));
         var owner = Files.getOwner(raster);
-        var group = Files.readAttributes(root, java.nio.file.attribute.PosixFileAttributes.class).group();
+        var group = Files.readAttributes(root, PosixFileAttributes.class).group();
 
         GeoServerClient.prepareGeoTiffDirectory(root, mosaic);
         GeoServerClient.prepareGeoTiffDirectory(root, mosaic);
 
         for (Path directory : new Path[] { mosaic.getParent().getParent(), mosaic.getParent(), mosaic, nested }) {
             assertEquals("rwxrwxr-x", PosixFilePermissions.toString(Files.getPosixFilePermissions(directory)));
-            assertEquals(group, Files.readAttributes(directory, java.nio.file.attribute.PosixFileAttributes.class).group());
+            assertEquals(group, Files.readAttributes(directory, PosixFileAttributes.class).group());
         }
         assertEquals("rw-rw----", PosixFilePermissions.toString(Files.getPosixFilePermissions(raster)));
         assertEquals("rw-rw-r--", PosixFilePermissions.toString(Files.getPosixFilePermissions(properties)));
         assertEquals(owner, Files.getOwner(raster));
-        assertEquals(group, Files.readAttributes(raster, java.nio.file.attribute.PosixFileAttributes.class).group());
+        assertEquals(group, Files.readAttributes(raster, PosixFileAttributes.class).group());
         assertEquals("rwxr-xr-x", PosixFilePermissions.toString(Files.getPosixFilePermissions(root)));
         assertEquals("rwxr-xr-x", PosixFilePermissions.toString(Files.getPosixFilePermissions(sibling)));
     }
