@@ -26,7 +26,7 @@ public class Raster extends GeoServerDataSubset {
     public void loadData(Path dirPath, String database, String baseIRI) {
         GDALClient.getInstance()
                 .uploadRasterFilesToPostGIS(database, getSchema(), getTable(), dirPath.toString(),
-                        gdalOptions, mdimSettings, false);
+                        gdalOptions, mdimSettings, isAppend());
     }
 
     @Override

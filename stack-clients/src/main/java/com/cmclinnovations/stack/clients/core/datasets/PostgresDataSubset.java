@@ -19,6 +19,8 @@ public abstract class PostgresDataSubset extends DataSubset {
     private final Optional<String> schema = Optional.empty();
     private final Optional<String> table = Optional.empty();
     @JsonProperty
+    private boolean append = false;
+    @JsonProperty
     private final Optional<String> sql = Optional.empty();
 
     @Override
@@ -40,6 +42,16 @@ public abstract class PostgresDataSubset extends DataSubset {
                 .map(Optional::get)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @JsonProperty(defaultValue = "false")
+    public boolean isAppend() {
+        return append;
+    }
+
+    @JsonProperty
+    public void setAppend(boolean append) {
+        this.append = append;
     }
 
     @Override

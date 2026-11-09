@@ -262,6 +262,7 @@ Each data subset must have the following values specified:
 | [`"name"`](#name-1)                           | No        | Last component of the subdirectory | The name of the data subset                                                                                                                                              |
 | [`"type"`](#type)                             | Yes       | N/A                                | The type of the data                                                                                                                                                     |
 | [`"subdirectory"`](#subdirectory)             | Yes       | N/A                                | The subdirectory within the dataset directory that contains the data in this data subset                                                                                 |
+| `"append"`                                    | No        | `false` for most subsets, `true` for `CityDB` | If set to `true`, the data is appended to existing Postgres tables instead of recreating or truncating them. This is supported for Postgres-backed subset types such as `Tabular`, `Vector`, `Raster`, `OSMRouting`, and `CityDB`. |
 | `"skip"`                                      | No        | `false`                            | If set to `true` this data subset will be ignored by the data uploader                                                                                                   |
 | `"sql"`                                       | No        | N/A                                | If the data is being loaded into the PostgreSQL database then the query provided here is run straight after the data is loaded [:open_file_folder:](#value-by-file-name) |
 | [`"additionalMetadata"`](#additionalmetadata) | No        | `{}`                               | Additional metadata describing the data subset                                                                                                                           |
@@ -280,16 +281,49 @@ More information about the different data types can be found [here](#data-types)
 If there are multiple data subsets then each one must have a separate subdirectory set.
 If there is only one data subset, this still have to be set, otherwise no upload will be performed.
 
+#### `"append"`
+
+Set this to `true` when you want to add rows to an existing Postgres table instead of dropping and recreating it.
+This is particularly useful for incremental loads or when a dataset is split into multiple uploads that should share the same layer/table.
+
+The default differs by subset type:
+
+- `CityDB` defaults to `true` to preserve the existing city model state while loading additional data.
+- Other Postgres-backed subset types default to `false` and will replace or truncate the target table before the new data is loaded.
+
+Example:
+
+```json
+{
+  "type": "Vector",
+  "subdirectory": "roads",
+  "append": true
+}
+```
+
 #### `"styles"`
 
 A list of GeoServer style file definition objects.
 The styles defined here will be loaded into the GeoServer workspace associated with the dataset.
 Each entry requires the following values to be specified:
 
-| Key      | Description                                                                                                |
-| -------- | ---------------------------------------------------------------------------------------------------------- |
-| `"name"` | The name of the style, it will need to be prefixed by the dataset's workspace when referenced in GeoServer |
-| `"file"` | The style file's path, relative to the dataset directory                                                   |
+| Key        | Description                                                                                                |
+| ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `"name"`   | The name of the style, it will need to be prefixed by the dataset's workspace when referenced in GeoServer |
+| `"file"`   | The style file's path, relative to the dataset directory                                                   |
+| `"legend"` | Optional legend metadata to attach to the style in GeoServer after the style is created/updated            |
+
+If `"legend"` is provided, it supports the following fields:
+
+| Key                | Required | Description                                                |
+| ------------------ | -------- | ---------------------------------------------------------- |
+| `"onlineResource"` | No*      | URL to the legend image resource in GeoServer              |
+| `"format"`         | No       | MIME type of the legend image (for example `image/png`)    |
+| `"height"`         | Yes      | Legend image height in pixels                              |
+| `"width"`          | Yes      | Legend image width in pixels                               |
+| `"file"`           | No*      | Path to the legend image file relative to config directory |
+
+**\* One of these needs to be populated.**
 
 Currently only `.sld` style files are supported.
 Worked examples of different SLD styles can be found in the [GeoServer manual][sld-cookbook].
@@ -301,7 +335,13 @@ An example of a style specification in the configuration file is:
 "styles": [
     {
         "name": "elevation",
-        "file": "elevation.sld"
+        "file": "elevation.sld",
+        "legend": {
+            "file": "grass_fill.png",
+            "format": "image/png; charset=UTF-8",
+            "height": 32,
+            "width": 32
+        }
     }
 ]
 ```
@@ -577,8 +617,7 @@ netCDF files are commonly used in climate science projection data. The uploader 
 For raster data you can add a `geoServerSettings` node within the relevant data subset in the configuration json.
 Within that the following nodes can be added.
 
-- `"layerSettings"`
-  - `"defaultStyle"`: name of style within GeoServer that will be the style if of this layer if no other style is specified.
+- `"defaultStyle"` name of style within GeoServer that will be the style if of this layer if no other style is specified.
 
 ### Tabular Data
 

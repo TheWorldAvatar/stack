@@ -20,7 +20,7 @@ public class Vector extends GeoServerDataSubset {
     public void loadData(Path dirPath, String database, String baseIRI) {
         GDALClient.getInstance()
                 .uploadVectorFilesToPostGIS(database, getSchema(), getTable(), dirPath.toString(), ogr2ogrOptions,
-                        false);
+                        isAppend());
     }
 
     @Override

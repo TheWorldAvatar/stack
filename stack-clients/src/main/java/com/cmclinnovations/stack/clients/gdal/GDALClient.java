@@ -230,6 +230,12 @@ public class GDALClient extends ContainerClient {
                     gdalOptions, mdimSettings);
 
             ensurePostGISRasterSupportEnabled(database);
+
+            // Check if the table already exists in PostGIS and update the append flag
+            // accordingly. Needed as GDAL raster append will throw an error if table does
+            // not exist.
+            append = append && PostGISClient.getInstance().tableExists(database, schema, layerName);
+
             uploadRasters(database, schema, layerName, postgresFiles, append);
         }
     }

@@ -184,4 +184,17 @@ public class PostGISClient extends ClientWithEndpoint<PostGISEndpointConfig> {
                 + escapedAuthName + "'," + srid + ",'" + escapedWkt + "','" + escapedProj4 + "')";
         executeUpdate(database, sql);
     }
+
+    public boolean tableExists(String database, String tableName) {
+        return tableExists(database, "public", tableName);
+    }
+
+    public boolean tableExists(String database, String schemaName, String tableName) {
+        String query = "SELECT 1 FROM information_schema.tables " +
+                "WHERE table_schema = '" + schemaName + "' " +
+                "AND table_name = '" + tableName + "' " +
+                "LIMIT 1";
+
+        return getRemoteStoreClient(database).executeQuery(query).length() == 1;
+    }
 }
