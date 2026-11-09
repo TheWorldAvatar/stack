@@ -12,11 +12,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,6 +237,45 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         return Files.isDirectory(Path.of(StackClient.GEOTIFFS_DIR));
     }
 
+    static void prepareGeoTiffDirectory(Path geotiffRoot, Path geotiffDir) throws IOException {
+        Path root = geotiffRoot.toRealPath();
+        Path directory = geotiffDir.toRealPath();
+        if (!directory.startsWith(root) || directory.equals(root)) {
+            throw new IllegalArgumentException("GeoTIFF mosaic directory must be inside '" + root + "'.");
+        }
+
+        // The volume's group is shared with GeoServer, which must write mosaic metadata.
+        GroupPrincipal group = Files.readAttributes(root, PosixFileAttributes.class).group();
+        for (Path parent = directory.getParent(); !parent.equals(root); parent = parent.getParent()) {
+            makeGeoTiffPathGroupWritable(parent, group);
+        }
+        try (Stream<Path> paths = Files.walk(directory)) {
+            for (var iterator = paths.iterator(); iterator.hasNext();) {
+                Path path = iterator.next();
+                if (!Files.isSymbolicLink(path)) {
+                    makeGeoTiffPathGroupWritable(path, group);
+                }
+            }
+        }
+    }
+
+    private static void makeGeoTiffPathGroupWritable(Path path, GroupPrincipal group) throws IOException {
+        PosixFileAttributes attributes = Files.readAttributes(path, PosixFileAttributes.class);
+        if (!attributes.group().equals(group)) {
+            Files.getFileAttributeView(path, PosixFileAttributeView.class).setGroup(group);
+        }
+        Set<PosixFilePermission> permissions = attributes.permissions();
+        Set<PosixFilePermission> updatedPermissions = new HashSet<>(permissions);
+        updatedPermissions.add(PosixFilePermission.GROUP_READ);
+        updatedPermissions.add(PosixFilePermission.GROUP_WRITE);
+        if (attributes.isDirectory()) {
+            updatedPermissions.add(PosixFilePermission.GROUP_EXECUTE);
+        }
+        if (!updatedPermissions.equals(permissions)) {
+            Files.setPosixFilePermissions(path, updatedPermissions);
+        }
+    }
+
     private void copyRecursively(Path sourcePath, Path targetPath) throws IOException {
         if (Files.isDirectory(sourcePath)) {
             Files.createDirectories(targetPath);
@@ -437,6 +483,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                     for (Map.Entry<String, byte[]> entry : files.entrySet()) {
                         Files.write(geotiffDir.resolve(entry.getKey()), entry.getValue());
                     }
+                    prepareGeoTiffDirectory(Path.of(StackClient.GEOTIFFS_DIR), geotiffDir);
                 } else {
                     String containerId = getContainerId(EndpointNames.GEOSERVER);
                     sendFilesContent(containerId, files, geotiffDir.toString());
@@ -444,7 +491,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             } catch (IOException ex) {
                 throw new RuntimeException(
                         "The 'datastore.properties' and 'indexer.properties' files for the GeoServer coverage datastore '"
-                                + name + "' could not be created.",
+                                + name + "' could not be created or made writable by the shared volume group.",
                         ex);
             }
             try {
