@@ -958,6 +958,12 @@ This way you can look at look at the user interfaces of the various services (se
 
 ### Quick Fixes
 
+#### GeoServer raster mosaic permissions
+
+If publishing a raster mosaic fails with `location is writable:false` in the GeoServer logs, check filesystem permissions rather than URL Checks. GeoServer needs write access to the mosaic directory to create its metadata.
+
+For socketless uploads, mount the same `/geotiffs` volume in the uploader and GeoServer. Its root directory's group must be one of GeoServer's runtime groups. Before publishing, the uploader assigns that group to the mosaic files, directories, and parent directories within the volume and grants group read/write access plus directory traversal. It does not grant world-write access. The uploader must own the paths or have permission to change their group and permissions.
+
 #### General
 
 - For certain vector geometries (e.g. `MULTILINESTRING` and `LINESTRING`) it is necessary to use [`-nlt`][ogr2ogr-nlt] to specify the geometry in the following way.
