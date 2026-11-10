@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.60.6-update-postgis-SNAPSHOT</version>
+    <version>1.60.6</version>
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
     <parent>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.60.6-update-postgis-SNAPSHOT</version>
+            <version>1.60.6</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
