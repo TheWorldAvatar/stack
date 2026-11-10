@@ -15,6 +15,12 @@ More details of the Stack Data Uploader and instructions for using it can be fou
 The Stack Clients library is a collection of Java code that provides APIs to interact with the containers.
 Detailed documentation of these APIs is currently a work in progress.
 
+Use `StackClient.getServiceHostName("simple-model")` to resolve an internal service
+hostname for either deployment system. It returns `simple-model` in Kubernetes
+(in the caller's namespace), or `<STACK_NAME>-simple-model` in Docker, replacing
+underscores with hyphens to match Stack Manager service names. Kubernetes is
+detected using the non-blank `KUBERNETES_SERVICE_HOST` environment variable.
+
 It is also possible to wrap this using the py4j library to call them from Python code.
 This has been done for several agents but still needs some work to make it standardised.
 

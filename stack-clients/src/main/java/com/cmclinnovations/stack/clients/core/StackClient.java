@@ -68,6 +68,17 @@ public final class StackClient {
         return stackName + separator + name;
     }
 
+    /**
+     * Resolves an internal service hostname in the current stack. Kubernetes uses
+     * the unprefixed service name in the caller's namespace; Docker uses the
+     * stack-prefixed name with underscores replaced by hyphens.
+     */
+    public static String getServiceHostName(String serviceName) {
+        return isRunningInKubernetes()
+                ? serviceName
+                : prependStackName(serviceName).replace('_', '-');
+    }
+
     public static String removeStackName(String name) {
         return name.replaceFirst("^/?" + StackClient.getStackNameForRegex() + "(?:-|_)", "");
     }
