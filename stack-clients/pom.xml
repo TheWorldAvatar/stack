@@ -117,7 +117,7 @@
         <dependency>
             <groupId>uk.ac.cam.cares.jps</groupId>
             <artifactId>jps-base-lib</artifactId>
-            <version>1.50.0</version>
+            <version>1.51.0-timeseries-opti-SNAPSHOT</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
         <dependency>
