@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-data-uploader</artifactId>
-    <version>1.60.7-baselib-ts-eff-SNAPSHOT</version>
+    <version>1.60.7</version>
     <name>Stack Data Uploader</name>
     <url>https://theworldavatar.io</url>
     <parent>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.60.7-baselib-ts-eff-SNAPSHOT</version>
+            <version>1.60.7</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
