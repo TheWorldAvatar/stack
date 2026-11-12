@@ -7,7 +7,6 @@
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
     <version>1.60.8-parallel-data-loading-SNAPSHOT</version>
-
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
     <parent>
