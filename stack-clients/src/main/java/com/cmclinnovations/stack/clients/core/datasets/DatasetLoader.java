@@ -96,8 +96,7 @@ public class DatasetLoader {
         Set<Dataset> pendingDatasets = new HashSet<>(datasetGraph.vertexSet());
 
         while (!pendingDatasets.isEmpty()) {
-            List<Dataset> readyDatasets = datasetGraph.vertexSet().stream()
-                    .filter(pendingDatasets::contains)
+            List<Dataset> readyDatasets = pendingDatasets.stream()
                     .filter(dataset -> datasetGraph.incomingEdgesOf(dataset).stream()
                             .map(datasetGraph::getEdgeSource)
                             .noneMatch(pendingDatasets::contains))
@@ -108,7 +107,7 @@ public class DatasetLoader {
             }
 
             readyDatasets.parallelStream().forEach(this::loadDataset);
-            readyDatasets.forEach(pendingDatasets::remove);
+            pendingDatasets.removeAll(readyDatasets);
         }
     }
 
