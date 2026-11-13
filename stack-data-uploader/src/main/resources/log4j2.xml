@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Both log4j-slf4j-impl (direct) and logback-classic (transitive) are on the
+    classpath, so the SLF4J binding that wins is not deterministic. This mirrors
+    logback.xml so stdout is INFO-level either way. See also logback.xml.
+-->
+<Configuration name="StackDataUploader" status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5p %c{1.} - %m%n"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Verbose even at DEBUG: dumps full request/response bodies. -->
+        <Logger name="org.apache.http.wire" level="WARN"/>
+        <Logger name="httpclient.wire" level="WARN"/>
+        <Logger name="org.apache.http.impl.conn" level="WARN"/>
+        <Logger name="org.apache.commons.httpclient" level="WARN"/>
+        <Logger name="org.eclipse.rdf4j.http.client" level="INFO"/>
+
+        <Root level="${env:STACK_LOG_LEVEL:-INFO}">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

@@ -11,11 +11,19 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.GroupPrincipal;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,21 +159,21 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         Legend legend = style.getLegend();
         Path legendPath = getStyleDirectory(workspaceName);
 
-        String containerId = getContainerId(EndpointNames.GEOSERVER);
-
         if (legend.getFile() != null) {
             Path sourcePath = Path.of("/inputs/config").resolve(legend.getFile());
             Path targetPath = legendPath.resolve(legend.getFile());
             try {
-                sendFileContent(containerId, targetPath, Files.readAllBytes(sourcePath));
+                if (hasLocalGeoServerDataMount()) {
+                    copyRecursively(sourcePath, targetPath);
+                } else {
+                    String containerId = getContainerId(EndpointNames.GEOSERVER);
+                    sendFileContent(containerId, targetPath, Files.readAllBytes(sourcePath));
+                }
             } catch (IOException ex) {
                 throw new RuntimeException(
                         "GeoServer legend update failed for style '" + workspaceName + ":" + style.getName() + "'.",
                         ex);
             }
-
-            createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
-                    targetPath.toAbsolutePath().toString()).exec();
 
             legend.setOnlineResource(legend.getFile());
         }
@@ -219,26 +227,102 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
         files.forEach(file -> {
             loadStaticFile(baseDirectory, file);
         });
+    }
 
-        createComplexCommand(getContainerId(EndpointNames.GEOSERVER), "chown", "-R", "tomcat:tomcat",
-                STATIC_DATA_DIRECTORY.toAbsolutePath().toString()).exec();
+    private boolean hasLocalGeoServerDataMount() {
+        return Files.isDirectory(SERVING_DIRECTORY);
+    }
+
+    private boolean hasLocalGeoTiffsMount() {
+        return Files.isDirectory(Path.of(StackClient.GEOTIFFS_DIR));
+    }
+
+    static void prepareGeoTiffDirectory(Path geotiffRoot, Path geotiffDir) throws IOException {
+        Path root = geotiffRoot.toRealPath();
+        Path directory = geotiffDir.toRealPath();
+        if (!directory.startsWith(root) || directory.equals(root)) {
+            throw new IllegalArgumentException("GeoTIFF mosaic directory must be inside '" + root + "'.");
+        }
+
+        // The volume's group is shared with GeoServer, which must write mosaic metadata.
+        GroupPrincipal group = Files.readAttributes(root, PosixFileAttributes.class).group();
+        for (Path parent = directory.getParent(); !parent.equals(root); parent = parent.getParent()) {
+            makeGeoTiffPathGroupWritable(parent, group);
+        }
+        try (Stream<Path> paths = Files.walk(directory)) {
+            for (var iterator = paths.iterator(); iterator.hasNext();) {
+                Path path = iterator.next();
+                if (!Files.isSymbolicLink(path)) {
+                    makeGeoTiffPathGroupWritable(path, group);
+                }
+            }
+        }
+    }
+
+    private static void makeGeoTiffPathGroupWritable(Path path, GroupPrincipal group) throws IOException {
+        PosixFileAttributes attributes = Files.readAttributes(path, PosixFileAttributes.class);
+        if (!attributes.group().equals(group)) {
+            Files.getFileAttributeView(path, PosixFileAttributeView.class).setGroup(group);
+        }
+        Set<PosixFilePermission> permissions = attributes.permissions();
+        Set<PosixFilePermission> updatedPermissions = new HashSet<>(permissions);
+        updatedPermissions.add(PosixFilePermission.GROUP_READ);
+        updatedPermissions.add(PosixFilePermission.GROUP_WRITE);
+        if (attributes.isDirectory()) {
+            updatedPermissions.add(PosixFilePermission.GROUP_EXECUTE);
+        }
+        if (!updatedPermissions.equals(permissions)) {
+            Files.setPosixFilePermissions(path, updatedPermissions);
+        }
+    }
+
+    private void copyRecursively(Path sourcePath, Path targetPath) throws IOException {
+        if (Files.isDirectory(sourcePath)) {
+            Files.createDirectories(targetPath);
+            try (var paths = Files.walk(sourcePath)) {
+                paths.forEach(currentSourcePath -> {
+                    Path relativePath = sourcePath.relativize(currentSourcePath);
+                    Path currentTargetPath = targetPath.resolve(relativePath);
+                    try {
+                        if (Files.isDirectory(currentSourcePath)) {
+                            Files.createDirectories(currentTargetPath);
+                        } else {
+                            Files.createDirectories(currentTargetPath.getParent());
+                            Files.copy(currentSourcePath, currentTargetPath, StandardCopyOption.REPLACE_EXISTING);
+                        }
+                    } catch (IOException ex) {
+                        throw new RuntimeException(
+                                "Failed to copy GeoServer file '" + currentSourcePath + "' to '"
+                                        + currentTargetPath + "'.",
+                                ex);
+                    }
+                });
+            }
+        } else {
+            Files.createDirectories(targetPath.getParent());
+            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
     }
 
     private void loadStaticFile(Path baseDirectory, GeoserverOtherStaticFile file) {
         Path absSourcePath = baseDirectory.resolve(file.getSource());
         Path absTargetPath = STATIC_DATA_DIRECTORY.resolve(file.getTarget());
 
-        String containerId = getContainerId(EndpointNames.GEOSERVER);
-
         if (!Files.exists(absSourcePath)) {
             throw new RuntimeException(
                     "Static GeoServer data '" + absSourcePath.toString() + "' does not exist and could not be loaded.");
-        } else if (Files.isDirectory(absSourcePath)) {
-            sendFolder(containerId, absSourcePath.toString(), absTargetPath.toString());
         } else {
             try {
-                sendFileContent(containerId, STATIC_DATA_DIRECTORY.resolve(file.getTarget()),
-                        Files.readAllBytes(baseDirectory.resolve(file.getSource())));
+                if (hasLocalGeoServerDataMount()) {
+                    copyRecursively(absSourcePath, absTargetPath);
+                } else if (Files.isDirectory(absSourcePath)) {
+                    sendFolder(getContainerId(EndpointNames.GEOSERVER), absSourcePath.toString(),
+                            absTargetPath.toString());
+                } else {
+                    sendFileContent(getContainerId(EndpointNames.GEOSERVER),
+                            STATIC_DATA_DIRECTORY.resolve(file.getTarget()),
+                            Files.readAllBytes(baseDirectory.resolve(file.getSource())));
+                }
             } catch (IOException ex) {
                 throw new RuntimeException(
                         "Failed to serialise file '" + absSourcePath.toString() + "'.");
@@ -253,8 +337,16 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                     "Static GeoServer data '" + baseDirectory.resolve(iconDir)
                             + "' does not exist and could not be loaded.");
         } else if (Files.isDirectory(baseDirectory.resolve(iconDir))) {
-            sendFolder(getContainerId(EndpointNames.GEOSERVER), baseDirectory.resolve(iconDir).toString(),
-                    ICONS_DIRECTORY.toString());
+            try {
+                if (hasLocalGeoServerDataMount()) {
+                    copyRecursively(baseDirectory.resolve(iconDir), ICONS_DIRECTORY);
+                } else {
+                    sendFolder(getContainerId(EndpointNames.GEOSERVER), baseDirectory.resolve(iconDir).toString(),
+                            ICONS_DIRECTORY.toString());
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to load GeoServer icons from '" + iconDir + "'.", ex);
+            }
         } else {
             throw new RuntimeException("Geoserver icon directory " + iconDir + "does not exist or is not a directory.");
         }
@@ -343,8 +435,6 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             postgisClient.createDatabase(geoserverRasterIndexDatabaseName);
             postgisClient.createSchema(geoserverRasterIndexDatabaseName, schema);
 
-            String containerId = getContainerId(EndpointNames.GEOSERVER);
-
             Properties datastoreProperties = new Properties();
             datastoreProperties.putIfAbsent("SPI", "org.geotools.data.postgis.PostgisNGDataStoreFactory");
             datastoreProperties.putIfAbsent("host", postgreSQLEndpoint.getHostName());
@@ -388,12 +478,20 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
                 files.put("indexer.properties",
                         indexerProperties.getBytes());
 
-                sendFilesContent(containerId, files, geotiffDir.toString());
-                createComplexCommand(containerId, "chown", "-R", "tomcat:tomcat", StackClient.GEOTIFFS_DIR).exec();
+                if (hasLocalGeoTiffsMount()) {
+                    Files.createDirectories(geotiffDir);
+                    for (Map.Entry<String, byte[]> entry : files.entrySet()) {
+                        Files.write(geotiffDir.resolve(entry.getKey()), entry.getValue());
+                    }
+                    prepareGeoTiffDirectory(Path.of(StackClient.GEOTIFFS_DIR), geotiffDir);
+                } else {
+                    String containerId = getContainerId(EndpointNames.GEOSERVER);
+                    sendFilesContent(containerId, files, geotiffDir.toString());
+                }
             } catch (IOException ex) {
                 throw new RuntimeException(
                         "The 'datastore.properties' and 'indexer.properties' files for the GeoServer coverage datastore '"
-                                + name + "' could not be created.",
+                                + name + "' could not be created or made writable by the shared volume group.",
                         ex);
             }
             try {
@@ -441,15 +539,43 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
     }
 
     public void addProjectionsToGeoserver(String wktString, String srid) {
+        byte[] projectionFileContent = (srid + "=" + wktString + "\n").getBytes();
+        boolean wroteProjection = false;
 
-        String geoserverContainerId = getContainerId("geoserver");
-        DockerClient dockerClient = DockerClient.getInstance();
+        if (hasLocalGeoServerDataMount()) {
+            try {
+                Path userProjectionsDir = Path.of(USER_PROJECTIONS_DIR);
+                Files.createDirectories(userProjectionsDir);
+                Files.write(userProjectionsDir.resolve("epsg.properties"), projectionFileContent);
+                wroteProjection = true;
+            } catch (IOException ex) {
+                throw new RuntimeException("Failed to write GeoServer custom projections file to local data mount.",
+                        ex);
+            }
+        }
 
-        dockerClient.makeDir(geoserverContainerId, USER_PROJECTIONS_DIR);
+        try {
+            String geoserverContainerId = getContainerId("geoserver");
+            DockerClient dockerClient = DockerClient.getInstance();
+            dockerClient.makeDir(geoserverContainerId, USER_PROJECTIONS_DIR);
+            sendFileContent(geoserverContainerId,
+                    Path.of(USER_PROJECTIONS_DIR, "epsg.properties"),
+                    projectionFileContent);
+            wroteProjection = true;
+        } catch (RuntimeException ex) {
+            if (!wroteProjection) {
+                logger.debug("GeoServer projection could not be written via Docker API.", ex);
+            } else {
+                logger.warn("Failed to update GeoServer projection file via Docker after local write succeeded.", ex);
+            }
+        }
 
-        sendFileContent(geoserverContainerId,
-                Path.of(USER_PROJECTIONS_DIR, "epsg.properties"),
-                (srid + "=" + wktString + "\n").getBytes());
+        if (!wroteProjection) {
+            logger.warn(
+                    "GeoServer custom projection '{}' could not be written because no shared data mount or Docker socket is available.",
+                    srid);
+            return;
+        }
 
         GeoServerClient.getInstance().reload();
     }
