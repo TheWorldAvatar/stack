@@ -52,6 +52,8 @@ public class GDALClient extends ContainerClient {
 
     private static final String GDALSRSINFO = "gdalsrsinfo";
 
+    private static final Object RASTER2PGSQL_INSTALLATION_LOCK = new Object();
+
     private static final Logger logger = LoggerFactory.getLogger(GDALClient.class);
 
     private final PostGISEndpointConfig postgreSQLEndpoint;
@@ -597,13 +599,14 @@ public class GDALClient extends ContainerClient {
     private void uploadRasters(String postGISContainerId, String database, String schemaName, String layerName,
             List<String> geotiffFiles, boolean append) {
 
+        ensureRaster2pgsqlInstalled(postGISContainerId);
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
         String mode = append ? "-a" : "-d";
+        // https://postgis.net/docs/using_raster_dataman.html#RT_Raster_Loader
         String execId = createComplexCommand(postGISContainerId, "bash", "-c",
-                "(which raster2pgsql || (apt update && apt install -y postgis && rm -rf /var/lib/apt/lists/*)) && " +
-                // https://postgis.net/docs/using_raster_dataman.html#RT_Raster_Loader
-                        "raster2pgsql " + mode + " -C -t auto -R -F -q -I -M -Y"
+                "raster2pgsql " + mode + " -C -t auto -R -F -q -I -M -Y"
                         + geotiffFiles.stream().collect(Collectors.joining("' '", " '", "' "))
                         + "\"" + schemaName + "\".\"" + layerName + "\""
                         + " | psql -U " + postgreSQLEndpoint.getUsername() + " -d " + database + " -w")
@@ -613,6 +616,18 @@ public class GDALClient extends ContainerClient {
                 .exec();
 
         handleErrors(errorStream, execId, logger);
+    }
+
+    private void ensureRaster2pgsqlInstalled(String postGISContainerId) {
+        synchronized (RASTER2PGSQL_INSTALLATION_LOCK) {
+            ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
+            String execId = createComplexCommand(postGISContainerId, "bash", "-c",
+                    "which raster2pgsql || (apt update && apt install -y postgis && rm -rf /var/lib/apt/lists/*)")
+                    .withErrorStream(errorStream)
+                    .withEvaluationTimeout(3600)
+                    .exec();
+            handleErrors(errorStream, execId, logger);
+        }
     }
 
     // add .tif extension on files in geotiffs directory
