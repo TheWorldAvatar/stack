@@ -51,8 +51,6 @@ public class GDALClient extends ContainerClient {
 
     private static final String GDALSRSINFO = "gdalsrsinfo";
 
-    private static final Object RASTER2PGSQL_INSTALLATION_LOCK = new Object();
-
     private static final Logger logger = LoggerFactory.getLogger(GDALClient.class);
 
     private final PostGISEndpointConfig postgreSQLEndpoint;
@@ -70,7 +68,7 @@ public class GDALClient extends ContainerClient {
     private GDALClient() {
         postgreSQLEndpoint = readEndpointConfig(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
         commandTimeoutSeconds = GdalExecutionConfig.resolveCommandTimeoutSeconds(
-            System.getenv(StackClient.GDAL_COMMAND_TIMEOUT_KEY), 300L);
+                System.getenv(StackClient.GDAL_COMMAND_TIMEOUT_KEY), 300L);
         logger.info("Using GDAL command timeout of {}s.", commandTimeoutSeconds);
     }
 
@@ -175,7 +173,7 @@ public class GDALClient extends ContainerClient {
                 command,
                 options.getEnv(),
                 null,
-            commandTimeoutSeconds);
+                commandTimeoutSeconds);
 
         // Some GDAL builds do not support '-if'; if encountered, retry once without it.
         if (result.exitCode != 0 && result.stderr.contains("Unknown option name '-if'")) {
@@ -601,21 +599,22 @@ public class GDALClient extends ContainerClient {
     private void uploadRasters(String database, String schemaName, String layerName,
             List<String> geotiffFiles, boolean append) {
 
-        ensureRaster2pgsqlInstalled(postGISContainerId);
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
         String mode = append ? "-a" : "-d";
-        // https://postgis.net/docs/using_raster_dataman.html#RT_Raster_Loader
-        String execId = createComplexCommand(postGISContainerId, "bash", "-c",
-                "raster2pgsql " + mode + " -C -t auto -R -F -q -I -M -Y"
-                        + geotiffFiles.stream().collect(Collectors.joining("' '", " '", "' "))
-                        + "\"" + schemaName + "\".\"" + layerName + "\""
-                        + " | psql -U " + postgreSQLEndpoint.getUsername() + " -d " + database + " -w")
-                .withOutputStream(outputStream)
-                .withErrorStream(errorStream)
-                .withEvaluationTimeout(3600)
-                .exec();
+        String filesArg = geotiffFiles.stream().map(GDALClient::shellQuote).collect(Collectors.joining(" "));
+        String command = "raster2pgsql " + mode + " -C -t auto -R -F -q -I -M -Y "
+                + filesArg + " \"" + schemaName + "\".\"" + layerName + "\""
+                + " | psql -h " + shellQuote(postgreSQLEndpoint.getHostName())
+                + " -p " + shellQuote(postgreSQLEndpoint.getPort())
+                + " -U " + shellQuote(postgreSQLEndpoint.getUsername())
+                + " -d " + shellQuote(database)
+                + " -w";
+        CommandResult result = runLocalCommand(
+                List.of("bash", "-lc", command),
+                Map.of("PGPASSWORD", postgreSQLEndpoint.getPassword()),
+                null,
+                3600);
+        handleLocalCommandErrors(result, "raster2pgsql");
+    }
 
     private static final class CommandResult {
         private final int exitCode;
@@ -698,20 +697,7 @@ public class GDALClient extends ContainerClient {
         }
     }
 
-    private void ensureRaster2pgsqlInstalled(String postGISContainerId) {
-        synchronized (RASTER2PGSQL_INSTALLATION_LOCK) {
-            ByteArrayOutputStream errorStream = new ByteArrayOutputStream();
-            String execId = createComplexCommand(postGISContainerId, "bash", "-c",
-                    "which raster2pgsql || (apt update && apt install -y postgis && rm -rf /var/lib/apt/lists/*)")
-                    .withErrorStream(errorStream)
-                    .withEvaluationTimeout(3600)
-                    .exec();
-            handleErrors(errorStream, execId, logger);
-        }
-    }
-
     // add .tif extension on files in geotiffs directory
-
     // return filePath for any file to either "geotiffs" or "multidim_geospatial"
     private static String generateOutFilePath(String basePathIn, String databaseName, String schemaName,
             String layerName, String filePath, String destinationDirectory) {
