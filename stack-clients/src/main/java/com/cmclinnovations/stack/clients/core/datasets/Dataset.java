@@ -17,8 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import com.cmclinnovations.stack.clients.blazegraph.Namespace;
 import com.cmclinnovations.stack.clients.core.EndpointNames;
+import com.cmclinnovations.stack.clients.core.StackClient;
 import com.cmclinnovations.stack.clients.geoserver.GeoServerStyle;
 import com.cmclinnovations.stack.clients.geoserver.StaticGeoServerData;
+import com.cmclinnovations.stack.clients.postgis.PostGISClient;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -141,6 +143,9 @@ public class Dataset extends AbstractDataObject {
     }
 
     public String getDatabase() {
+        if (StackClient.isRunningInKubernetes()) {
+            return PostGISClient.DEFAULT_DATABASE_NAME;
+        }
         if (database.isPresent()) {
             LOGGER.warn(NAME_DEPRECATION_NOTICE, "database", getName(), database.get());
             return database.get();
@@ -195,7 +200,7 @@ public class Dataset extends AbstractDataObject {
     public List<String> getRules() {
         return rules.orElse(Collections.emptyList());
     }
-    
+
     public List<String> getOntopLenses() {
         return ontopLenses.orElse(Collections.emptyList());
     }
