@@ -68,7 +68,7 @@ public class GDALClient extends ContainerClient {
     private GDALClient() {
         postgreSQLEndpoint = readEndpointConfig(EndpointNames.POSTGIS, PostGISEndpointConfig.class);
         commandTimeoutSeconds = GdalExecutionConfig.resolveCommandTimeoutSeconds(
-            System.getenv(StackClient.GDAL_COMMAND_TIMEOUT_KEY), 300L);
+                System.getenv(StackClient.GDAL_COMMAND_TIMEOUT_KEY), 300L);
         logger.info("Using GDAL command timeout of {}s.", commandTimeoutSeconds);
     }
 
@@ -173,7 +173,7 @@ public class GDALClient extends ContainerClient {
                 command,
                 options.getEnv(),
                 null,
-            commandTimeoutSeconds);
+                commandTimeoutSeconds);
 
         // Some GDAL builds do not support '-if'; if encountered, retry once without it.
         if (result.exitCode != 0 && result.stderr.contains("Unknown option name '-if'")) {
@@ -698,7 +698,6 @@ public class GDALClient extends ContainerClient {
     }
 
     // add .tif extension on files in geotiffs directory
-
     // return filePath for any file to either "geotiffs" or "multidim_geospatial"
     private static String generateOutFilePath(String basePathIn, String databaseName, String schemaName,
             String layerName, String filePath, String destinationDirectory) {

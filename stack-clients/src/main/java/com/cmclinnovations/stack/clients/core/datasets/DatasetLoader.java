@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -15,6 +17,8 @@ import org.eclipse.rdf4j.sparqlbuilder.core.SparqlBuilder;
 import org.eclipse.rdf4j.sparqlbuilder.core.Variable;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.Queries;
 import org.eclipse.rdf4j.sparqlbuilder.core.query.SelectQuery;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +66,9 @@ public class DatasetLoader {
 
         List<Dataset> allDatasets = DatasetReader.getAllDatasets(configPath);
 
-        Stream<Dataset> selectedDatasets = DatasetReader.getStackSpecificDatasets(allDatasets, selectedDatasetName);
-
-        loadDatasets(selectedDatasets);
+        DirectedAcyclicGraph<Dataset, DefaultEdge> datasetGraph = DatasetReader
+                .getStackSpecificDatasetGraph(allDatasets, selectedDatasetName);
+        loadDatasets(datasetGraph);
 
         createIncomingStackRepository();
 
@@ -90,6 +94,25 @@ public class DatasetLoader {
 
     public void loadDatasets(Stream<Dataset> selectedDatasets) {
         selectedDatasets.forEach(this::loadDataset);
+    }
+
+    public void loadDatasets(DirectedAcyclicGraph<Dataset, DefaultEdge> datasetGraph) {
+        Set<Dataset> pendingDatasets = new HashSet<>(datasetGraph.vertexSet());
+
+        while (!pendingDatasets.isEmpty()) {
+            List<Dataset> readyDatasets = pendingDatasets.stream()
+                    .filter(dataset -> datasetGraph.incomingEdgesOf(dataset).stream()
+                            .map(datasetGraph::getEdgeSource)
+                            .noneMatch(pendingDatasets::contains))
+                    .collect(Collectors.toList());
+
+            if (readyDatasets.isEmpty()) {
+                throw new IllegalStateException("Dataset dependency graph contains a cycle.");
+            }
+
+            readyDatasets.parallelStream().forEach(this::loadDataset);
+            pendingDatasets.removeAll(readyDatasets);
+        }
     }
 
     public void loadDataset(Dataset dataset) {
