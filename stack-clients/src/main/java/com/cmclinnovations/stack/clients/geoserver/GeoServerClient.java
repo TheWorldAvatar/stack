@@ -246,7 +246,7 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
 
         // The volume's group is shared with GeoServer, which must write mosaic
         // metadata.
-        GroupPrincipal group = Files.readAttributes(Path.of("/opt"), PosixFileAttributes.class).group();
+        GroupPrincipal group = Files.readAttributes(geotiffRoot, PosixFileAttributes.class).group();
         for (Path parent = directory.getParent(); !parent.equals(root); parent = parent.getParent()) {
             makeGeoTiffPathGroupWritable(parent, group);
         }
