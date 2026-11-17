@@ -244,8 +244,9 @@ public class GeoServerClient extends ClientWithEndpoint<RESTEndpointConfig> {
             throw new IllegalArgumentException("GeoTIFF mosaic directory must be inside '" + root + "'.");
         }
 
-        // The volume's group is shared with GeoServer, which must write mosaic metadata.
-        GroupPrincipal group = Files.readAttributes(root, PosixFileAttributes.class).group();
+        // The volume's group is shared with GeoServer, which must write mosaic
+        // metadata.
+        GroupPrincipal group = Files.readAttributes(Path.of("/opt"), PosixFileAttributes.class).group();
         for (Path parent = directory.getParent(); !parent.equals(root); parent = parent.getParent()) {
             makeGeoTiffPathGroupWritable(parent, group);
         }
