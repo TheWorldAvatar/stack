@@ -472,7 +472,6 @@ public class GDALClient extends ContainerClient {
                         layerName, tempDir, options, mdimSettings, createdDirectories));
             }
         }
-        createdDirectories.forEach(directoryPath -> directoryPath.toFile().setReadable(true, false));
         return postgresFiles;
     }
 
