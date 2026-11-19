@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-manager</artifactId>
-    <version>1.61.2-geosrever-update-SNAPSHOT</version>
+    <version>1.62.0-update-3rd-party-images-SNAPSHOT</version>
     <name>Stack Manager</name>
     <url>https://theworldavatar.io</url>
     <parent>
@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.cmclinnovations</groupId>
             <artifactId>stack-clients</artifactId>
-            <version>1.61.2-geosrever-update-SNAPSHOT</version>
+            <version>1.62.0-update-3rd-party-images-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
