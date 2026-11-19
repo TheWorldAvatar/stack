@@ -4,7 +4,7 @@
         "Name": "rdf4j",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "docker.io/eclipse/rdf4j-workbench:6.1.0",
+                "Image": "docker.io/eclipse/rdf4j-workbench:6.1.0-tomcat",
                 "Env": [
                     "JAVA_OPTS=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError -XX:-UseBASE64Intrinsics"
                 ],
