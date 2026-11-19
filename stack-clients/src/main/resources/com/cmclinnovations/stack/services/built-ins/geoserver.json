@@ -4,13 +4,14 @@
         "Name": "geoserver",
         "TaskTemplate": {
             "ContainerSpec": {
-                "Image": "docker.osgeo.org/geoserver:2.27.2",
+                "Image": "docker.osgeo.org/geoserver:3.0.2",
                 "Env": [
                     "GEOSERVER_CSRF_WHITELIST=localhost",
                     "INSTALL_EXTENSIONS=true",
                     "STABLE_EXTENSIONS=vectortiles",
                     "CORS_ENABLED=true",
-                    "SKIP_DEMO_DATA=true"
+                    "SKIP_DEMO_DATA=true",
+                    "JAVA_TOOL_OPTIONS=-XX:-UseBASE64Intrinsics"
                 ],
                 "Mounts": [
                     {
