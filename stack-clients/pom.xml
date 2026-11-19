@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.cmclinnovations</groupId>
     <artifactId>stack-clients</artifactId>
-    <version>1.61.1</version>
+    <version>1.61.2-rdf4j-update-SNAPSHOT</version>
     <name>Stack Clients</name>
     <url>https://theworldavatar.io</url>
     <parent>
