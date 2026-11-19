@@ -10,7 +10,8 @@
                     "INSTALL_EXTENSIONS=true",
                     "STABLE_EXTENSIONS=vectortiles",
                     "CORS_ENABLED=true",
-                    "SKIP_DEMO_DATA=true"
+                    "SKIP_DEMO_DATA=true",
+                    "JAVA_TOOL_OPTIONS: -XX:-UseBASE64Intrinsics"
                 ],
                 "Mounts": [
                     {
