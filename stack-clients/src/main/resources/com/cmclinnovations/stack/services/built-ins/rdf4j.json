@@ -23,9 +23,9 @@
                 "Healthcheck": {
                     "Test": [
                         "CMD",
-                        "curl",
-                        "-f",
-                        "http://localhost:8080/rdf4j-server"
+                        "bash",
+                        "-c",
+                        "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /rdf4j-server HTTP/1.1\nHost: 127.0.0.1\nConnection: close\n\n' >&3;grep '200 OK' <&3"
                     ],
                     "Interval": 1000000000,
                     "Timeout": 1000000000,
